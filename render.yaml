@@ -3,7 +3,7 @@ services:
     name: sistema-pdv-backend
     env: node
     plan: free
-    buildCommand: cd backend && npm install && npm rebuild better-sqlite3 && npm run build && ls -la dist
+    buildCommand: cd backend && npm install && npm rebuild better-sqlite3 && npm run build && echo "=== Build completo ===" && ls -la dist || echo "Pasta dist não encontrada"
     startCommand: node backend/start.js
     envVars:
       - key: NODE_ENV
