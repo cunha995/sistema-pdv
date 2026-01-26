@@ -3,7 +3,7 @@ services:
     name: sistema-pdv-backend
     env: node
     plan: free
-    buildCommand: npm install && cd backend && npm install && npm run build
+    buildCommand: cd backend && npm install && npm rebuild better-sqlite3 && npm run build
     startCommand: cd backend && node dist/server.js
     envVars:
       - key: NODE_ENV
