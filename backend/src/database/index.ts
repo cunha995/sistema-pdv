@@ -1,7 +1,24 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 
-const db = new Database(path.join(__dirname, '../../database.db'));
+// Em produção (Render), usar /tmp que tem permissão de escrita
+// Em desenvolvimento, usar a pasta local
+const dbPath = process.env.NODE_ENV === 'production' 
+  ? '/tmp/database.db' 
+  : path.join(__dirname, '../../database.db');
+
+// Criar diretório se não existir (para desenvolvimento)
+if (process.env.NODE_ENV !== 'production') {
+  const dir = path.dirname(dbPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+const db = new Database(dbPath);
+
+console.log(`📁 Banco de dados: ${dbPath}`);
 
 // Criar tabelas
 db.exec(`
