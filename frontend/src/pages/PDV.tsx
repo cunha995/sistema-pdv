@@ -109,131 +109,92 @@ const PDV: React.FC = () => {
   };
 
   return (
-    <div>
-      <h1 className="mb-20">Ponto de Venda (PDV)</h1>
-
-      {mensagem && (
-        <div className={`alert ${mensagem.includes('sucesso') ? 'alert-success' : 'alert-error'}`}>
-          {mensagem}
-        </div>
-      )}
-
-      <div className="grid-2">
-        {/* Busca por Código de Barras */}
-        <div className="card">
-          <h2>Buscar Produto</h2>
-          <div className="form-group">
-            <label>Código de Barras</label>
-            <input
-              type="text"
-              value={codigoBarras}
-              onChange={(e) => setCodigoBarras(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && adicionarProduto()}
-              placeholder="Digite ou escaneie o código"
-              autoFocus
-            />
+    <div className="pdv-main-layout" style={{ display: 'flex', height: '100vh', background: '#7a0026' }}>
+      {/* Painel principal amarelo */}
+      <div className="pdv-pedido" style={{ flex: 1, background: '#ffe082', margin: 24, borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column', padding: 24 }}>
+        {/* Cabeçalho */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
+          <div>
+            <label style={{ fontWeight: 'bold', color: '#7a0026' }}>Quantidade</label>
+            <input type="number" min="0.01" step="0.01" value={quantidade} onChange={e => setQuantidade(Number(e.target.value))} style={{ width: 80, fontSize: 22, fontWeight: 'bold', textAlign: 'center', background: '#fff', border: '2px solid #7a0026', borderRadius: 6 }} />
           </div>
-          <div className="form-group">
-            <label>Quantidade</label>
-            <input
-              type="number"
-              min="1"
-              value={quantidade}
-              onChange={(e) => setQuantidade(Number(e.target.value))}
-            />
+          <div style={{ flex: 1 }}>
+            <label style={{ fontWeight: 'bold', color: '#7a0026' }}>Código/Pesquisa</label>
+            <input type="text" value={codigoBarras} onChange={e => setCodigoBarras(e.target.value)} onKeyDown={e => e.key === 'Enter' && adicionarProduto()} style={{ width: '100%', fontSize: 22, fontWeight: 'bold', background: '#fff', border: '2px solid #7a0026', borderRadius: 6 }} />
           </div>
-          <button className="btn btn-primary" onClick={() => adicionarProduto()}>
-            Adicionar
-          </button>
+          <button style={{ fontSize: 18, fontWeight: 'bold', background: '#7a0026', color: '#fff', border: 'none', borderRadius: 6, padding: '0 18px' }} onClick={() => adicionarProduto()}>F2</button>
         </div>
 
-        {/* Lista de Produtos */}
-        <div className="card">
-          <h2>Produtos Disponíveis</h2>
-          <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-            {produtos.map(produto => (
-              <div
-                key={produto.id}
-                style={{
-                  padding: '10px',
-                  borderBottom: '1px solid #eee',
-                  cursor: 'pointer'
-                }}
-                onClick={() => adicionarProduto(produto)}
-              >
-                <strong>{produto.nome}</strong> - R$ {produto.preco.toFixed(2)}
-                <br />
-                <small>Estoque: {produto.estoque}</small>
-              </div>
-            ))}
+        {/* Pedido aberto edição */}
+        <div style={{ display: 'flex', gap: 24, flex: 1 }}>
+          {/* Imagem do produto (mock) */}
+          <div style={{ minWidth: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
+            <img src="https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=120&q=80" alt="Produto" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8, marginBottom: 12 }} />
+            <div style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 8 }}>VALOR UNITÁRIO</div>
+            <div style={{ fontSize: 28, fontWeight: 'bold', background: '#fff', border: '2px solid #7a0026', borderRadius: 6, padding: '6px 0', textAlign: 'center' }}>R$ {carrinho.length > 0 ? carrinho[carrinho.length-1].preco_unitario.toFixed(2) : '0,00'}</div>
+            <div style={{ fontWeight: 'bold', fontSize: 18, margin: '16px 0 8px 0' }}>Quantidade</div>
+            <div style={{ fontSize: 28, fontWeight: 'bold', background: '#fff', border: '2px solid #7a0026', borderRadius: 6, padding: '6px 0', textAlign: 'center' }}>{carrinho.length > 0 ? carrinho[carrinho.length-1].quantidade : '0'} UN</div>
+            <div style={{ fontWeight: 'bold', fontSize: 18, margin: '16px 0 8px 0' }}>SUBTOTAL</div>
+            <div style={{ fontSize: 28, fontWeight: 'bold', background: '#fff', border: '2px solid #7a0026', borderRadius: 6, padding: '6px 0', textAlign: 'center' }}>R$ {carrinho.length > 0 ? carrinho[carrinho.length-1].subtotal.toFixed(2) : '0,00'}</div>
           </div>
+
+          {/* Lista de itens do pedido */}
+          <div style={{ flex: 1, background: '#fffde7', borderRadius: 8, padding: 18, fontFamily: 'monospace', fontSize: 18 }}>
+            <div style={{ fontWeight: 'bold', fontSize: 28, color: '#7a0026', marginBottom: 8 }}>PEDIDO ABERTO EDIÇÃO</div>
+            <div>
+              {carrinho.length === 0 ? <div style={{ color: '#aaa', fontSize: 20 }}>Nenhum item</div> : (
+                carrinho.map((item, idx) => (
+                  <div key={item.produto_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ffe082', padding: '4px 0' }}>
+                    <span>{String(idx+1).padStart(3,'0')}  {item.produto_nome}</span>
+                    <span>{item.quantidade} UN X {item.preco_unitario.toFixed(2)}</span>
+                    <span>{item.subtotal.toFixed(2)}</span>
+                    <button style={{ marginLeft: 12, background: 'none', border: 'none', color: '#c00', fontWeight: 'bold', fontSize: 18, cursor: 'pointer' }} onClick={() => removerItem(item.produto_id)}>✖</button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Rodapé valor total */}
+        <div style={{ background: '#ffc107', borderRadius: 8, padding: '18px 0', marginTop: 18, textAlign: 'right', fontWeight: 'bold', fontSize: 32, color: '#7a0026' }}>
+          VALOR TOTAL DA VENDA: <span style={{ fontSize: 40 }}>R$ {calcularTotal().toFixed(2)}</span>
         </div>
       </div>
 
-      {/* Carrinho */}
-      <div className="card mt-20">
-        <h2>Carrinho de Compras</h2>
-        {carrinho.length === 0 ? (
-          <p>Carrinho vazio</p>
-        ) : (
-          <>
-            <table>
-              <thead>
-                <tr>
-                  <th>Produto</th>
-                  <th>Quantidade</th>
-                  <th>Preço Unit.</th>
-                  <th>Subtotal</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {carrinho.map((item) => (
-                  <tr key={item.produto_id}>
-                    <td>{item.produto_nome}</td>
-                    <td>{item.quantidade}</td>
-                    <td>R$ {item.preco_unitario.toFixed(2)}</td>
-                    <td>R$ {item.subtotal.toFixed(2)}</td>
-                    <td>
-                      <button
-                        className="btn btn-danger"
-                        onClick={() => removerItem(item.produto_id)}
-                      >
-                        Remover
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <div className="mt-20 flex-between">
-              <div>
-                <h3>Total: R$ {calcularTotal().toFixed(2)}</h3>
-                <div className="form-group mt-20">
-                  <label>Método de Pagamento</label>
-                  <select
-                    value={metodoPagamento}
-                    onChange={(e) => setMetodoPagamento(e.target.value)}
-                  >
-                    <option value="dinheiro">Dinheiro</option>
-                    <option value="cartao_credito">Cartão de Crédito</option>
-                    <option value="cartao_debito">Cartão de Débito</option>
-                    <option value="pix">PIX</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex-gap">
-                <button className="btn btn-secondary" onClick={() => setCarrinho([])}>
-                  Cancelar
-                </button>
-                <button className="btn btn-success" onClick={finalizarVenda}>
-                  Finalizar Venda
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+      {/* Painel lateral vinho */}
+      <div className="pdv-lateral" style={{ width: 340, background: '#7a0026', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 24, borderTopRightRadius: 12, borderBottomRightRadius: 12 }}>
+        {/* Dicas de teclas */}
+        <div>
+          <div style={{ fontWeight: 'bold', fontSize: 22, marginBottom: 12 }}>Dicas</div>
+          <div style={{ fontSize: 16, lineHeight: '1.7' }}>
+            F9 - Cliente<br />
+            F5 - Dinheiro<br />
+            F6 - Cartão<br />
+            F8 - Pós-pago<br />
+            F10 - Finalizar<br />
+            F12 - NFC-e<br />
+            F3 - Pesquisa Avançada<br />
+            F3 - Abrir Pedido (Editar)<br />
+            Alt+1 - Cancelar um item<br />
+            CTRL+S - Sangria<br />
+            CTRL+F - Fechar caixa<br />
+            'PREÇO'+'*'+'9' - Venda diverso<br />
+            F4 - Todas funções<br />
+          </div>
+        </div>
+        {/* Dados do caixa */}
+        <div style={{ background: '#fff', color: '#7a0026', borderRadius: 8, padding: 16, fontWeight: 'bold', fontSize: 18 }}>
+          <div style={{ marginBottom: 8 }}>CAIXA 001</div>
+          <div style={{ fontSize: 16 }}>OPERADOR DE CAIXA</div>
+          <div style={{ fontSize: 20, margin: '8px 0' }}>ADMINISTRADOR</div>
+          <div style={{ fontSize: 16 }}>VENDEDOR</div>
+          <div style={{ fontSize: 20, margin: '8px 0' }}>Vendedor não informado</div>
+          <div style={{ fontSize: 16 }}>DATA DA VENDA</div>
+          <div style={{ fontSize: 20, margin: '8px 0' }}>{new Date().toLocaleDateString()}</div>
+          <div style={{ fontSize: 16 }}>HORA ATUAL</div>
+          <div style={{ fontSize: 20, margin: '8px 0' }}>{new Date().toLocaleTimeString()}</div>
+        </div>
       </div>
     </div>
   );

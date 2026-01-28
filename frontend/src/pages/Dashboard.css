@@ -1,0 +1,218 @@
+/* Dashboard.css - Estilo moderno para o dashboard PDV */
+
+.dashboard-main {
+  max-width: 420px;
+  margin: 0 auto;
+  background: #f7faff;
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  padding-bottom: 32px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  min-height: 100vh;
+}
+
+/* Topbar */
+.dashboard-topbar {
+  padding: 18px 18px 0 18px;
+}
+.dashboard-title-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dashboard-title-app {
+  font-size: 1.25em;
+  font-weight: 600;
+  color: #2a4d7a;
+}
+.dashboard-icons span {
+  font-size: 1.25em;
+  margin-left: 14px;
+  cursor: pointer;
+  color: #1976d2;
+}
+.dashboard-user {
+  font-size: 1em;
+  color: #1976d2;
+  margin-top: 4px;
+  margin-left: 2px;
+  font-weight: 500;
+}
+
+/* Cards */
+.dashboard-cards {
+  display: flex;
+  gap: 14px;
+  padding: 18px 18px 0 18px;
+}
+.dashboard-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  flex: 1;
+  padding: 14px 12px 12px 14px;
+  text-align: left;
+  min-width: 0;
+}
+.dashboard-card-title {
+  font-size: 1em;
+  color: #1a2940;
+  font-weight: bold;
+}
+.dashboard-card-value {
+  font-size: 1.3em;
+  color: #1976d2;
+  font-weight: 600;
+  margin: 2px 0 2px 0;
+}
+.dashboard-card-desc {
+  font-size: 0.95em;
+  color: #6b7a90;
+}
+
+/* Menu */
+.dashboard-menu {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 22px 18px 0 18px;
+}
+.dashboard-menu-item {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0 8px 0;
+  font-size: 1.1em;
+  color: #1a2940;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dashboard-menu-item:hover {
+  background: #e3f0ff;
+}
+.dashboard-menu-item span:first-child {
+  font-size: 1.5em;
+  margin-bottom: 2px;
+}
+.dashboard-menu-item span:last-child {
+  font-size: 0.95em;
+}
+
+/* Alertas */
+.dashboard-alerts {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  margin: 24px 18px 0 18px;
+  padding: 14px 16px 10px 16px;
+}
+.dashboard-alerts-title {
+  display: flex;
+  align-items: center;
+  font-size: 1.08em;
+  font-weight: 600;
+  color: #1976d2;
+  margin-bottom: 6px;
+}
+.dashboard-alerts-icon {
+  margin-right: 6px;
+  font-size: 1.2em;
+}
+.dashboard-alerts-badge {
+  background: #1976d2;
+  color: #fff;
+  border-radius: 10px;
+  font-size: 0.85em;
+  padding: 2px 8px;
+  margin-left: 8px;
+}
+.dashboard-alerts-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.dashboard-alerts-list li {
+  font-size: 0.98em;
+  color: #1a2940;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+}
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+.dot-blue {
+  background: #1976d2;
+}
+}
+.dashboard-card-value {
+  font-size: 1.5em;
+  color: #1976d2;
+  font-weight: bold;
+  margin: 6px 0;
+}
+.dashboard-card-desc {
+  font-size: 0.95em;
+  color: #888;
+}
+.dashboard-menu {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  padding: 24px;
+}
+.dashboard-menu-item {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 0 8px 0;
+  font-size: 1.5em;
+  color: #1976d2;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.dashboard-menu-item span {
+  font-size: 0.9em;
+  color: #1976d2;
+  margin-top: 6px;
+}
+.dashboard-menu-item:hover {
+  background: #e3f0ff;
+}
+.dashboard-alerts {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  margin: 24px;
+  padding: 16px;
+}
+.dashboard-alerts-title {
+  font-weight: bold;
+  color: #1976d2;
+  margin-bottom: 8px;
+}
+.dashboard-alerts ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.dashboard-alerts li {
+  font-size: 1em;
+  color: #1a2940;
+  margin-bottom: 6px;
+}
+.dashboard-alerts strong {
+  color: #e67e22;
+}
