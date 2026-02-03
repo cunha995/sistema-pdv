@@ -1,104 +1,258 @@
-
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { Produto } from '../types';
+import './PainelMesa.css';
+
+interface ItemPedido {
+  id: number;
+  produto_id: number;
+  quantidade: number;
+  preco_unitario: number;
+  subtotal: number;
+}
+
+interface Pedido {
+  id: number;
+  mesa_id: number;
+  status: string;
+  total: number;
+  created_at: string;
+  itens: ItemPedido[];
+}
 
 const PainelMesa: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const [produtos, setProdutos] = useState<Produto[]>([]);
-  const [pedido, setPedido] = useState<{produto: Produto, quantidade: number}[]>([]);
+  const [pedidoAtual, setPedidoAtual] = useState<{ produto: Produto; quantidade: number }[]>([]);
+  const [historicoPedidos, setHistoricoPedidos] = useState<Pedido[]>([]);
+  const [totalConta, setTotalConta] = useState(0);
   const [mensagem, setMensagem] = useState('');
-  const [ultimoPedido, setUltimoPedido] = useState<any>(null);
-
+  const [metodoPagamento, setMetodoPagamento] = useState('dinheiro');
+  const [desconto, setDesconto] = useState(0);
 
   useEffect(() => {
     api.produtos.listar().then(setProdutos);
   }, []);
 
-  // Buscar status do último pedido da mesa
   useEffect(() => {
     if (!id) return;
-    const buscarUltimoPedido = async () => {
-      const resp = await fetch(`/api/mesas/${id}/pedidos`);
-      const pedidos = await resp.json();
-      if (pedidos.length > 0) {
-        setUltimoPedido(pedidos[pedidos.length - 1]);
-      } else {
-        setUltimoPedido(null);
+    const buscarPedidos = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || '/api';
+        const response = await fetch(`${apiUrl}/mesas/${id}/pedidos`);
+        const pedidos = await response.json();
+        setHistoricoPedidos(pedidos);
+        const total = pedidos.reduce((acc: number, pedido: Pedido) => acc + pedido.total, 0);
+        setTotalConta(total);
+      } catch (error) {
+        console.error('Erro ao buscar pedidos:', error);
       }
     };
-    buscarUltimoPedido();
-    const interval = setInterval(buscarUltimoPedido, 4000);
+
+    buscarPedidos();
+    const interval = setInterval(buscarPedidos, 5000);
     return () => clearInterval(interval);
   }, [id]);
 
   const adicionarAoPedido = (produto: Produto) => {
-    setPedido(prev => {
-      const existe = prev.find(p => p.produto.id === produto.id);
+    setPedidoAtual((prev) => {
+      const existe = prev.find((p) => p.produto.id === produto.id);
       if (existe) {
-        return prev.map(p => p.produto.id === produto.id ? {...p, quantidade: p.quantidade + 1} : p);
+        return prev.map((p) =>
+          p.produto.id === produto.id ? { ...p, quantidade: p.quantidade + 1 } : p
+        );
       }
-      return [...prev, {produto, quantidade: 1}];
+      return [...prev, { produto, quantidade: 1 }];
     });
   };
 
   const removerDoPedido = (produtoId: number) => {
-    setPedido(prev => prev.filter(p => p.produto.id !== produtoId));
+    setPedidoAtual((prev) => prev.filter((p) => p.produto.id !== produtoId));
   };
 
-
   const enviarPedido = async () => {
-    if (!id) return;
+    if (!id || pedidoAtual.length === 0) return;
+
     try {
-      const itens = pedido.map(item => ({ produto_id: item.produto.id, quantidade: item.quantidade }));
-      const resp = await fetch(`/api/mesas/${id}/pedidos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itens })
-      });
-      if (resp.ok) {
-        setMensagem('Pedido enviado com sucesso!');
-        setPedido([]);
-      } else {
-        setMensagem('Erro ao enviar pedido');
+      const apiUrl = import.meta.env.VITE_API_URL || '/api';
+      const itens = pedidoAtual.map((item) => ({
+        produto_id: item.produto.id,
+        quantidade: item.quantidade,
+        preco_unitario: item.produto.preco,
+      }));
+
+      const response = await fetch(
+        `${apiUrl}/mesas/${id}/pedidos`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itens }),
+        }
+      );
+
+      if (response.ok) {
+        setMensagem('✓ Pedido enviado com sucesso!');
+        setPedidoAtual([]);
+        setTimeout(() => setMensagem(''), 2000);
       }
-    } catch (e) {
-      setMensagem('Erro ao enviar pedido');
+    } catch (error) {
+      setMensagem('✗ Erro ao enviar pedido');
+      console.error(error);
     }
-    setTimeout(() => setMensagem(''), 3000);
+  };
+
+  const fecharConta = async () => {
+    if (!id) return;
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || '/api';
+      const response = await fetch(
+        `${apiUrl}/mesas/${id}/fechar-conta`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metodo_pagamento, desconto: parseFloat(desconto.toString()) }),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        setMensagem(`✓ Conta fechada! Venda #${result.venda_id}`);
+        setHistoricoPedidos([]);
+        setTotalConta(0);
+        setPedidoAtual([]);
+        setDesconto(0);
+        setTimeout(() => setMensagem(''), 3000);
+      } else {
+        setMensagem('✗ Erro ao fechar conta');
+      }
+    } catch (error) {
+      setMensagem('✗ Erro ao fechar conta');
+      console.error(error);
+    }
+  };
+
+  const calcularTotalPedidoAtual = () => {
+    return pedidoAtual.reduce((acc, item) => acc + item.produto.preco * item.quantidade, 0);
   };
 
   return (
-    <div className="painel-mesa-main">
-      <h2>Painel da Mesa {id}</h2>
-      {ultimoPedido && (
-        <div style={{marginBottom: 16}}>
-          <b>Status do último pedido:</b> <span style={{color: ultimoPedido.status === 'pronto' ? 'green' : ultimoPedido.status === 'entregue' ? 'blue' : 'orange'}}>{ultimoPedido.status}</span>
+    <div className="painel-mesa">
+      <div className="painel-header">
+        <h1>Mesa {id}</h1>
+        <div className="total-conta">
+          <strong>Total da Conta: R$ {(totalConta - desconto).toFixed(2)}</strong>
+        </div>
+      </div>
+
+      {mensagem && <div className="mensagem">{mensagem}</div>}
+
+      <div className="painel-content">
+        <div className="historico-pedidos">
+          <h2>Histórico de Pedidos ({historicoPedidos.length})</h2>
+          {historicoPedidos.length === 0 ? (
+            <p className="sem-pedidos">Nenhum pedido feito ainda</p>
+          ) : (
+            <div className="lista-pedidos">
+              {historicoPedidos.map((pedido) => (
+                <div key={pedido.id} className="pedido-item">
+                  <div className="pedido-header">
+                    <span className="pedido-id">Pedido #{pedido.id}</span>
+                    <span className={`status status-${pedido.status}`}>{pedido.status}</span>
+                    <span className="pedido-total">R$ {pedido.total.toFixed(2)}</span>
+                  </div>
+                  <div className="pedido-itens">
+                    {pedido.itens.map((item) => (
+                      <div key={item.id} className="item-linha">
+                        <span>{item.quantidade}x</span>
+                        <span>Produto {item.produto_id}</span>
+                        <span>R$ {item.subtotal.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="novo-pedido">
+          <h2>Novo Pedido</h2>
+          <div className="produtos-grid">
+            {produtos.map((produto) => (
+              <button
+                key={produto.id}
+                className="produto-btn"
+                onClick={() => adicionarAoPedido(produto)}
+              >
+                <div>{produto.nome}</div>
+                <div className="preco">R$ {produto.preco.toFixed(2)}</div>
+              </button>
+            ))}
+          </div>
+
+          {pedidoAtual.length > 0 && (
+            <div className="pedido-carrinho">
+              <h3>Itens do Pedido</h3>
+              <div className="carrinho-itens">
+                {pedidoAtual.map((item) => (
+                  <div key={item.produto.id} className="carrinho-item">
+                    <span>{item.quantidade}x {item.produto.nome}</span>
+                    <span>R$ {(item.produto.preco * item.quantidade).toFixed(2)}</span>
+                    <button onClick={() => removerDoPedido(item.produto.id)}>✕</button>
+                  </div>
+                ))}
+              </div>
+              <div className="subtotal">
+                <strong>Subtotal do Pedido: R$ {calcularTotalPedidoAtual().toFixed(2)}</strong>
+              </div>
+              <button className="btn-enviar" onClick={enviarPedido}>
+                Enviar Pedido
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {historicoPedidos.length > 0 && (
+        <div className="painel-fechamento">
+          <h2>Fechar Conta</h2>
+          <div className="fechamento-form">
+            <div className="form-group">
+              <label>Método de Pagamento:</label>
+              <select value={metodoPagamento} onChange={(e) => setMetodoPagamento(e.target.value)}>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="credito">Crédito</option>
+                <option value="debito">Débito</option>
+                <option value="pix">PIX</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Desconto (R$):</label>
+              <input
+                type="number"
+                step="0.01"
+                value={desconto}
+                onChange={(e) => setDesconto(parseFloat(e.target.value))}
+              />
+            </div>
+
+            <div className="resumo">
+              <p>Total: R$ {totalConta.toFixed(2)}</p>
+              <p>Desconto: R$ {desconto.toFixed(2)}</p>
+              <p className="total-final">
+                <strong>Total a Pagar: R$ {(totalConta - desconto).toFixed(2)}</strong>
+              </p>
+            </div>
+
+            <button className="btn-fechar" onClick={fecharConta}>
+              Fechar Conta
+            </button>
+          </div>
         </div>
       )}
-      <h3>Escolha seus produtos:</h3>
-      <div className="produtos-list">
-        {produtos.map(produto => (
-          <div key={produto.id} className="produto-card">
-            <div><b>{produto.nome}</b></div>
-            <div>R$ {produto.preco.toFixed(2)}</div>
-            <button onClick={() => adicionarAoPedido(produto)}>Adicionar</button>
-          </div>
-        ))}
-      </div>
-      <h3>Seu Pedido:</h3>
-      <ul>
-        {pedido.map(item => (
-          <li key={item.produto.id}>
-            {item.produto.nome} x {item.quantidade}
-            <button onClick={() => removerDoPedido(item.produto.id)}>Remover</button>
-          </li>
-        ))}
-      </ul>
-      {pedido.length > 0 && <button onClick={enviarPedido}>Enviar Pedido</button>}
-      {mensagem && <div className="mensagem-ok">{mensagem}</div>}
     </div>
   );
 };

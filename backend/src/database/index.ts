@@ -68,6 +68,26 @@ db.exec(`
     FOREIGN KEY (produto_id) REFERENCES produtos(id)
   );
 
+  CREATE TABLE IF NOT EXISTS pedidos_mesa (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mesa_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'pendente',
+    total REAL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS itens_pedido_mesa (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pedido_id INTEGER NOT NULL,
+    produto_id INTEGER NOT NULL,
+    quantidade INTEGER NOT NULL,
+    preco_unitario REAL NOT NULL,
+    subtotal REAL NOT NULL,
+    FOREIGN KEY (pedido_id) REFERENCES pedidos_mesa(id) ON DELETE CASCADE,
+    FOREIGN KEY (produto_id) REFERENCES produtos(id)
+  );
+
   -- Inserir dados de exemplo
   INSERT OR IGNORE INTO produtos (id, nome, descricao, preco, codigo_barras, estoque, categoria) VALUES
     (1, 'Coca-Cola 2L', 'Refrigerante Coca-Cola 2 litros', 8.99, '7894900011517', 50, 'Bebidas'),
