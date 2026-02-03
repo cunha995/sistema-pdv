@@ -12,6 +12,9 @@ const PDV: React.FC = () => {
   const [desconto, setDesconto] = useState(0);
   const [mensagem, setMensagem] = useState('');
   const [filtro, setFiltro] = useState('');
+  const [mostrarMesas, setMostrarMesas] = useState(false);
+  const [mesaSelecionada, setMesaSelecionada] = useState<number | null>(null);
+  const [pedidosMesa, setPedidosMesa] = useState<any[]>([]);
 
   useEffect(() => {
     carregarProdutos();
@@ -112,6 +115,45 @@ const PDV: React.FC = () => {
 
   const totalComDesconto = calcularTotal() - desconto;
 
+  const carregarPedidosMesa = async (mesaId: number) => {
+    try {
+      const pedidos = await api.mesas.listarPedidos(mesaId);
+      setPedidosMesa(pedidos);
+      setMesaSelecionada(mesaId);
+    } catch (error) {
+      console.error('Erro ao carregar pedidos da mesa:', error);
+      setMensagem('❌ Erro ao carregar pedidos da mesa!');
+      setTimeout(() => setMensagem(''), 2000);
+    }
+  };
+
+  const fecharContaMesa = async () => {
+    if (!mesaSelecionada) return;
+
+    try {
+      await api.mesas.fecharConta(mesaSelecionada, {
+        metodo_pagamento: metodoPagamento,
+        desconto
+      });
+      setMensagem('✓ Conta da mesa fechada com sucesso!');
+      setMesaSelecionada(null);
+      setPedidosMesa([]);
+      setDesconto(0);
+      setMostrarMesas(false);
+      setTimeout(() => setMensagem(''), 3000);
+    } catch (error) {
+      console.error('Erro ao fechar conta:', error);
+      setMensagem('❌ Erro ao fechar conta da mesa!');
+      setTimeout(() => setMensagem(''), 2000);
+    }
+  };
+
+  const calcularTotalMesa = () => {
+    return pedidosMesa
+      .filter(p => p.status !== 'fechado')
+      .reduce((total, pedido) => total + parseFloat(pedido.total || 0), 0);
+  };
+
   const finalizarVenda = async () => {
     if (carrinho.length === 0) {
       setMensagem('❌ Carrinho vazio!');
@@ -151,7 +193,130 @@ const PDV: React.FC = () => {
           <span>Operador: Admin</span>
           <span>{new Date().toLocaleString()}</span>
         </div>
+        <button 
+          className="btn-mesas-toggle"
+          onClick={() => setMostrarMesas(!mostrarMesas)}
+        >
+          {mostrarMesas ? '✕ Fechar' : '🍽️ Mesas'}
+        </button>
       </div>
+
+      {/* Painel de Mesas */}
+      {mostrarMesas && (
+        <div className="mesas-panel">
+          <div className="mesas-header">
+            <h2>Mesas Disponíveis</h2>
+            <p>Selecione uma mesa para visualizar e fechar a conta</p>
+          </div>
+          <div className="mesas-grid">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mesaNum) => (
+              <button
+                key={mesaNum}
+                className={`mesa-btn ${mesaSelecionada === mesaNum ? 'selecionada' : ''}`}
+                onClick={() => carregarPedidosMesa(mesaNum)}
+              >
+                <span className="mesa-numero">Mesa {mesaNum}</span>
+                <span className="mesa-status">Clique para ver</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Detalhes da Mesa Selecionada */}
+          {mesaSelecionada && (
+            <div className="mesa-detalhes">
+              <div className="mesa-detalhes-header">
+                <h3>📋 Mesa {mesaSelecionada} - Pedidos</h3>
+                <button 
+                  className="btn-close-details"
+                  onClick={() => {
+                    setMesaSelecionada(null);
+                    setPedidosMesa([]);
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {pedidosMesa.length === 0 ? (
+                <div className="sem-pedidos">Nenhum pedido registrado para esta mesa</div>
+              ) : (
+                <>
+                  <div className="pedidos-lista">
+                    {pedidosMesa.filter(p => p.status !== 'fechado').map((pedido) => (
+                      <div key={pedido.id} className="pedido-card">
+                        <div className="pedido-header">
+                          <span className="pedido-id">Pedido #{pedido.id}</span>
+                          <span className={`pedido-status status-${pedido.status}`}>
+                            {pedido.status}
+                          </span>
+                        </div>
+                        <div className="pedido-itens">
+                          {pedido.itens?.map((item: any, idx: number) => (
+                            <div key={idx} className="pedido-item">
+                              <span>{item.quantidade}x {item.produto_nome}</span>
+                              <span>R$ {(item.subtotal || 0).toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="pedido-total">
+                          Total: <strong>R$ {(pedido.total || 0).toFixed(2)}</strong>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="fechar-conta-section">
+                    <div className="conta-resumo">
+                      <div className="resumo-linha">
+                        <span>Total dos Pedidos:</span>
+                        <strong>R$ {calcularTotalMesa().toFixed(2)}</strong>
+                      </div>
+
+                      <div className="desconto-group">
+                        <label>Desconto (R$):</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={desconto}
+                          onChange={(e) => setDesconto(Math.max(0, Number(e.target.value)))}
+                          className="desconto-input"
+                        />
+                      </div>
+
+                      <div className="resumo-linha total">
+                        <span>Total Final:</span>
+                        <strong>R$ {(calcularTotalMesa() - desconto).toFixed(2)}</strong>
+                      </div>
+
+                      <div className="pagamento-group">
+                        <label>Método de Pagamento:</label>
+                        <select
+                          value={metodoPagamento}
+                          onChange={(e) => setMetodoPagamento(e.target.value)}
+                          className="pagamento-select"
+                        >
+                          <option value="dinheiro">💵 Dinheiro</option>
+                          <option value="credito">💳 Crédito</option>
+                          <option value="debito">💳 Débito</option>
+                          <option value="pix">📱 PIX</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <button 
+                      className="btn-fechar-conta"
+                      onClick={fecharContaMesa}
+                    >
+                      ✓ Fechar Conta da Mesa
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Mensagem */}
       {mensagem && <div className="pdv-mensagem">{mensagem}</div>}

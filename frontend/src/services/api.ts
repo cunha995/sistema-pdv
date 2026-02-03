@@ -55,5 +55,15 @@ export const api = {
       if (dataFim) params.append('data_fim', dataFim);
       return fetch(`${API_URL}/vendas/relatorio?${params}`).then(r => r.json());
     }
+  },
+
+  // Mesas
+  mesas: {
+    listarPedidos: (mesaId: number) => fetch(`${API_URL}/mesas/${mesaId}/pedidos`).then(r => r.json()),
+    fecharConta: (mesaId: number, data: any) => fetch(`${API_URL}/mesas/${mesaId}/fechar-conta`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(r => r.json())
   }
 };
