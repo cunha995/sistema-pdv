@@ -65,5 +65,27 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     }).then(r => r.json())
+  },
+
+  // Funcionários
+  funcionarios: {
+    listar: () => fetch(`${API_URL}/funcionarios`).then(r => r.json()),
+    buscar: (id: number) => fetch(`${API_URL}/funcionarios/${id}`).then(r => r.json()),
+    criar: (data: any) => fetch(`${API_URL}/funcionarios`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(r => r.json()),
+    atualizar: (id: number, data: any) => fetch(`${API_URL}/funcionarios/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(r => r.json()),
+    deletar: (id: number) => fetch(`${API_URL}/funcionarios/${id}`, {
+      method: 'DELETE'
+    }).then(r => r.json()),
+    ativar: (id: number) => fetch(`${API_URL}/funcionarios/${id}/ativar`, {
+      method: 'PATCH'
+    }).then(r => r.json())
   }
 };

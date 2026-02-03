@@ -5,6 +5,7 @@ import produtosRoutes from './routes/produtos';
 import clientesRoutes from './routes/clientes';
 import vendasRoutes from './routes/vendas';
 import mesasRoutes from './routes/mesas';
+import funcionariosRoutes from './routes/funcionarios';
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.use('/api/produtos', produtosRoutes);
 app.use('/api/clientes', clientesRoutes);
 app.use('/api/vendas', vendasRoutes);
 app.use('/api/mesas', mesasRoutes);
+app.use('/api/funcionarios', funcionariosRoutes);
 
 // Rota raiz
 app.get('/', (req, res) => {

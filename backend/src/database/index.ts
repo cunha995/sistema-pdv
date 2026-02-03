@@ -88,6 +88,19 @@ db.exec(`
     FOREIGN KEY (produto_id) REFERENCES produtos(id)
   );
 
+  CREATE TABLE IF NOT EXISTS funcionarios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    cpf TEXT UNIQUE NOT NULL,
+    email TEXT,
+    telefone TEXT,
+    cargo TEXT DEFAULT 'Operador de Caixa',
+    senha TEXT,
+    ativo BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   -- Inserir dados de exemplo
   INSERT OR IGNORE INTO produtos (id, nome, descricao, preco, codigo_barras, estoque, categoria) VALUES
     (1, 'Coca-Cola 2L', 'Refrigerante Coca-Cola 2 litros', 8.99, '7894900011517', 50, 'Bebidas'),
