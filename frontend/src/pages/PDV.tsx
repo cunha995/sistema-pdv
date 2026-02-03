@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { Produto, ItemVenda } from '../types';
+import './PDV.css';
 
 const PDV: React.FC = () => {
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -8,7 +9,9 @@ const PDV: React.FC = () => {
   const [codigoBarras, setCodigoBarras] = useState('');
   const [quantidade, setQuantidade] = useState(1);
   const [metodoPagamento, setMetodoPagamento] = useState('dinheiro');
+  const [desconto, setDesconto] = useState(0);
   const [mensagem, setMensagem] = useState('');
+  const [filtro, setFiltro] = useState('');
 
   useEffect(() => {
     carregarProdutos();
@@ -32,12 +35,14 @@ const PDV: React.FC = () => {
       }
 
       if (!produtoSelecionado) {
-        setMensagem('Produto não encontrado!');
+        setMensagem('❌ Produto não encontrado!');
+        setTimeout(() => setMensagem(''), 2000);
         return;
       }
 
       if (produtoSelecionado.estoque < quantidade) {
-        setMensagem('Estoque insuficiente!');
+        setMensagem('❌ Estoque insuficiente!');
+        setTimeout(() => setMensagem(''), 2000);
         return;
       }
 
@@ -72,9 +77,10 @@ const PDV: React.FC = () => {
 
       setCodigoBarras('');
       setQuantidade(1);
-      setMensagem('');
+      setMensagem('✓ Produto adicionado!');
+      setTimeout(() => setMensagem(''), 1500);
     } catch (error) {
-      setMensagem('Erro ao adicionar produto!');
+      setMensagem('❌ Erro ao adicionar produto!');
     }
   };
 
@@ -82,118 +88,238 @@ const PDV: React.FC = () => {
     setCarrinho(carrinho.filter(item => item.produto_id !== produtoId));
   };
 
+  const atualizarQuantidade = (produtoId: number, novaQuantidade: number) => {
+    if (novaQuantidade <= 0) {
+      removerItem(produtoId);
+      return;
+    }
+    setCarrinho(
+      carrinho.map(item =>
+        item.produto_id === produtoId
+          ? {
+              ...item,
+              quantidade: novaQuantidade,
+              subtotal: novaQuantidade * item.preco_unitario
+            }
+          : item
+      )
+    );
+  };
+
   const calcularTotal = () => {
     return carrinho.reduce((total, item) => total + item.subtotal, 0);
   };
 
+  const totalComDesconto = calcularTotal() - desconto;
+
   const finalizarVenda = async () => {
     if (carrinho.length === 0) {
-      setMensagem('Carrinho vazio!');
+      setMensagem('❌ Carrinho vazio!');
       return;
     }
 
     try {
       const venda = {
-        total: calcularTotal(),
+        total: totalComDesconto,
         metodo_pagamento: metodoPagamento,
+        desconto,
         itens: carrinho
       };
 
       await api.vendas.criar(venda);
       setCarrinho([]);
-      setMensagem('Venda realizada com sucesso!');
+      setDesconto(0);
+      setMensagem('✓ Venda realizada com sucesso!');
       setTimeout(() => setMensagem(''), 3000);
     } catch (error) {
-      setMensagem('Erro ao finalizar venda!');
+      setMensagem('❌ Erro ao finalizar venda!');
     }
   };
 
+  const produtosFiltrados = produtos.filter(p =>
+    p.nome.toLowerCase().includes(filtro.toLowerCase()) ||
+    p.codigo_barras?.includes(filtro)
+  );
+
   return (
-    <div className="pdv-main-layout" style={{ display: 'flex', height: '100vh', background: '#7a0026' }}>
-      {/* Painel principal amarelo */}
-      <div className="pdv-pedido" style={{ flex: 1, background: '#ffe082', margin: 24, borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', display: 'flex', flexDirection: 'column', padding: 24 }}>
-        {/* Cabeçalho */}
-        <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
-          <div>
-            <label style={{ fontWeight: 'bold', color: '#7a0026' }}>Quantidade</label>
-            <input type="number" min="0.01" step="0.01" value={quantidade} onChange={e => setQuantidade(Number(e.target.value))} style={{ width: 80, fontSize: 22, fontWeight: 'bold', textAlign: 'center', background: '#fff', border: '2px solid #7a0026', borderRadius: 6 }} />
+    <div className="pdv-container">
+      {/* Header */}
+      <div className="pdv-header">
+        <h1>🛒 Sistema de PDV</h1>
+        <div className="header-info">
+          <span>Caixa 001</span>
+          <span>Operador: Admin</span>
+          <span>{new Date().toLocaleString()}</span>
+        </div>
+      </div>
+
+      {/* Mensagem */}
+      {mensagem && <div className="pdv-mensagem">{mensagem}</div>}
+
+      <div className="pdv-layout">
+        {/* Lado esquerdo - Produtos */}
+        <div className="pdv-produtos">
+          <div className="busca-section">
+            <h2>Produtos</h2>
+            <div className="busca-input-group">
+              <input
+                type="text"
+                placeholder="🔍 Buscar por nome ou código..."
+                value={filtro}
+                onChange={(e) => setFiltro(e.target.value)}
+                className="busca-input"
+              />
+            </div>
+
+            <div className="codigo-barras-group">
+              <input
+                type="text"
+                placeholder="📦 Código de barras"
+                value={codigoBarras}
+                onChange={(e) => setCodigoBarras(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && adicionarProduto()}
+                className="codigo-input"
+                autoFocus
+              />
+              <input
+                type="number"
+                min="1"
+                value={quantidade}
+                onChange={(e) => setQuantidade(Math.max(1, Number(e.target.value)))}
+                className="quantidade-input"
+                placeholder="Qtd"
+              />
+              <button className="btn-adicionar" onClick={() => adicionarProduto()}>
+                Adicionar
+              </button>
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ fontWeight: 'bold', color: '#7a0026' }}>Código/Pesquisa</label>
-            <input type="text" value={codigoBarras} onChange={e => setCodigoBarras(e.target.value)} onKeyDown={e => e.key === 'Enter' && adicionarProduto()} style={{ width: '100%', fontSize: 22, fontWeight: 'bold', background: '#fff', border: '2px solid #7a0026', borderRadius: 6 }} />
+
+          <div className="produtos-grid">
+            {produtosFiltrados.length === 0 ? (
+              <div className="sem-produtos">Nenhum produto encontrado</div>
+            ) : (
+              produtosFiltrados.map((produto) => (
+                <div
+                  key={produto.id}
+                  className="produto-card"
+                  onClick={() => {
+                    setQuantidade(1);
+                    adicionarProduto(produto);
+                  }}
+                >
+                  <div className="produto-info">
+                    <strong>{produto.nome}</strong>
+                    <small>{produto.categoria}</small>
+                  </div>
+                  <div className="produto-footer">
+                    <span className="preco">R$ {produto.preco.toFixed(2)}</span>
+                    <span className={`estoque ${produto.estoque > 0 ? 'em-estoque' : 'sem-estoque'}`}>
+                      {produto.estoque > 0 ? `${produto.estoque} un` : 'Fora'}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-          <button style={{ fontSize: 18, fontWeight: 'bold', background: '#7a0026', color: '#fff', border: 'none', borderRadius: 6, padding: '0 18px' }} onClick={() => adicionarProduto()}>F2</button>
         </div>
 
-        {/* Pedido aberto edição */}
-        <div style={{ display: 'flex', gap: 24, flex: 1 }}>
-          {/* Imagem do produto (mock) */}
-          <div style={{ minWidth: 120, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
-            <img src="https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=120&q=80" alt="Produto" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8, marginBottom: 12 }} />
-            <div style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 8 }}>VALOR UNITÁRIO</div>
-            <div style={{ fontSize: 28, fontWeight: 'bold', background: '#fff', border: '2px solid #7a0026', borderRadius: 6, padding: '6px 0', textAlign: 'center' }}>R$ {carrinho.length > 0 ? carrinho[carrinho.length-1].preco_unitario.toFixed(2) : '0,00'}</div>
-            <div style={{ fontWeight: 'bold', fontSize: 18, margin: '16px 0 8px 0' }}>Quantidade</div>
-            <div style={{ fontSize: 28, fontWeight: 'bold', background: '#fff', border: '2px solid #7a0026', borderRadius: 6, padding: '6px 0', textAlign: 'center' }}>{carrinho.length > 0 ? carrinho[carrinho.length-1].quantidade : '0'} UN</div>
-            <div style={{ fontWeight: 'bold', fontSize: 18, margin: '16px 0 8px 0' }}>SUBTOTAL</div>
-            <div style={{ fontSize: 28, fontWeight: 'bold', background: '#fff', border: '2px solid #7a0026', borderRadius: 6, padding: '6px 0', textAlign: 'center' }}>R$ {carrinho.length > 0 ? carrinho[carrinho.length-1].subtotal.toFixed(2) : '0,00'}</div>
-          </div>
-
-          {/* Lista de itens do pedido */}
-          <div style={{ flex: 1, background: '#fffde7', borderRadius: 8, padding: 18, fontFamily: 'monospace', fontSize: 18 }}>
-            <div style={{ fontWeight: 'bold', fontSize: 28, color: '#7a0026', marginBottom: 8 }}>PEDIDO ABERTO EDIÇÃO</div>
-            <div>
-              {carrinho.length === 0 ? <div style={{ color: '#aaa', fontSize: 20 }}>Nenhum item</div> : (
+        {/* Lado direito - Carrinho e Resumo */}
+        <div className="pdv-sidebar">
+          {/* Carrinho */}
+          <div className="carrinho-section">
+            <h2>🛒 Carrinho ({carrinho.length})</h2>
+            <div className="carrinho-itens">
+              {carrinho.length === 0 ? (
+                <div className="carrinho-vazio">Nenhum item no carrinho</div>
+              ) : (
                 carrinho.map((item, idx) => (
-                  <div key={item.produto_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ffe082', padding: '4px 0' }}>
-                    <span>{String(idx+1).padStart(3,'0')}  {item.produto_nome}</span>
-                    <span>{item.quantidade} UN X {item.preco_unitario.toFixed(2)}</span>
-                    <span>{item.subtotal.toFixed(2)}</span>
-                    <button style={{ marginLeft: 12, background: 'none', border: 'none', color: '#c00', fontWeight: 'bold', fontSize: 18, cursor: 'pointer' }} onClick={() => removerItem(item.produto_id)}>✖</button>
+                  <div key={item.produto_id} className="carrinho-item">
+                    <div className="item-numero">{String(idx + 1).padStart(2, '0')}</div>
+                    <div className="item-detalhes">
+                      <div className="item-nome">{item.produto_nome}</div>
+                      <div className="item-valores">
+                        {item.quantidade} un × R$ {item.preco_unitario.toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="item-controles">
+                      <button
+                        className="btn-qtd"
+                        onClick={() => atualizarQuantidade(item.produto_id, item.quantidade - 1)}
+                      >
+                        −
+                      </button>
+                      <span className="item-qtd">{item.quantidade}</span>
+                      <button
+                        className="btn-qtd"
+                        onClick={() => atualizarQuantidade(item.produto_id, item.quantidade + 1)}
+                      >
+                        +
+                      </button>
+                      <button
+                        className="btn-remover"
+                        onClick={() => removerItem(item.produto_id)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className="item-subtotal">R$ {item.subtotal.toFixed(2)}</div>
                   </div>
                 ))
               )}
             </div>
           </div>
-        </div>
 
-        {/* Rodapé valor total */}
-        <div style={{ background: '#ffc107', borderRadius: 8, padding: '18px 0', marginTop: 18, textAlign: 'right', fontWeight: 'bold', fontSize: 32, color: '#7a0026' }}>
-          VALOR TOTAL DA VENDA: <span style={{ fontSize: 40 }}>R$ {calcularTotal().toFixed(2)}</span>
-        </div>
-      </div>
+          {/* Resumo e Pagamento */}
+          <div className="resumo-section">
+            <div className="resumo-linha">
+              <span>Subtotal:</span>
+              <strong>R$ {calcularTotal().toFixed(2)}</strong>
+            </div>
 
-      {/* Painel lateral vinho */}
-      <div className="pdv-lateral" style={{ width: 340, background: '#7a0026', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 24, borderTopRightRadius: 12, borderBottomRightRadius: 12 }}>
-        {/* Dicas de teclas */}
-        <div>
-          <div style={{ fontWeight: 'bold', fontSize: 22, marginBottom: 12 }}>Dicas</div>
-          <div style={{ fontSize: 16, lineHeight: '1.7' }}>
-            F9 - Cliente<br />
-            F5 - Dinheiro<br />
-            F6 - Cartão<br />
-            F8 - Pós-pago<br />
-            F10 - Finalizar<br />
-            F12 - NFC-e<br />
-            F3 - Pesquisa Avançada<br />
-            F3 - Abrir Pedido (Editar)<br />
-            Alt+1 - Cancelar um item<br />
-            CTRL+S - Sangria<br />
-            CTRL+F - Fechar caixa<br />
-            'PREÇO'+'*'+'9' - Venda diverso<br />
-            F4 - Todas funções<br />
+            <div className="desconto-group">
+              <label>Desconto (R$):</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={desconto}
+                onChange={(e) => setDesconto(Math.max(0, Number(e.target.value)))}
+                className="desconto-input"
+              />
+            </div>
+
+            <div className="resumo-linha total">
+              <span>Total:</span>
+              <strong>R$ {totalComDesconto.toFixed(2)}</strong>
+            </div>
+
+            <div className="pagamento-group">
+              <label>Método de Pagamento:</label>
+              <select
+                value={metodoPagamento}
+                onChange={(e) => setMetodoPagamento(e.target.value)}
+                className="pagamento-select"
+              >
+                <option value="dinheiro">💵 Dinheiro</option>
+                <option value="credito">💳 Crédito</option>
+                <option value="debito">💳 Débito</option>
+                <option value="pix">📱 PIX</option>
+              </select>
+            </div>
+
+            <button
+              className="btn-finalizar"
+              onClick={finalizarVenda}
+              disabled={carrinho.length === 0}
+            >
+              ✓ Finalizar Venda
+            </button>
+
+            <button className="btn-limpar" onClick={() => setCarrinho([])}>
+              Limpar Carrinho
+            </button>
           </div>
-        </div>
-        {/* Dados do caixa */}
-        <div style={{ background: '#fff', color: '#7a0026', borderRadius: 8, padding: 16, fontWeight: 'bold', fontSize: 18 }}>
-          <div style={{ marginBottom: 8 }}>CAIXA 001</div>
-          <div style={{ fontSize: 16 }}>OPERADOR DE CAIXA</div>
-          <div style={{ fontSize: 20, margin: '8px 0' }}>ADMINISTRADOR</div>
-          <div style={{ fontSize: 16 }}>VENDEDOR</div>
-          <div style={{ fontSize: 20, margin: '8px 0' }}>Vendedor não informado</div>
-          <div style={{ fontSize: 16 }}>DATA DA VENDA</div>
-          <div style={{ fontSize: 20, margin: '8px 0' }}>{new Date().toLocaleDateString()}</div>
-          <div style={{ fontSize: 16 }}>HORA ATUAL</div>
-          <div style={{ fontSize: 20, margin: '8px 0' }}>{new Date().toLocaleTimeString()}</div>
         </div>
       </div>
     </div>
