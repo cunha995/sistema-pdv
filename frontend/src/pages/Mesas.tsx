@@ -1,5 +1,5 @@
 import React from 'react';
-import QRCode from 'qrcode.react';
+const QRCode = require('qrcode.react').default;
 
 const mesas = [
   { id: 1, nome: 'Mesa 1' },
