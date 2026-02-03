@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import produtosRoutes from './routes/produtos';
 import clientesRoutes from './routes/clientes';
 import vendasRoutes from './routes/vendas';
+import mesasRoutes from './routes/mesas';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ try {
 app.use('/api/produtos', produtosRoutes);
 app.use('/api/clientes', clientesRoutes);
 app.use('/api/vendas', vendasRoutes);
+app.use('/api/mesas', mesasRoutes);
 
 // Rota raiz
 app.get('/', (req, res) => {
