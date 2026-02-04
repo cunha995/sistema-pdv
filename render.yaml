@@ -13,11 +13,20 @@ services:
         value: production
     healthCheckPath: /api/produtos
 
-  # Frontend Static Site
+  # Frontend Web Service (SPA com Node.js)
   - type: web
     name: sistema-pdv-frontend
-    runtime: static
+    runtime: node
     region: oregon
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_API_URL
+        value: https://sistema-pdv-api-xxxxx.onrender.com/api
     plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
