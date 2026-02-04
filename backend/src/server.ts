@@ -8,6 +8,7 @@ import mesasRoutes from './routes/mesas';
 import funcionariosRoutes from './routes/funcionarios';
 import empresasRoutes from './routes/empresas';
 import planosRoutes from './routes/planos';
+import authRoutes from './routes/auth';
 
 dotenv.config();
 
@@ -44,6 +45,7 @@ app.use('/api/mesas', mesasRoutes);
 app.use('/api/funcionarios', funcionariosRoutes);
 app.use('/api/empresas', empresasRoutes);
 app.use('/api/planos', planosRoutes);
+app.use('/api/auth', authRoutes);
 
 // Rota raiz
 app.get('/', (req, res) => {

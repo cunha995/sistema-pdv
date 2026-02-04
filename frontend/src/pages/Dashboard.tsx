@@ -1,9 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const navigate = useNavigate();
+
+  // Pegar informações do usuário
+  const usuarioStr = localStorage.getItem('usuario');
+  const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -23,6 +29,12 @@ const Dashboard: React.FC = () => {
     });
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+    navigate('/login');
+  };
+
   return (
     <div className="dashboard-container">
       {/* Hero Header */}
@@ -32,13 +44,21 @@ const Dashboard: React.FC = () => {
           <div className="hero-welcome">
             <h1 className="hero-title">
               <span className="wave">👋</span>
-              Bem-vindo ao Sistema PDV
+              Bem-vindo, {usuario?.nome || 'Usuário'}
             </h1>
-            <p className="hero-subtitle">Painel Administrativo</p>
+            <p className="hero-subtitle">
+              {usuario?.empresa_nome || 'Sistema PDV'} 
+              {usuario?.is_demo && <span className="badge-demo">DEMO</span>}
+            </p>
           </div>
-          <div className="hero-time">
-            <div className="time-display">{formatTime(currentTime)}</div>
-            <div className="date-display">{formatDate(currentTime)}</div>
+          <div className="hero-actions">
+            <div className="hero-time">
+              <div className="time-display">{formatTime(currentTime)}</div>
+              <div className="date-display">{formatDate(currentTime)}</div>
+            </div>
+            <button onClick={handleLogout} className="btn-logout">
+              Sair
+            </button>
           </div>
         </div>
       </div>

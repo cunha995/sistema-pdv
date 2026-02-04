@@ -126,5 +126,29 @@ export const api = {
     deletar: (id: number) => fetch(`${API_URL}/planos/${id}`, {
       method: 'DELETE'
     }).then(r => r.json())
+  },
+
+  // Autenticação
+  auth: {
+    login: (email: string, senha: string) => fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha })
+    }).then(r => r.json()),
+    criarUsuario: (data: any) => fetch(`${API_URL}/auth/usuarios`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(r => r.json()),
+    listarUsuarios: (empresa_id: number) => fetch(`${API_URL}/auth/usuarios/${empresa_id}`).then(r => r.json()),
+    deletarUsuario: (id: number) => fetch(`${API_URL}/auth/usuarios/${id}`, {
+      method: 'DELETE'
+    }).then(r => r.json()),
+    verificar: () => {
+      const token = localStorage.getItem('token');
+      return fetch(`${API_URL}/auth/verificar`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).then(r => r.json());
+    }
   }
 };

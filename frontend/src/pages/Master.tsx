@@ -19,6 +19,12 @@ interface Empresa {
   plano_nome?: string;
   preco_mensal?: number;
   data_contratacao?: string;
+  // Campos para criação de usuário
+  usuario_nome?: string;
+  usuario_email?: string;
+  usuario_senha?: string;
+  is_demo?: boolean;
+  duracao_demo_minutos?: number;
 }
 
 interface Plano {
@@ -115,8 +121,27 @@ const Master: React.FC = () => {
         await api.empresas.atualizar(editandoEmpresa.id!, formEmpresa);
         setMensagem('✓ Empresa atualizada!');
       } else {
-        await api.empresas.criar(formEmpresa);
-        setMensagem('✓ Empresa cadastrada!');
+        // Criar empresa
+        const empresaCriada = await api.empresas.criar(formEmpresa);
+        
+        // Criar usuário para a empresa
+        if (formEmpresa.usuario_nome && formEmpresa.usuario_email && formEmpresa.usuario_senha) {
+          await fetch('/api/auth/usuarios', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              empresa_id: empresaCriada.id,
+              nome: formEmpresa.usuario_nome,
+              email: formEmpresa.usuario_email,
+              senha: formEmpresa.usuario_senha,
+              tipo: 'admin',
+              is_demo: formEmpresa.is_demo || false,
+              duracao_demo_minutos: formEmpresa.duracao_demo_minutos || 30
+            })
+          });
+        }
+        
+        setMensagem('✓ Empresa e usuário cadastrados!');
       }
       limparFormEmpresa();
       carregarEmpresas();
@@ -386,6 +411,62 @@ const Master: React.FC = () => {
                     onChange={(e) => setFormEmpresa({...formEmpresa, contato_telefone: e.target.value})}
                   />
                 </div>
+
+                {!editandoEmpresa && (
+                  <>
+                    <div className="form-divider">
+                      <span>🔐 Credenciais de Acesso</span>
+                    </div>
+                    <div className="form-row">
+                      <input
+                        type="text"
+                        placeholder="Nome do Usuário"
+                        required
+                        value={formEmpresa.usuario_nome || ''}
+                        onChange={(e) => setFormEmpresa({...formEmpresa, usuario_nome: e.target.value})}
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email de Login"
+                        required
+                        value={formEmpresa.usuario_email || ''}
+                        onChange={(e) => setFormEmpresa({...formEmpresa, usuario_email: e.target.value})}
+                      />
+                    </div>
+                    <div className="form-row">
+                      <input
+                        type="password"
+                        placeholder="Senha"
+                        required
+                        value={formEmpresa.usuario_senha || ''}
+                        onChange={(e) => setFormEmpresa({...formEmpresa, usuario_senha: e.target.value})}
+                      />
+                      <div className="checkbox-group">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={formEmpresa.is_demo || false}
+                            onChange={(e) => setFormEmpresa({...formEmpresa, is_demo: e.target.checked})}
+                          />
+                          Conta Demo
+                        </label>
+                        {formEmpresa.is_demo && (
+                          <select
+                            value={formEmpresa.duracao_demo_minutos || 30}
+                            onChange={(e) => setFormEmpresa({...formEmpresa, duracao_demo_minutos: Number(e.target.value)})}
+                          >
+                            <option value={15}>15 minutos</option>
+                            <option value={30}>30 minutos</option>
+                            <option value={60}>60 minutos</option>
+                            <option value={120}>2 horas</option>
+                            <option value={1440}>24 horas</option>
+                          </select>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
                 <div className="form-actions">
                   <button type="button" className="btn-cancel" onClick={limparFormEmpresa}>Cancelar</button>
                   <button type="submit" className="btn-submit">Salvar</button>
