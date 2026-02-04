@@ -13,7 +13,7 @@ import authRoutes from './routes/auth';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT ?? 3000);
 
 console.log('🔧 Iniciando servidor...');
 console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
@@ -48,7 +48,7 @@ app.use('/api/planos', planosRoutes);
 app.use('/api/auth', authRoutes);
 
 // Rota raiz
-app.get('/', (req, res) => {
+app.get('/', (req: express.Request, res: express.Response) => {
   res.json({ 
     status: 'ok', 
     message: 'Sistema PDV API',
@@ -63,7 +63,7 @@ app.get('/', (req, res) => {
 });
 
 // Rota de health check
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (req: express.Request, res: express.Response) => {
   res.json({ 
     status: 'ok', 
     message: 'Sistema PDV API está funcionando!',
