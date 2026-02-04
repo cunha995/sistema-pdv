@@ -13,6 +13,7 @@ import PedidosMesas from './pages/PedidosMesas';
 import Delivery from './pages/Delivery';
 import Estoque from './pages/Estoque';
 import Config from './pages/Config';
+import Master from './pages/Master';
 import { Navigate } from 'react-router-dom';
 
 
@@ -22,6 +23,8 @@ function App() {
       <Routes>
         {/* Redireciona raiz para /admin */}
         <Route path="/" element={<Navigate to="/admin" replace />} />
+        {/* Painel Master (SaaS) */}
+        <Route path="/master" element={<Master />} />
         {/* Painel do administrador/atendente */}
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/admin/pdv" element={<PDV />} />

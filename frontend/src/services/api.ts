@@ -87,5 +87,44 @@ export const api = {
     ativar: (id: number) => fetch(`${API_URL}/funcionarios/${id}/ativar`, {
       method: 'PATCH'
     }).then(r => r.json())
+  },
+
+  // Empresas
+  empresas: {
+    listar: () => fetch(`${API_URL}/empresas`).then(r => r.json()),
+    buscar: (id: number) => fetch(`${API_URL}/empresas/${id}`).then(r => r.json()),
+    criar: (data: any) => fetch(`${API_URL}/empresas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(r => r.json()),
+    atualizar: (id: number, data: any) => fetch(`${API_URL}/empresas/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(r => r.json()),
+    deletar: (id: number) => fetch(`${API_URL}/empresas/${id}`, {
+      method: 'DELETE'
+    }).then(r => r.json()),
+    estatisticas: () => fetch(`${API_URL}/empresas/estatisticas`).then(r => r.json())
+  },
+
+  // Planos
+  planos: {
+    listar: () => fetch(`${API_URL}/planos`).then(r => r.json()),
+    buscar: (id: number) => fetch(`${API_URL}/planos/${id}`).then(r => r.json()),
+    criar: (data: any) => fetch(`${API_URL}/planos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(r => r.json()),
+    atualizar: (id: number, data: any) => fetch(`${API_URL}/planos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(r => r.json()),
+    deletar: (id: number) => fetch(`${API_URL}/planos/${id}`, {
+      method: 'DELETE'
+    }).then(r => r.json())
   }
 };
