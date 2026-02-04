@@ -135,7 +135,7 @@
 }
 
 .stat-card:hover {
-  border-color #667eea;
+  border-color: #667eea;
   transform: translateY(-4px);
 }
 
