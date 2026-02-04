@@ -16,7 +16,7 @@ if (process.env.NODE_ENV !== 'production') {
   }
 }
 
-const db = new Database(dbPath);
+export const db = new Database(dbPath);
 
 console.log(`📁 Banco de dados: ${dbPath}`);
 
@@ -168,7 +168,7 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (empresa_id) REFERENCES empresas(id)
-  );`
+  );
 
   -- Inserir dados de exemplo de planos
   INSERT OR IGNORE INTO planos (id, nome, descricao, preco_mensal, limite_usuarios, limite_mesas, limite_produtos, inclui_delivery) VALUES
@@ -183,7 +183,7 @@ db.exec(`
     (2, 'Arroz Tipo 1 5kg', 'Arroz branco tipo 1 pacote 5kg', 25.90, '7896016601234', 30, 'Alimentos'),
     (3, 'Feijão Preto 1kg', 'Feijão preto pacote 1kg', 7.50, '7896016602345', 40, 'Alimentos'),
     (4, 'Sabão em Pó 1kg', 'Sabão em pó para roupas 1kg', 12.90, '7891150012345', 25, 'Limpeza');
-`);
+  `);
 
 console.log('✅ Banco de dados inicializado!');
 

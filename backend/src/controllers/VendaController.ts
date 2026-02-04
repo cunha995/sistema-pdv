@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import db from '../database';
+import { db } from '../database';
 import { Venda } from '../models/types';
 
 export class VendaController {

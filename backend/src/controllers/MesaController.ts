@@ -1,4 +1,4 @@
-import db from '../database';
+import { db } from '../database';
 
 export class MesaController {
   // Criar pedido para uma mesa
