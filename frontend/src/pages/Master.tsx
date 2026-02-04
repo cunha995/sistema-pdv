@@ -121,15 +121,26 @@ const Master: React.FC = () => {
         await api.empresas.atualizar(editandoEmpresa.id!, formEmpresa);
         setMensagem('✓ Empresa atualizada!');
       } else {
+        // Separar dados da empresa dos dados do usuário
+        const dadosEmpresa = {
+          nome: formEmpresa.nome,
+          cnpj: formEmpresa.cnpj,
+          email: formEmpresa.email,
+          telefone: formEmpresa.telefone,
+          endereco: formEmpresa.endereco,
+          contato_nome: formEmpresa.contato_nome,
+          contato_email: formEmpresa.contato_email,
+          contato_telefone: formEmpresa.contato_telefone,
+          plano_id: formEmpresa.plano_id
+        };
+
         // Criar empresa
-        const empresaCriada = await api.empresas.criar(formEmpresa);
+        const empresaCriada = await api.empresas.criar(dadosEmpresa);
         
-        // Criar usuário para a empresa
+        // Criar usuário para a empresa se as credenciais foram preenchidas
         if (formEmpresa.usuario_nome && formEmpresa.usuario_email && formEmpresa.usuario_senha) {
-          await fetch('/api/auth/usuarios', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          try {
+            await api.auth.criarUsuario({
               empresa_id: empresaCriada.id,
               nome: formEmpresa.usuario_nome,
               email: formEmpresa.usuario_email,
@@ -137,16 +148,21 @@ const Master: React.FC = () => {
               tipo: 'admin',
               is_demo: formEmpresa.is_demo || false,
               duracao_demo_minutos: formEmpresa.duracao_demo_minutos || 30
-            })
-          });
+            });
+            setMensagem('✓ Empresa e usuário cadastrados com sucesso!');
+          } catch (userError: any) {
+            console.error('Erro ao criar usuário:', userError);
+            setMensagem(`⚠️ Empresa criada mas erro ao criar usuário: ${userError.message}`);
+          }
+        } else {
+          setMensagem('✓ Empresa cadastrada! (sem usuário)');
         }
-        
-        setMensagem('✓ Empresa e usuário cadastrados!');
       }
       limparFormEmpresa();
       carregarEmpresas();
-      setTimeout(() => setMensagem(''), 3000);
+      setTimeout(() => setMensagem(''), 4000);
     } catch (error: any) {
+      console.error('Erro ao salvar empresa:', error);
       setMensagem(`❌ ${error.message || 'Erro ao salvar empresa'}`);
     }
   };

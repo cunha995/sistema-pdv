@@ -135,11 +135,18 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, senha })
     }).then(r => r.json()),
-    criarUsuario: (data: any) => fetch(`${API_URL}/auth/usuarios`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }).then(r => r.json()),
+    criarUsuario: async (data: any) => {
+      const response = await fetch(`${API_URL}/auth/usuarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Erro ao criar usuário');
+      }
+      return json;
+    },
     listarUsuarios: (empresa_id: number) => fetch(`${API_URL}/auth/usuarios/${empresa_id}`).then(r => r.json()),
     deletarUsuario: (id: number) => fetch(`${API_URL}/auth/usuarios/${id}`, {
       method: 'DELETE'
