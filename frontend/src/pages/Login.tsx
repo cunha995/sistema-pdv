@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
 import './Login.css';
 
 interface LoginResponse {
@@ -29,25 +30,7 @@ export default function Login() {
     setCarregando(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, senha }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (data.demo_expirada) {
-          setErro('Sua conta demo expirou. Entre em contato para contratar um plano.');
-        } else {
-          setErro(data.error || 'Erro ao fazer login');
-        }
-        setCarregando(false);
-        return;
-      }
+      const data = await api.auth.login(email, senha);
 
       // Salvar dados no localStorage
       localStorage.setItem('token', data.token);
@@ -55,9 +38,13 @@ export default function Login() {
 
       // Redirecionar para o dashboard
       navigate('/admin');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro:', error);
-      setErro('Erro ao conectar com o servidor');
+      if (error?.message?.includes('Conta demo expirada')) {
+        setErro('Sua conta demo expirou. Entre em contato para contratar um plano.');
+      } else {
+        setErro(error?.message || 'Erro ao conectar com o servidor');
+      }
       setCarregando(false);
     }
   };
@@ -72,13 +59,13 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">Usuário</label>
             <input
-              type="email"
+              type="text"
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="seu@email.com"
+              placeholder="admin"
               required
               autoFocus
             />

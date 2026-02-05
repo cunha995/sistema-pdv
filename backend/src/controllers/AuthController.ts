@@ -20,7 +20,7 @@ export class AuthController {
       const { email, senha } = req.body;
 
       if (!email || !senha) {
-        return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+        return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
       }
 
       // Buscar usuário
@@ -28,8 +28,8 @@ export class AuthController {
         SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa
         FROM usuarios u
         JOIN empresas e ON u.empresa_id = e.id
-        WHERE u.email = ? AND u.ativo = 1
-      `).get(email);
+        WHERE (u.email = ? OR u.nome = ?) AND u.ativo = 1
+      `).get(email, email);
 
       if (!usuario) {
         return res.status(401).json({ error: 'Credenciais inválidas' });

@@ -124,8 +124,8 @@ const Master: React.FC = () => {
         // Normalizar valores
         const nomeEmpresa = formEmpresa.nome?.trim();
         const emailEmpresa = formEmpresa.email?.trim();
-        const usuarioNome = formEmpresa.usuario_nome?.trim();
-        const usuarioEmail = formEmpresa.usuario_email?.trim();
+        const usuarioNome = formEmpresa.usuario_nome?.trim() || 'admin';
+        const usuarioEmail = formEmpresa.usuario_email?.trim() || emailEmpresa;
         const usuarioSenha = formEmpresa.usuario_senha?.trim();
 
         if (!nomeEmpresa || !emailEmpresa) {
@@ -133,11 +133,8 @@ const Master: React.FC = () => {
           return;
         }
 
-        const algumCampoUsuario = !!(usuarioNome || usuarioEmail || usuarioSenha);
-        const todosCamposUsuario = !!(usuarioNome && usuarioEmail && usuarioSenha);
-
-        if (algumCampoUsuario && !todosCamposUsuario) {
-          setMensagem('❌ Preencha Nome, Email e Senha do usuário');
+        if (!usuarioSenha) {
+          setMensagem('❌ Informe a senha do usuário admin');
           return;
         }
 
@@ -172,7 +169,7 @@ const Master: React.FC = () => {
         setEmpresas((prev) => [empresaParaLista, ...prev.filter(e => e.id !== empresaCriada.id)]);
         
         // Criar usuário para a empresa se as credenciais foram preenchidas
-        if (todosCamposUsuario) {
+        if (usuarioNome && usuarioEmail && usuarioSenha) {
           try {
             await api.auth.criarUsuario({
               empresa_id: empresaCriada.id,
@@ -241,6 +238,33 @@ const Master: React.FC = () => {
       setTimeout(() => carregarEmpresas(), 800);
     } catch (error) {
       setMensagem('❌ Erro ao apagar empresa');
+    }
+  };
+
+  const handleCriarAcesso = async (empresa: Empresa) => {
+    if (!empresa.id) return;
+
+    const nome = prompt('Nome do usuário admin:', empresa.nome || '');
+    if (!nome) return;
+
+    const email = prompt('Email de login:', empresa.email || '');
+    if (!email) return;
+
+    const senha = prompt('Senha de acesso:');
+    if (!senha) return;
+
+    try {
+      await api.auth.criarUsuario({
+        empresa_id: empresa.id,
+        nome: nome.trim(),
+        email: email.trim(),
+        senha,
+        tipo: 'admin'
+      });
+      setMensagem(`✓ Acesso criado para ${email}`);
+      setTimeout(() => setMensagem(''), 4000);
+    } catch (error: any) {
+      setMensagem(`❌ ${error.message || 'Erro ao criar acesso'}`);
     }
   };
 
@@ -472,23 +496,21 @@ const Master: React.FC = () => {
                     <div className="form-row">
                       <input
                         type="text"
-                        placeholder="Nome do Usuário"
-                        required
-                        value={formEmpresa.usuario_nome || ''}
+                        placeholder="Usuário (login)"
+                        value={formEmpresa.usuario_nome || 'admin'}
                         onChange={(e) => setFormEmpresa({...formEmpresa, usuario_nome: e.target.value})}
                       />
                       <input
-                        type="email"
-                        placeholder="Email de Login"
-                        required
-                        value={formEmpresa.usuario_email || ''}
-                        onChange={(e) => setFormEmpresa({...formEmpresa, usuario_email: e.target.value})}
+                        type="text"
+                        placeholder="Email de cadastro (usa o da empresa)"
+                        value={formEmpresa.email || ''}
+                        readOnly
                       />
                     </div>
                     <div className="form-row">
                       <input
                         type="password"
-                        placeholder="Senha"
+                        placeholder="Senha do admin"
                         required
                         value={formEmpresa.usuario_senha || ''}
                         onChange={(e) => setFormEmpresa({...formEmpresa, usuario_senha: e.target.value})}
@@ -543,6 +565,7 @@ const Master: React.FC = () => {
                   <p><strong>Vendas:</strong> {emp.quantidade_vendas} ({emp.total_vendas ? `R$ ${(emp.total_vendas as number).toFixed(2)}` : 'R$ 0,00'})</p>
                 </div>
                 <div className="empresa-actions">
+                  <button className="btn-acesso" onClick={() => handleCriarAcesso(emp)}>🔐 Criar Acesso</button>
                   <button className="btn-editar" onClick={() => handleEditarEmpresa(emp)}>✏️ Editar</button>
                   <button className="btn-deletar" onClick={() => handleDeletarEmpresa(emp.id!)}>🗑️ Apagar</button>
                 </div>

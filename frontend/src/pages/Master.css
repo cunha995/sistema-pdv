@@ -124,8 +124,8 @@
 }
 
 .stat-card {
-  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-  border: 1px solid #334155;
+  background: linear-gradient(135deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.08) 100%);
+  border: 1px solid #475569;
   border-radius: 16px;
   padding: 24px;
   display: flex;
@@ -161,7 +161,7 @@
 }
 
 .stat-label {
-  color: #94a3b8;
+  color: #e2e8f0;
   font-size: 0.95em;
 }
 
@@ -188,7 +188,7 @@
 
 .info-box p {
   margin: 0 0 12px 0;
-  color: #cbd5e1;
+  color: #e2e8f0;
   line-height: 1.6;
 }
 
@@ -199,7 +199,7 @@
 }
 
 .info-box li {
-  color: #cbd5e1;
+  color: #e2e8f0;
   margin-bottom: 8px;
   padding-left: 24px;
   position: relative;
@@ -378,6 +378,22 @@
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+
+.btn-acesso {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9em;
+}
+
+.btn-acesso:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid #334155;

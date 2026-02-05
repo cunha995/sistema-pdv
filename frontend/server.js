@@ -1,13 +1,29 @@
 const express = require('express');
 const path = require('path');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 const PORT = process.env.PORT || 5173;
 
 const distPath = path.join(__dirname, 'dist');
+const API_TARGET =
+  process.env.API_URL ||
+  process.env.BACKEND_URL ||
+  'https://sistema-pdv-backend.onrender.com';
 
 console.log(`📁 Servindo arquivos de: ${distPath}`);
 console.log(`🔌 Porta: ${PORT}`);
+
+// Proxy das rotas da API para o backend
+app.use(
+  '/api',
+  createProxyMiddleware({
+    target: API_TARGET,
+    changeOrigin: true,
+    secure: true,
+    logLevel: 'warn',
+  })
+);
 
 // Servir arquivos estáticos da pasta dist
 app.use(express.static(distPath));

@@ -1,4 +1,23 @@
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' ? '/api' : 'https://sistema-pdv-backend.onrender.com/api');
+const FALLBACK_API_URL = 'https://sistema-pdv-backend.onrender.com/api';
+const RAW_API_URL = import.meta.env.VITE_API_URL;
+const IS_DEV = import.meta.env.MODE === 'development';
+
+const resolveApiUrl = () => {
+  if (!RAW_API_URL) {
+    return IS_DEV ? '/api' : FALLBACK_API_URL;
+  }
+
+  if (RAW_API_URL === '/api') {
+    const host = typeof window !== 'undefined' ? window.location.hostname : '';
+    if (host && host.endsWith('onrender.com')) {
+      return FALLBACK_API_URL;
+    }
+  }
+
+  return RAW_API_URL;
+};
+
+export const API_URL = resolveApiUrl();
 
 export const api = {
   // Produtos
@@ -144,11 +163,52 @@ export const api = {
 
   // Autenticação
   auth: {
-    login: (email: string, senha: string) => fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, senha })
-    }).then(r => r.json()),
+    login: async (email: string, senha: string) => {
+      const attempt = async (baseUrl: string) => {
+        const response = await fetch(`${baseUrl}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, senha })
+        });
+
+        const raw = await response.text();
+        const contentType = response.headers.get('content-type') || '';
+        let json: any = null;
+        try {
+          json = raw ? JSON.parse(raw) : null;
+        } catch {
+          json = null;
+        }
+
+        const isHtml = contentType.includes('text/html') || raw.trim().startsWith('<!DOCTYPE') || raw.trim().startsWith('<html');
+
+        if (!response.ok) {
+          return { ok: false, json, isHtml };
+        }
+
+        if (!json) {
+          return { ok: false, json: { error: 'Resposta inválida do servidor' }, isHtml };
+        }
+
+        return { ok: true, json, isHtml };
+      };
+
+      try {
+        const first = await attempt(API_URL);
+        if (first.ok) return first.json;
+
+        const shouldFallback = API_URL.startsWith('/api') || first.isHtml;
+        if (shouldFallback && FALLBACK_API_URL !== API_URL) {
+          const second = await attempt(FALLBACK_API_URL);
+          if (second.ok) return second.json;
+          throw new Error(second.json?.error || 'Erro ao fazer login');
+        }
+
+        throw new Error(first.json?.error || 'Erro ao fazer login');
+      } catch (error) {
+        throw error;
+      }
+    },
     criarUsuario: async (data: any) => {
       const response = await fetch(`${API_URL}/auth/usuarios`, {
         method: 'POST',
