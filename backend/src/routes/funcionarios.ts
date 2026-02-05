@@ -4,6 +4,7 @@ import { FuncionarioController } from '../controllers/FuncionarioController';
 const router = express.Router();
 
 router.get('/', FuncionarioController.listar);
+router.post('/login', FuncionarioController.login);
 router.get('/:id', FuncionarioController.buscar);
 router.post('/', FuncionarioController.criar);
 router.put('/:id', FuncionarioController.atualizar);

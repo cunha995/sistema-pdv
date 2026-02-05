@@ -12,6 +12,11 @@ const PDV: React.FC = () => {
   const [desconto, setDesconto] = useState(0);
   const [mensagem, setMensagem] = useState('');
   const [filtro, setFiltro] = useState('');
+  const [caixaUsuario, setCaixaUsuario] = useState('');
+  const [caixaSenha, setCaixaSenha] = useState('');
+  const [caixaErro, setCaixaErro] = useState('');
+  const [caixaCarregando, setCaixaCarregando] = useState(false);
+  const [caixaOperador, setCaixaOperador] = useState<{ nome: string; tipo: 'admin' | 'funcionario' } | null>(null);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [clienteFiltro, setClienteFiltro] = useState('');
   const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null);
@@ -23,6 +28,14 @@ const PDV: React.FC = () => {
   useEffect(() => {
     carregarProdutos();
     carregarClientes();
+    const operadorSalvo = localStorage.getItem('caixa_operador');
+    if (operadorSalvo) {
+      try {
+        setCaixaOperador(JSON.parse(operadorSalvo));
+      } catch {
+        localStorage.removeItem('caixa_operador');
+      }
+    }
   }, []);
 
   const carregarProdutos = async () => {
@@ -211,16 +224,93 @@ const PDV: React.FC = () => {
     );
   });
 
+  const autenticarCaixa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCaixaErro('');
+    setCaixaCarregando(true);
+
+    try {
+      const adminResp = await api.auth.login(caixaUsuario, caixaSenha);
+      if (adminResp?.usuario?.nome) {
+        const operador = { nome: adminResp.usuario.nome, tipo: 'admin' as const };
+        setCaixaOperador(operador);
+        localStorage.setItem('caixa_operador', JSON.stringify(operador));
+        setCaixaUsuario('');
+        setCaixaSenha('');
+        setCaixaCarregando(false);
+        return;
+      }
+    } catch (error) {
+      // continua para login de funcionário
+    }
+
+    try {
+      const funcResp = await api.funcionarios.login(caixaUsuario, caixaSenha);
+      if (funcResp?.funcionario?.nome) {
+        const operador = { nome: funcResp.funcionario.nome, tipo: 'funcionario' as const };
+        setCaixaOperador(operador);
+        localStorage.setItem('caixa_operador', JSON.stringify(operador));
+        setCaixaUsuario('');
+        setCaixaSenha('');
+        setCaixaCarregando(false);
+        return;
+      }
+
+      setCaixaErro('Credenciais inválidas');
+    } catch (error: any) {
+      setCaixaErro(error?.message || 'Erro ao autenticar');
+    } finally {
+      setCaixaCarregando(false);
+    }
+  };
+
+  const trocarOperador = () => {
+    localStorage.removeItem('caixa_operador');
+    setCaixaOperador(null);
+  };
+
   return (
     <div className="pdv-container">
+      {!caixaOperador && (
+        <div className="caixa-auth-overlay">
+          <form className="caixa-auth-card" onSubmit={autenticarCaixa}>
+            <h2>Abertura de Caixa</h2>
+            <p>Informe usuário e senha para iniciar o caixa.</p>
+            <input
+              type="text"
+              placeholder="CPF, email ou usuário"
+              value={caixaUsuario}
+              onChange={(e) => setCaixaUsuario(e.target.value)}
+              required
+              autoFocus
+            />
+            <input
+              type="password"
+              placeholder="Senha"
+              value={caixaSenha}
+              onChange={(e) => setCaixaSenha(e.target.value)}
+              required
+            />
+            {caixaErro && <div className="caixa-auth-erro">{caixaErro}</div>}
+            <button type="submit" disabled={caixaCarregando}>
+              {caixaCarregando ? 'Verificando...' : 'Abrir Caixa'}
+            </button>
+          </form>
+        </div>
+      )}
       {/* Header */}
       <div className="pdv-header">
         <h1>🛒 Sistema de PDV</h1>
         <div className="header-info">
           <span>Caixa 001</span>
-          <span>Operador: Admin</span>
+          <span>Operador: {caixaOperador?.nome || '—'}</span>
           <span>{new Date().toLocaleString()}</span>
         </div>
+        {caixaOperador && (
+          <button className="btn-trocar-operador" onClick={trocarOperador}>
+            Trocar Operador
+          </button>
+        )}
         <button 
           className="btn-mesas-toggle"
           onClick={() => setMostrarMesas(!mostrarMesas)}

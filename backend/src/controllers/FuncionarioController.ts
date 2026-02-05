@@ -1,5 +1,14 @@
 import { Request, Response } from 'express';
 import { db } from '../database';
+import crypto from 'crypto';
+
+function hashSenha(senha: string): string {
+  return crypto.createHash('sha256').update(senha).digest('hex');
+}
+
+function isSha256Hash(value?: string) {
+  return !!value && /^[a-f0-9]{64}$/i.test(value);
+}
 
 export class FuncionarioController {
   // Listar todos os funcionários
@@ -53,10 +62,12 @@ export class FuncionarioController {
         return res.status(400).json({ error: 'CPF já cadastrado' });
       }
 
+      const senhaHash = senha ? hashSenha(senha) : null;
+
       const result = db.prepare(`
         INSERT INTO funcionarios (nome, cpf, email, telefone, cargo, senha)
         VALUES (?, ?, ?, ?, ?, ?)
-      `).run(nome, cpf, email, telefone, cargo || 'Operador de Caixa', senha || null);
+      `).run(nome, cpf, email, telefone, cargo || 'Operador de Caixa', senhaHash);
 
       res.status(201).json({
         id: result.lastInsertRowid,
@@ -80,19 +91,30 @@ export class FuncionarioController {
   static atualizar(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { nome, cpf, email, telefone, cargo, ativo } = req.body;
+      const { nome, cpf, email, telefone, cargo, ativo, senha } = req.body;
 
       const funcionario = db.prepare('SELECT id FROM funcionarios WHERE id = ?').get(id);
       if (!funcionario) {
         return res.status(404).json({ error: 'Funcionário não encontrado' });
       }
 
-      db.prepare(`
-        UPDATE funcionarios 
-        SET nome = ?, cpf = ?, email = ?, telefone = ?, cargo = ?, ativo = ?,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(nome, cpf, email, telefone, cargo, ativo !== undefined ? ativo : 1, id);
+      const senhaHash = senha ? hashSenha(senha) : null;
+
+      if (senhaHash) {
+        db.prepare(`
+          UPDATE funcionarios 
+          SET nome = ?, cpf = ?, email = ?, telefone = ?, cargo = ?, ativo = ?, senha = ?,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(nome, cpf, email, telefone, cargo, ativo !== undefined ? ativo : 1, senhaHash, id);
+      } else {
+        db.prepare(`
+          UPDATE funcionarios 
+          SET nome = ?, cpf = ?, email = ?, telefone = ?, cargo = ?, ativo = ?,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(nome, cpf, email, telefone, cargo, ativo !== undefined ? ativo : 1, id);
+      }
 
       res.json({ message: 'Funcionário atualizado com sucesso' });
     } catch (error: any) {
@@ -140,6 +162,49 @@ export class FuncionarioController {
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Erro ao ativar funcionário' });
+    }
+  }
+
+  // Login de funcionário
+  static login(req: Request, res: Response) {
+    try {
+      const { usuario, senha } = req.body;
+
+      if (!usuario || !senha) {
+        return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
+      }
+
+      const funcionario: any = db.prepare(`
+        SELECT * FROM funcionarios
+        WHERE (cpf = ? OR email = ? OR nome = ?) AND ativo = 1
+      `).get(usuario, usuario, usuario);
+
+      if (!funcionario || !funcionario.senha) {
+        return res.status(401).json({ error: 'Credenciais inválidas' });
+      }
+
+      const senhaHash = hashSenha(senha);
+      const senhaValida = isSha256Hash(funcionario.senha)
+        ? funcionario.senha === senhaHash
+        : funcionario.senha === senha;
+
+      if (!senhaValida) {
+        return res.status(401).json({ error: 'Credenciais inválidas' });
+      }
+
+      return res.json({
+        funcionario: {
+          id: funcionario.id,
+          nome: funcionario.nome,
+          cpf: funcionario.cpf,
+          email: funcionario.email,
+          telefone: funcionario.telefone,
+          cargo: funcionario.cargo
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Erro ao fazer login' });
     }
   }
 }

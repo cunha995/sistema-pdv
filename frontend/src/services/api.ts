@@ -90,6 +90,11 @@ export const api = {
   funcionarios: {
     listar: () => fetch(`${API_URL}/funcionarios`).then(r => r.json()),
     buscar: (id: number) => fetch(`${API_URL}/funcionarios/${id}`).then(r => r.json()),
+    login: (usuario: string, senha: string) => fetch(`${API_URL}/funcionarios/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario, senha })
+    }).then(r => r.json()),
     criar: (data: any) => fetch(`${API_URL}/funcionarios`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
