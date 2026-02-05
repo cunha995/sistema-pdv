@@ -17,6 +17,12 @@ const PDV: React.FC = () => {
   const [caixaErro, setCaixaErro] = useState('');
   const [caixaCarregando, setCaixaCarregando] = useState(false);
   const [caixaOperador, setCaixaOperador] = useState<{ nome: string; tipo: 'admin' | 'funcionario' } | null>(null);
+  const [caixaAberto, setCaixaAberto] = useState(false);
+  const [valorAbertura, setValorAbertura] = useState(0);
+  const [fechamentoDinheiro, setFechamentoDinheiro] = useState(0);
+  const [fechamentoCartao, setFechamentoCartao] = useState(0);
+  const [fechamentoPix, setFechamentoPix] = useState(0);
+  const [fechamentoObservacao, setFechamentoObservacao] = useState('');
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [clienteFiltro, setClienteFiltro] = useState('');
   const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null);
@@ -34,6 +40,17 @@ const PDV: React.FC = () => {
         setCaixaOperador(JSON.parse(operadorSalvo));
       } catch {
         localStorage.removeItem('caixa_operador');
+      }
+    }
+
+    const aberturaSalva = localStorage.getItem('caixa_abertura');
+    if (aberturaSalva) {
+      try {
+        const abertura = JSON.parse(aberturaSalva);
+        setCaixaAberto(true);
+        setValorAbertura(Number(abertura.valor) || 0);
+      } catch {
+        localStorage.removeItem('caixa_abertura');
       }
     }
   }, []);
@@ -266,7 +283,35 @@ const PDV: React.FC = () => {
 
   const trocarOperador = () => {
     localStorage.removeItem('caixa_operador');
+    localStorage.removeItem('caixa_abertura');
     setCaixaOperador(null);
+    setCaixaAberto(false);
+    setValorAbertura(0);
+    setFechamentoDinheiro(0);
+    setFechamentoCartao(0);
+    setFechamentoPix(0);
+    setFechamentoObservacao('');
+  };
+
+  const abrirCaixa = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCaixaAberto(true);
+    localStorage.setItem('caixa_abertura', JSON.stringify({ valor: valorAbertura, data: new Date().toISOString() }));
+  };
+
+  const fecharCaixa = () => {
+    const fechamento = {
+      dinheiro: fechamentoDinheiro,
+      cartao: fechamentoCartao,
+      pix: fechamentoPix,
+      observacao: fechamentoObservacao,
+      data: new Date().toISOString()
+    };
+    localStorage.setItem('caixa_fechamento', JSON.stringify(fechamento));
+    setMensagem('✓ Caixa fechado com sucesso!');
+    setTimeout(() => setMensagem(''), 3000);
+    setCaixaAberto(false);
+    localStorage.removeItem('caixa_abertura');
   };
 
   return (
@@ -295,6 +340,26 @@ const PDV: React.FC = () => {
             <button type="submit" disabled={caixaCarregando}>
               {caixaCarregando ? 'Verificando...' : 'Abrir Caixa'}
             </button>
+          </form>
+        </div>
+      )}
+
+      {caixaOperador && !caixaAberto && (
+        <div className="caixa-auth-overlay">
+          <form className="caixa-auth-card" onSubmit={abrirCaixa}>
+            <h2>Valor de Abertura</h2>
+            <p>Informe o valor inicial em dinheiro no caixa.</p>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={valorAbertura}
+              onChange={(e) => setValorAbertura(Math.max(0, Number(e.target.value)))}
+              placeholder="R$ 0,00"
+              required
+              autoFocus
+            />
+            <button type="submit">Confirmar Abertura</button>
           </form>
         </div>
       )}
@@ -647,6 +712,51 @@ const PDV: React.FC = () => {
 
             <button className="btn-limpar" onClick={() => setCarrinho([])}>
               Limpar Carrinho
+            </button>
+          </div>
+
+          <div className="fechamento-section">
+            <h2>Fechamento do Caixa</h2>
+            <div className="fechamento-linha">
+              <label>Dinheiro</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={fechamentoDinheiro}
+                onChange={(e) => setFechamentoDinheiro(Math.max(0, Number(e.target.value)))}
+              />
+            </div>
+            <div className="fechamento-linha">
+              <label>Cartão</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={fechamentoCartao}
+                onChange={(e) => setFechamentoCartao(Math.max(0, Number(e.target.value)))}
+              />
+            </div>
+            <div className="fechamento-linha">
+              <label>PIX</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={fechamentoPix}
+                onChange={(e) => setFechamentoPix(Math.max(0, Number(e.target.value)))}
+              />
+            </div>
+            <div className="fechamento-linha">
+              <label>Observações</label>
+              <textarea
+                value={fechamentoObservacao}
+                onChange={(e) => setFechamentoObservacao(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <button className="btn-fechar-caixa" onClick={fecharCaixa}>
+              Fechar Caixa
             </button>
           </div>
         </div>
