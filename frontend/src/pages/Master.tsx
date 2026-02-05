@@ -121,21 +121,44 @@ const Master: React.FC = () => {
         await api.empresas.atualizar(editandoEmpresa.id!, formEmpresa);
         setMensagem('✓ Empresa atualizada!');
       } else {
+        // Normalizar valores
+        const nomeEmpresa = formEmpresa.nome?.trim();
+        const emailEmpresa = formEmpresa.email?.trim();
+        const usuarioNome = formEmpresa.usuario_nome?.trim();
+        const usuarioEmail = formEmpresa.usuario_email?.trim();
+        const usuarioSenha = formEmpresa.usuario_senha?.trim();
+
+        if (!nomeEmpresa || !emailEmpresa) {
+          setMensagem('❌ Nome e email da empresa são obrigatórios');
+          return;
+        }
+
+        const algumCampoUsuario = !!(usuarioNome || usuarioEmail || usuarioSenha);
+        const todosCamposUsuario = !!(usuarioNome && usuarioEmail && usuarioSenha);
+
+        if (algumCampoUsuario && !todosCamposUsuario) {
+          setMensagem('❌ Preencha Nome, Email e Senha do usuário');
+          return;
+        }
+
         // Separar dados da empresa dos dados do usuário
         const dadosEmpresa = {
-          nome: formEmpresa.nome,
-          cnpj: formEmpresa.cnpj,
-          email: formEmpresa.email,
-          telefone: formEmpresa.telefone,
-          endereco: formEmpresa.endereco,
-          contato_nome: formEmpresa.contato_nome,
-          contato_email: formEmpresa.contato_email,
-          contato_telefone: formEmpresa.contato_telefone,
+          nome: nomeEmpresa,
+          cnpj: formEmpresa.cnpj?.trim() || '',
+          email: emailEmpresa,
+          telefone: formEmpresa.telefone?.trim() || '',
+          endereco: formEmpresa.endereco?.trim() || '',
+          contato_nome: formEmpresa.contato_nome?.trim() || '',
+          contato_email: formEmpresa.contato_email?.trim() || '',
+          contato_telefone: formEmpresa.contato_telefone?.trim() || '',
           plano_id: formEmpresa.plano_id
         };
 
         // Criar empresa
         const empresaCriada = await api.empresas.criar(dadosEmpresa);
+        if (!empresaCriada?.id) {
+          throw new Error('Erro ao criar empresa');
+        }
 
         // Atualizar lista imediatamente (otimista)
         const planoSelecionado = planos.find(p => p.id === dadosEmpresa.plano_id);
@@ -149,13 +172,13 @@ const Master: React.FC = () => {
         setEmpresas((prev) => [empresaParaLista, ...prev.filter(e => e.id !== empresaCriada.id)]);
         
         // Criar usuário para a empresa se as credenciais foram preenchidas
-        if (formEmpresa.usuario_nome && formEmpresa.usuario_email && formEmpresa.usuario_senha) {
+        if (todosCamposUsuario) {
           try {
             await api.auth.criarUsuario({
               empresa_id: empresaCriada.id,
-              nome: formEmpresa.usuario_nome,
-              email: formEmpresa.usuario_email,
-              senha: formEmpresa.usuario_senha,
+              nome: usuarioNome,
+              email: usuarioEmail,
+              senha: usuarioSenha,
               tipo: 'admin',
               is_demo: formEmpresa.is_demo || false,
               duracao_demo_minutos: formEmpresa.duracao_demo_minutos || 30

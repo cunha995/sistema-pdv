@@ -93,16 +93,30 @@ export const api = {
   empresas: {
     listar: () => fetch(`${API_URL}/empresas`).then(r => r.json()),
     buscar: (id: number) => fetch(`${API_URL}/empresas/${id}`).then(r => r.json()),
-    criar: (data: any) => fetch(`${API_URL}/empresas`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }).then(r => r.json()),
-    atualizar: (id: number, data: any) => fetch(`${API_URL}/empresas/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }).then(r => r.json()),
+    criar: async (data: any) => {
+      const response = await fetch(`${API_URL}/empresas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Erro ao criar empresa');
+      }
+      return json;
+    },
+    atualizar: async (id: number, data: any) => {
+      const response = await fetch(`${API_URL}/empresas/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(json.error || 'Erro ao atualizar empresa');
+      }
+      return json;
+    },
     deletar: (id: number) => fetch(`${API_URL}/empresas/${id}`, {
       method: 'DELETE'
     }).then(r => r.json()),
