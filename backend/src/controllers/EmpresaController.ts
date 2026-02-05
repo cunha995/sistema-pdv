@@ -14,6 +14,7 @@ export class EmpresaController {
           p.nome as plano_nome, p.preco_mensal
         FROM empresas e
         LEFT JOIN planos p ON e.plano_id = p.id
+        WHERE e.ativo = 1
         ORDER BY e.nome
       `).all();
       res.json(empresas);
