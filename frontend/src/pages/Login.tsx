@@ -51,52 +51,88 @@ export default function Login() {
 
   return (
     <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <h1>Sistema PDV</h1>
-          <p>Faça login para acessar o painel</p>
+      <div className="login-shell">
+        <div className="login-visual">
+          <span className="visual-badge">Painel Administrador</span>
+          <h2>Controle total do seu PDV</h2>
+          <p>
+            Acesse métricas, gerencie empresas e acompanhe planos com uma
+            experiência premium e segura.
+          </p>
+          <div className="visual-metrics">
+            <div className="metric">
+              <strong>99,9%</strong>
+              <span>Disponibilidade</span>
+            </div>
+            <div className="metric">
+              <strong>24/7</strong>
+              <span>Monitoramento</span>
+            </div>
+            <div className="metric">
+              <strong>+120</strong>
+              <span>Empresas</span>
+            </div>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="email">Usuário</label>
-            <input
-              type="text"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin"
-              required
-              autoFocus
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="senha">Senha</label>
-            <input
-              type="password"
-              id="senha"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          {erro && (
-            <div className="erro-mensagem">
-              {erro}
+        <div className="login-card">
+          <div className="login-brand">
+            <div className="brand-icon">⚡</div>
+            <div className="brand-text">
+              <h1>PDV Master</h1>
+              <p>Acesso Administrativo</p>
             </div>
-          )}
+          </div>
 
-          <button type="submit" className="btn-login" disabled={carregando}>
-            {carregando ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="login-form">
+            <div className="form-group">
+              <label htmlFor="email">Usuário</label>
+              <input
+                type="text"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin"
+                required
+                autoFocus
+              />
+            </div>
 
-        <div className="login-footer">
-          <p>Ainda não tem uma conta?</p>
-          <a href="/master">Solicite uma conta demo</a>
+            <div className="form-group">
+              <label htmlFor="senha">Senha</label>
+              <input
+                type="password"
+                id="senha"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            {erro && (
+              <div className="erro-mensagem">
+                {erro}
+              </div>
+            )}
+
+            <button type="submit" className="btn-login" disabled={carregando}>
+              {carregando ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
+
+          <div className="login-footer">
+            <p>Ainda não tem uma conta?</p>
+            <a href="/master">Solicite uma conta demo</a>
+            <a
+              href="https://wa.me/44998840934"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="whatsapp-link"
+            >
+              Falar no WhatsApp
+            </a>
+          </div>
         </div>
       </div>
     </div>
