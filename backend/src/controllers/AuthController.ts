@@ -90,10 +90,17 @@ export class AuthController {
         return res.status(400).json({ error: 'Campos obrigatórios faltando' });
       }
 
-      // Verificar se email já existe
-      const emailExiste = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(email);
-      if (emailExiste) {
+      // Verificar se email já existe (apenas usuários ativos)
+      const emailAtivo = db.prepare('SELECT id FROM usuarios WHERE email = ? AND ativo = 1').get(email);
+      if (emailAtivo) {
         return res.status(400).json({ error: 'Email já cadastrado' });
+      }
+
+      // Se existir usuário inativo com o mesmo email, liberar o email
+      const emailInativo: any = db.prepare('SELECT id, email FROM usuarios WHERE email = ? AND ativo = 0').get(email);
+      if (emailInativo) {
+        const novoEmail = `${emailInativo.email}__inativo__${emailInativo.id}`;
+        db.prepare('UPDATE usuarios SET email = ? WHERE id = ?').run(novoEmail, emailInativo.id);
       }
 
       // Hash da senha
@@ -152,7 +159,13 @@ export class AuthController {
     try {
       const { id } = req.params;
 
-      db.prepare('UPDATE usuarios SET ativo = 0 WHERE id = ?').run(id);
+      const usuario: any = db.prepare('SELECT id, email FROM usuarios WHERE id = ?').get(id);
+      if (!usuario) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      const emailInativo = `${usuario.email}__inativo__${usuario.id}`;
+      db.prepare('UPDATE usuarios SET ativo = 0, email = ? WHERE id = ?').run(emailInativo, id);
 
       res.json({ message: 'Usuário desativado com sucesso' });
     } catch (error) {
