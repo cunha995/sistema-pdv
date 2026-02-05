@@ -136,6 +136,17 @@ const Master: React.FC = () => {
 
         // Criar empresa
         const empresaCriada = await api.empresas.criar(dadosEmpresa);
+
+        // Atualizar lista imediatamente (otimista)
+        const planoSelecionado = planos.find(p => p.id === dadosEmpresa.plano_id);
+        const empresaParaLista: Empresa = {
+          ...dadosEmpresa,
+          id: empresaCriada.id,
+          ativo: 1,
+          plano_nome: planoSelecionado?.nome,
+          preco_mensal: planoSelecionado?.preco_mensal
+        };
+        setEmpresas((prev) => [empresaParaLista, ...prev.filter(e => e.id !== empresaCriada.id)]);
         
         // Criar usuário para a empresa se as credenciais foram preenchidas
         if (formEmpresa.usuario_nome && formEmpresa.usuario_email && formEmpresa.usuario_senha) {
@@ -159,7 +170,8 @@ const Master: React.FC = () => {
         }
       }
       limparFormEmpresa();
-      carregarEmpresas();
+      // Revalidar em segundo plano para garantir consistência
+      setTimeout(() => carregarEmpresas(), 800);
       setTimeout(() => setMensagem(''), 4000);
     } catch (error: any) {
       console.error('Erro ao salvar empresa:', error);
@@ -198,13 +210,14 @@ const Master: React.FC = () => {
   };
 
   const handleDeletarEmpresa = async (id: number) => {
-    if (!confirm('Desativar esta empresa?')) return;
+    if (!confirm('Apagar esta empresa?')) return;
     try {
       await api.empresas.deletar(id);
-      setMensagem('✓ Empresa desativada!');
-      carregarEmpresas();
+      setEmpresas((prev) => prev.filter((e) => e.id !== id));
+      setMensagem('✓ Empresa apagada!');
+      setTimeout(() => carregarEmpresas(), 800);
     } catch (error) {
-      setMensagem('❌ Erro ao desativar empresa');
+      setMensagem('❌ Erro ao apagar empresa');
     }
   };
 
@@ -508,7 +521,7 @@ const Master: React.FC = () => {
                 </div>
                 <div className="empresa-actions">
                   <button className="btn-editar" onClick={() => handleEditarEmpresa(emp)}>✏️ Editar</button>
-                  <button className="btn-deletar" onClick={() => handleDeletarEmpresa(emp.id!)}>🗑️ Desativar</button>
+                  <button className="btn-deletar" onClick={() => handleDeletarEmpresa(emp.id!)}>🗑️ Apagar</button>
                 </div>
               </div>
             ))}
