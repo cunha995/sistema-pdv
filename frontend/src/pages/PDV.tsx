@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { Produto, ItemVenda } from '../types';
+import { Produto, ItemVenda, Cliente } from '../types';
 import './PDV.css';
 
 const PDV: React.FC = () => {
@@ -12,12 +12,17 @@ const PDV: React.FC = () => {
   const [desconto, setDesconto] = useState(0);
   const [mensagem, setMensagem] = useState('');
   const [filtro, setFiltro] = useState('');
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [clienteFiltro, setClienteFiltro] = useState('');
+  const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null);
+  const [carregandoClientes, setCarregandoClientes] = useState(false);
   const [mostrarMesas, setMostrarMesas] = useState(false);
   const [mesaSelecionada, setMesaSelecionada] = useState<number | null>(null);
   const [pedidosMesa, setPedidosMesa] = useState<any[]>([]);
 
   useEffect(() => {
     carregarProdutos();
+    carregarClientes();
   }, []);
 
   const carregarProdutos = async () => {
@@ -26,6 +31,18 @@ const PDV: React.FC = () => {
       setProdutos(data);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
+    }
+  };
+
+  const carregarClientes = async () => {
+    try {
+      setCarregandoClientes(true);
+      const data = await api.clientes.listar();
+      setClientes(data);
+    } catch (error) {
+      console.error('Erro ao carregar clientes:', error);
+    } finally {
+      setCarregandoClientes(false);
     }
   };
 
@@ -162,6 +179,7 @@ const PDV: React.FC = () => {
 
     try {
       const venda = {
+        cliente_id: clienteSelecionado?.id,
         total: totalComDesconto,
         metodo_pagamento: metodoPagamento,
         desconto,
@@ -182,6 +200,16 @@ const PDV: React.FC = () => {
     p.nome.toLowerCase().includes(filtro.toLowerCase()) ||
     p.codigo_barras?.includes(filtro)
   );
+
+  const clientesFiltrados = clientes.filter((cliente) => {
+    const termo = clienteFiltro.toLowerCase();
+    return (
+      cliente.nome?.toLowerCase().includes(termo) ||
+      cliente.cpf?.includes(termo) ||
+      cliente.email?.toLowerCase().includes(termo) ||
+      cliente.telefone?.includes(termo)
+    );
+  });
 
   return (
     <div className="pdv-container">
@@ -437,6 +465,52 @@ const PDV: React.FC = () => {
 
           {/* Resumo e Pagamento */}
           <div className="resumo-section">
+            <div className="cliente-section">
+              <label>Cliente cadastrado</label>
+              <input
+                type="text"
+                placeholder="🔍 Buscar cliente por nome, CPF, email..."
+                value={clienteFiltro}
+                onChange={(e) => setClienteFiltro(e.target.value)}
+                className="cliente-input"
+              />
+              {carregandoClientes ? (
+                <div className="cliente-loading">Carregando clientes...</div>
+              ) : (
+                <div className="cliente-list">
+                  {clientesFiltrados.slice(0, 6).map((cliente) => (
+                    <button
+                      key={cliente.id}
+                      type="button"
+                      className={`cliente-item ${clienteSelecionado?.id === cliente.id ? 'ativo' : ''}`}
+                      onClick={() => setClienteSelecionado(cliente)}
+                    >
+                      <strong>{cliente.nome}</strong>
+                      <span>
+                        {cliente.cpf ? `CPF: ${cliente.cpf}` : cliente.email || cliente.telefone || 'Sem contato'}
+                      </span>
+                    </button>
+                  ))}
+                  {clienteFiltro && clientesFiltrados.length === 0 && (
+                    <div className="cliente-vazio">Nenhum cliente encontrado</div>
+                  )}
+                </div>
+              )}
+
+              {clienteSelecionado && (
+                <div className="cliente-selecionado">
+                  <span>Selecionado: {clienteSelecionado.nome}</span>
+                  <button
+                    type="button"
+                    className="cliente-remover"
+                    onClick={() => setClienteSelecionado(null)}
+                  >
+                    Remover
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="resumo-linha">
               <span>Subtotal:</span>
               <strong>R$ {calcularTotal().toFixed(2)}</strong>

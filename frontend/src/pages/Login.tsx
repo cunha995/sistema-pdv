@@ -123,7 +123,7 @@ export default function Login() {
 
           <div className="login-footer">
             <p>Ainda não tem uma conta?</p>
-            <a href="/master">Solicite uma conta demo</a>
+            <span>Solicite uma conta demo</span>
             <a
               href="https://wa.me/44998840934"
               target="_blank"
