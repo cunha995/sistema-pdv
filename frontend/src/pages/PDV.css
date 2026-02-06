@@ -60,6 +60,9 @@
 .nota-card * {
   color: #000000;
   font-weight: 700;
+  font-size: 15px;
+  line-height: 1.5;
+  text-shadow: none;
 }
 
 .nota-header {
