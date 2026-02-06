@@ -669,52 +669,50 @@ const PDV: React.FC = () => {
                     <div className="item-numero">{String(idx + 1).padStart(2, '0')}</div>
                     <div className="item-detalhes">
                       <div className="item-nome">{item.produto_nome}</div>
-                      {mostrarFechamento && (
-                        <div className="fechamento-section">
-                          <h2>Fechamento do Caixa</h2>
-                          <div className="fechamento-linha">
-                            <label>Dinheiro</label>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={fechamentoDinheiro}
-                              onChange={(e) => setFechamentoDinheiro(Math.max(0, Number(e.target.value)))}
-                            />
-                          </div>
-                          <div className="fechamento-linha">
-                            <label>Cartão</label>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={fechamentoCartao}
-                              onChange={(e) => setFechamentoCartao(Math.max(0, Number(e.target.value)))}
-                            />
-                          </div>
-                          <div className="fechamento-linha">
-                            <label>PIX</label>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={fechamentoPix}
-                              onChange={(e) => setFechamentoPix(Math.max(0, Number(e.target.value)))}
-                            />
-                          </div>
-                          <div className="fechamento-linha">
-                            <label>Observações</label>
-                            <textarea
-                              value={fechamentoObservacao}
-                              onChange={(e) => setFechamentoObservacao(e.target.value)}
-                              rows={3}
-                            />
-                          </div>
-                          <button className="btn-fechar-caixa" onClick={fecharCaixa}>
-                            Fechar Caixa
-                          </button>
-                        </div>
-                      )}
+                      <div className="item-valores">
+                        {item.quantidade} un × R$ {item.preco_unitario.toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="item-controles">
+                      <button
+                        className="btn-qtd"
+                        onClick={() => atualizarQuantidade(item.produto_id, item.quantidade - 1)}
+                      >
+                        −
+                      </button>
+                      <span className="item-qtd">{item.quantidade}</span>
+                      <button
+                        className="btn-qtd"
+                        onClick={() => atualizarQuantidade(item.produto_id, item.quantidade + 1)}
+                      >
+                        +
+                      </button>
+                      <button
+                        className="btn-remover"
+                        onClick={() => removerItem(item.produto_id)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className="item-subtotal">R$ {item.subtotal.toFixed(2)}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Resumo e Pagamento */}
+          <div className="resumo-section">
+            <div className="cliente-section">
+              <label>Cliente cadastrado</label>
+              <input
+                type="text"
+                placeholder="🔍 Buscar cliente por nome, CPF, email..."
+                value={clienteFiltro}
+                onChange={(e) => setClienteFiltro(e.target.value)}
+                className="cliente-input"
+              />
+              {carregandoClientes ? (
                 <div className="cliente-loading">Carregando clientes...</div>
               ) : (
                 <div className="cliente-list">
@@ -800,50 +798,52 @@ const PDV: React.FC = () => {
             </button>
           </div>
 
-          <div className="fechamento-section">
-            <h2>Fechamento do Caixa</h2>
-            <div className="fechamento-linha">
-              <label>Dinheiro</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={fechamentoDinheiro}
-                onChange={(e) => setFechamentoDinheiro(Math.max(0, Number(e.target.value)))}
-              />
+          {mostrarFechamento && (
+            <div className="fechamento-section">
+              <h2>Fechamento do Caixa</h2>
+              <div className="fechamento-linha">
+                <label>Dinheiro</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={fechamentoDinheiro}
+                  onChange={(e) => setFechamentoDinheiro(Math.max(0, Number(e.target.value)))}
+                />
+              </div>
+              <div className="fechamento-linha">
+                <label>Cartão</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={fechamentoCartao}
+                  onChange={(e) => setFechamentoCartao(Math.max(0, Number(e.target.value)))}
+                />
+              </div>
+              <div className="fechamento-linha">
+                <label>PIX</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={fechamentoPix}
+                  onChange={(e) => setFechamentoPix(Math.max(0, Number(e.target.value)))}
+                />
+              </div>
+              <div className="fechamento-linha">
+                <label>Observações</label>
+                <textarea
+                  value={fechamentoObservacao}
+                  onChange={(e) => setFechamentoObservacao(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <button className="btn-fechar-caixa" onClick={fecharCaixa}>
+                Fechar Caixa
+              </button>
             </div>
-            <div className="fechamento-linha">
-              <label>Cartão</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={fechamentoCartao}
-                onChange={(e) => setFechamentoCartao(Math.max(0, Number(e.target.value)))}
-              />
-            </div>
-            <div className="fechamento-linha">
-              <label>PIX</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={fechamentoPix}
-                onChange={(e) => setFechamentoPix(Math.max(0, Number(e.target.value)))}
-              />
-            </div>
-            <div className="fechamento-linha">
-              <label>Observações</label>
-              <textarea
-                value={fechamentoObservacao}
-                onChange={(e) => setFechamentoObservacao(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <button className="btn-fechar-caixa" onClick={fecharCaixa}>
-              Fechar Caixa
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </div>
