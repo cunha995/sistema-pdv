@@ -25,11 +25,21 @@ body {
     linear-gradient(135deg, #0b1220 0%, #0a0f1c 60%, #060912 100%);
   color: var(--text);
   transition: background-color 0.2s;
+  font-size: 16px;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 
 h1, h2, h3, h4, h5, h6 {
   color: #f8fafc;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+}
+
+p, li, td, th, label, input, textarea, select {
   letter-spacing: 0.2px;
 }
 
