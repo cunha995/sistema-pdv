@@ -32,6 +32,7 @@ const PainelMesa: React.FC = () => {
   const [desconto, setDesconto] = useState(0);
   const [chamandoAtendente, setChamandoAtendente] = useState(false);
   const statusAnteriorRef = useRef<Record<number, string>>({});
+  const [clienteNome, setClienteNome] = useState('');
 
   useEffect(() => {
     api.produtos.listar().then(setProdutos);
@@ -39,11 +40,21 @@ const PainelMesa: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
+    const chave = `mesa_cliente_nome_${id}`;
+    const salvo = localStorage.getItem(chave);
+    if (salvo) {
+      setClienteNome(salvo);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
     const buscarPedidos = async () => {
       try {
         const pedidos = await api.mesas.listarPedidos(Number(id));
+        const pedidosAtivos = pedidos.filter((pedido: Pedido) => pedido.status !== 'fechado');
         const statusAnterior = statusAnteriorRef.current;
-        pedidos.forEach((pedido: Pedido) => {
+        pedidosAtivos.forEach((pedido: Pedido) => {
           const anterior = statusAnterior[pedido.id];
           if (anterior && anterior !== pedido.status) {
             if (pedido.status === 'aceito' || pedido.status === 'preparando') {
@@ -58,8 +69,8 @@ const PainelMesa: React.FC = () => {
           statusAnterior[pedido.id] = pedido.status;
         });
 
-        setHistoricoPedidos(pedidos);
-        const total = pedidos.reduce((acc: number, pedido: Pedido) => acc + pedido.total, 0);
+        setHistoricoPedidos(pedidosAtivos);
+        const total = pedidosAtivos.reduce((acc: number, pedido: Pedido) => acc + pedido.total, 0);
         setTotalConta(total);
       } catch (error) {
         console.error('Erro ao buscar pedidos:', error);
@@ -170,7 +181,24 @@ const PainelMesa: React.FC = () => {
     <div className="painel-mesa">
       <div className="painel-header">
         <div className="painel-header-left">
-          <h1>Mesa {id}</h1>
+          <div className="painel-identificacao">
+            <h1>Mesa {id}</h1>
+            <div className="identificacao-input">
+              <label>Seu nome</label>
+              <input
+                type="text"
+                placeholder="Digite seu nome"
+                value={clienteNome}
+                onChange={(e) => {
+                  const valor = e.target.value;
+                  setClienteNome(valor);
+                  if (id) {
+                    localStorage.setItem(`mesa_cliente_nome_${id}`, valor);
+                  }
+                }}
+              />
+            </div>
+          </div>
           <button
             className="btn-atendente"
             onClick={chamarAtendente}
@@ -188,7 +216,7 @@ const PainelMesa: React.FC = () => {
 
       <div className="painel-content">
         <div className="historico-pedidos">
-          <h2>Histórico de Pedidos ({historicoPedidos.length})</h2>
+          <h2>Pedidos em andamento ({historicoPedidos.length})</h2>
           {historicoPedidos.length === 0 ? (
             <p className="sem-pedidos">Nenhum pedido feito ainda</p>
           ) : (
