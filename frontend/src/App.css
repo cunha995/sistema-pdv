@@ -27,14 +27,6 @@ body {
   transition: background-color 0.2s;
 }
 
-body,
-h1, h2, h3, h4, h5, h6,
-p, span, small, label,
-a, button, input, textarea, select, th, td {
-  color: #000 !important;
-  font-weight: 700 !important;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9) !important;
-}
 
 h1, h2, h3, h4, h5, h6 {
   color: #f8fafc;
@@ -51,6 +43,12 @@ a {
 
 a:hover {
   color: #f8fafc;
+}
+
+input,
+textarea,
+select {
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
 }
 
 .sidebar a:hover,
