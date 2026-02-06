@@ -25,7 +25,8 @@ const Dashboard: React.FC = () => {
     const carregarDados = async () => {
       try {
         if (usuario?.empresa_id) {
-          const vendas = await api.vendas.listar(usuario.empresa_id);
+          const vendasRaw = await api.vendas.listar(usuario.empresa_id);
+          const vendas = (vendasRaw || []).filter((v: any) => v.empresa_id === usuario.empresa_id);
           const hoje = new Date().toLocaleDateString('pt-BR');
           const vendasDeHoje = vendas.filter((v: any) => {
             const dataVenda = new Date(v.created_at).toLocaleDateString('pt-BR');

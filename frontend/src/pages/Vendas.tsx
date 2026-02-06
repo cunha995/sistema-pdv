@@ -30,14 +30,20 @@ const Vendas: React.FC = () => {
     const usuarioStr = localStorage.getItem('usuario');
     const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
     const data = await api.vendas.listar(usuario?.empresa_id);
-    setVendas(data);
+    const filtradas = usuario?.empresa_id
+      ? (data || []).filter((v: any) => v.empresa_id === usuario.empresa_id)
+      : [];
+    setVendas(filtradas);
   };
 
   const carregarFechamentos = async () => {
     const usuarioStr = localStorage.getItem('usuario');
     const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
     const data = await api.caixa.listarFechamentos(usuario?.empresa_id);
-    setFechamentos(data || []);
+    const filtrados = usuario?.empresa_id
+      ? (data || []).filter((f: any) => f.empresa_id === usuario.empresa_id)
+      : [];
+    setFechamentos(filtrados);
   };
 
   const gerarPdfFechamentos = () => {
