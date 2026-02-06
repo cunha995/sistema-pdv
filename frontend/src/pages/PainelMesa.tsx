@@ -41,9 +41,7 @@ const PainelMesa: React.FC = () => {
     if (!id) return;
     const buscarPedidos = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || '/api';
-        const response = await fetch(`${apiUrl}/mesas/${id}/pedidos`);
-        const pedidos = await response.json();
+        const pedidos = await api.mesas.listarPedidos(Number(id));
         const statusAnterior = statusAnteriorRef.current;
         pedidos.forEach((pedido: Pedido) => {
           const anterior = statusAnterior[pedido.id];
@@ -93,29 +91,19 @@ const PainelMesa: React.FC = () => {
     if (!id || pedidoAtual.length === 0) return;
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '/api';
       const itens = pedidoAtual.map((item) => ({
         produto_id: item.produto.id,
         quantidade: item.quantidade,
         preco_unitario: item.produto.preco,
       }));
 
-      const response = await fetch(
-        `${apiUrl}/mesas/${id}/pedidos`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ itens }),
-        }
-      );
-
-      if (response.ok) {
-        setMensagem('✓ Pedido enviado com sucesso!');
-        setPedidoAtual([]);
-        setTimeout(() => setMensagem(''), 2000);
-      }
+      await api.mesas.criarPedido(Number(id), itens);
+      setMensagem('✓ Pedido enviado com sucesso!');
+      setPedidoAtual([]);
+      setTimeout(() => setMensagem(''), 2000);
     } catch (error) {
-      setMensagem('✗ Erro ao enviar pedido');
+      const mensagemErro = error instanceof Error ? error.message : 'Erro ao enviar pedido';
+      setMensagem(`✗ ${mensagemErro}`);
       console.error(error);
     }
   };

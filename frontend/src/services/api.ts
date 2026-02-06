@@ -102,6 +102,27 @@ export const api = {
   // Mesas
   mesas: {
     listarPedidos: (mesaId: number) => fetch(`${API_URL}/mesas/${mesaId}/pedidos`).then(r => r.json()),
+    criarPedido: async (mesaId: number, itens: any[]) => {
+      const response = await fetch(`${API_URL}/mesas/${mesaId}/pedidos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itens })
+      });
+
+      const raw = await response.text();
+      let json: any = null;
+      try {
+        json = raw ? JSON.parse(raw) : null;
+      } catch {
+        json = null;
+      }
+
+      if (!response.ok) {
+        throw new Error(json?.error || 'Erro ao enviar pedido');
+      }
+
+      return json;
+    },
     fecharConta: (mesaId: number, data: any) => fetch(`${API_URL}/mesas/${mesaId}/fechar-conta`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
