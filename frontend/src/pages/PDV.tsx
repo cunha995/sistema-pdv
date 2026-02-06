@@ -223,6 +223,7 @@ const PDV: React.FC = () => {
     try {
       const itensVenda = [...carrinho];
       const venda = {
+        empresa_id: usuario?.empresa_id,
         cliente_id: clienteSelecionado?.id,
         total: totalComDesconto,
         metodo_pagamento: metodoPagamento,

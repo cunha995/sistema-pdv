@@ -34,6 +34,7 @@ export interface ItemVenda {
 
 export interface Venda {
   id?: number;
+  empresa_id?: number;
   cliente_id?: number;
   cliente_nome?: string;
   total: number;

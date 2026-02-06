@@ -61,7 +61,10 @@ export const api = {
 
   // Vendas
   vendas: {
-    listar: () => fetch(`${API_URL}/vendas`).then(r => r.json()),
+    listar: (empresa_id?: number) => {
+      const params = empresa_id ? `?empresa_id=${empresa_id}` : '';
+      return fetch(`${API_URL}/vendas${params}`).then(r => r.json());
+    },
     buscar: (id: number) => fetch(`${API_URL}/vendas/${id}`).then(r => r.json()),
     criar: (data: any) => fetch(`${API_URL}/vendas`, {
       method: 'POST',

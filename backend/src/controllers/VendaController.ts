@@ -6,12 +6,21 @@ export class VendaController {
   // Listar todas as vendas
   static listar(req: Request, res: Response) {
     try {
-      const vendas = db.prepare(`
+      const { empresa_id } = req.query;
+
+      let query = `
         SELECT v.*, c.nome as cliente_nome 
         FROM vendas v
         LEFT JOIN clientes c ON v.cliente_id = c.id
-        ORDER BY v.created_at DESC
-      `).all();
+      `;
+      const params: any[] = [];
+      if (empresa_id) {
+        query += ' WHERE v.empresa_id = ?';
+        params.push(empresa_id);
+      }
+      query += ' ORDER BY v.created_at DESC';
+
+      const vendas = db.prepare(query).all(...params);
 
       res.json(vendas);
     } catch (error) {
@@ -52,7 +61,7 @@ export class VendaController {
   static criar(req: Request, res: Response) {
     const transaction = db.transaction((vendaData: Venda) => {
       try {
-        const { cliente_id, total, desconto, metodo_pagamento, observacoes, itens } = vendaData;
+        const { empresa_id, cliente_id, total, desconto, metodo_pagamento, observacoes, itens } = vendaData;
 
         // Validações
         if (!itens || itens.length === 0) {
@@ -61,9 +70,9 @@ export class VendaController {
 
         // Inserir venda
         const resultVenda = db.prepare(`
-          INSERT INTO vendas (cliente_id, total, desconto, metodo_pagamento, observacoes)
-          VALUES (?, ?, ?, ?, ?)
-        `).run(cliente_id || null, total, desconto || 0, metodo_pagamento || null, observacoes || null);
+          INSERT INTO vendas (empresa_id, cliente_id, total, desconto, metodo_pagamento, observacoes)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(empresa_id || null, cliente_id || null, total, desconto || 0, metodo_pagamento || null, observacoes || null);
 
         const vendaId = resultVenda.lastInsertRowid;
 
@@ -113,13 +122,19 @@ export class VendaController {
   // Relatório de vendas por período
   static relatorio(req: Request, res: Response) {
     try {
-      const { data_inicio, data_fim } = req.query;
+      const { data_inicio, data_fim, empresa_id } = req.query;
 
       let query = 'SELECT * FROM vendas';
       const params: any[] = [];
 
+      if (empresa_id) {
+        query += ' WHERE empresa_id = ?';
+        params.push(empresa_id);
+      }
+
       if (data_inicio && data_fim) {
-        query += ' WHERE DATE(created_at) BETWEEN ? AND ?';
+        query += params.length ? ' AND' : ' WHERE';
+        query += ' DATE(created_at) BETWEEN ? AND ?';
         params.push(data_inicio, data_fim);
       }
 

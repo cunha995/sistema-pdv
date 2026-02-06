@@ -5,6 +5,11 @@ import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [vendasHoje, setVendasHoje] = useState({ total: 0, quantidade: 0 });
+  const [totalCaixa, setTotalCaixa] = useState(0);
+  const [produtosAtivos, setProdutosAtivos] = useState(0);
+  const [estoqueBaixo, setEstoqueBaixo] = useState(0);
+  const [clientesTotal, setClientesTotal] = useState(0);
   const navigate = useNavigate();
 
   // Pegar informações do usuário
@@ -14,6 +19,36 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const carregarDados = async () => {
+      try {
+        if (usuario?.empresa_id) {
+          const vendas = await api.vendas.listar(usuario.empresa_id);
+          const hoje = new Date().toLocaleDateString('pt-BR');
+          const vendasDeHoje = vendas.filter((v: any) => {
+            const dataVenda = new Date(v.created_at).toLocaleDateString('pt-BR');
+            return dataVenda === hoje;
+          });
+          const totalHoje = vendasDeHoje.reduce((sum: number, v: any) => sum + (v.total || 0), 0);
+          const totalGeral = vendas.reduce((sum: number, v: any) => sum + (v.total || 0), 0);
+          setVendasHoje({ total: totalHoje, quantidade: vendasDeHoje.length });
+          setTotalCaixa(totalGeral);
+        }
+
+        const produtos = await api.produtos.listar();
+        setProdutosAtivos(produtos.length);
+        setEstoqueBaixo(produtos.filter((p: any) => p.estoque <= 10).length);
+
+        const clientes = await api.clientes.listar();
+        setClientesTotal(clientes.length);
+      } catch (error) {
+        console.error('Erro ao carregar dashboard:', error);
+      }
+    };
+
+    carregarDados();
   }, []);
 
   const formatTime = (date: Date) => {
@@ -70,10 +105,10 @@ const Dashboard: React.FC = () => {
             <div className="stat-icon">💰</div>
             <div className="stat-info">
               <div className="stat-label">Vendas Hoje</div>
-              <div className="stat-value">R$ 3.216,50</div>
+              <div className="stat-value">R$ {vendasHoje.total.toFixed(2)}</div>
               <div className="stat-detail">
-                <span className="stat-badge success">+12%</span>
-                <span className="stat-text">30 vendas realizadas</span>
+                <span className="stat-badge success">Hoje</span>
+                <span className="stat-text">{vendasHoje.quantidade} vendas realizadas</span>
               </div>
             </div>
           </div>
@@ -82,10 +117,10 @@ const Dashboard: React.FC = () => {
             <div className="stat-icon">💵</div>
             <div className="stat-info">
               <div className="stat-label">Total em Caixa</div>
-              <div className="stat-value">R$ 5.238,25</div>
+              <div className="stat-value">R$ {totalCaixa.toFixed(2)}</div>
               <div className="stat-detail">
                 <span className="stat-badge info">Atualizado</span>
-                <span className="stat-text">04/07/2024 08:00</span>
+                <span className="stat-text">{formatDate(new Date())} {formatTime(currentTime)}</span>
               </div>
             </div>
           </div>
@@ -94,9 +129,9 @@ const Dashboard: React.FC = () => {
             <div className="stat-icon">📦</div>
             <div className="stat-info">
               <div className="stat-label">Produtos Ativos</div>
-              <div className="stat-value">147</div>
+              <div className="stat-value">{produtosAtivos}</div>
               <div className="stat-detail">
-                <span className="stat-badge warning">10 baixos</span>
+                <span className="stat-badge warning">{estoqueBaixo} baixos</span>
                 <span className="stat-text">estoque crítico</span>
               </div>
             </div>
@@ -106,10 +141,10 @@ const Dashboard: React.FC = () => {
             <div className="stat-icon">👥</div>
             <div className="stat-info">
               <div className="stat-label">Clientes</div>
-              <div className="stat-value">284</div>
+              <div className="stat-value">{clientesTotal}</div>
               <div className="stat-detail">
-                <span className="stat-badge success">+5</span>
-                <span className="stat-text">novos esta semana</span>
+                <span className="stat-badge success">Total</span>
+                <span className="stat-text">clientes cadastrados</span>
               </div>
             </div>
           </div>

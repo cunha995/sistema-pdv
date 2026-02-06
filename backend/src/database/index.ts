@@ -48,6 +48,7 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS vendas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    empresa_id INTEGER,
     cliente_id INTEGER,
     total REAL NOT NULL,
     desconto REAL DEFAULT 0,
@@ -201,5 +202,16 @@ db.exec(`
   `);
 
 console.log('✅ Banco de dados inicializado!');
+
+// Migração simples: adicionar empresa_id na tabela vendas se não existir
+try {
+  const columns = db.prepare('PRAGMA table_info(vendas)').all();
+  const hasEmpresaId = columns.some((c: any) => c.name === 'empresa_id');
+  if (!hasEmpresaId) {
+    db.prepare('ALTER TABLE vendas ADD COLUMN empresa_id INTEGER').run();
+  }
+} catch (error) {
+  console.error('Erro ao migrar vendas.empresa_id:', error);
+}
 
 export default db;
