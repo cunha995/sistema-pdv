@@ -9,6 +9,22 @@
   color: #e2e8f0;
 }
 
+.master-container h1,
+.master-container h2,
+.master-container h3,
+.master-container h4 {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.master-container p,
+.master-container span,
+.master-container li,
+.master-container label {
+  color: #f1f5f9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
 /* Header */
 .master-header {
   background: rgba(15, 23, 42, 0.75);

@@ -9,6 +9,22 @@
   color: #e2e8f0;
 }
 
+.config-container h1,
+.config-container h2,
+.config-container h3,
+.config-container h4 {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.config-container p,
+.config-container span,
+.config-container li,
+.config-container label {
+  color: #f1f5f9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
 /* Header */
 .config-header {
   max-width: 1200px;

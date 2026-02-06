@@ -11,6 +11,22 @@
   overflow: hidden;
 }
 
+.pdv-container h1,
+.pdv-container h2,
+.pdv-container h3,
+.pdv-container h4 {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.pdv-container p,
+.pdv-container span,
+.pdv-container li,
+.pdv-container label {
+  color: #f1f5f9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
 .pdv-container input,
 .pdv-container textarea,
 .pdv-container select {
