@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Produto, ItemVenda, Cliente } from '../types';
 import './PDV.css';
 
 const PDV: React.FC = () => {
+  const navigate = useNavigate();
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carrinho, setCarrinho] = useState<ItemVenda[]>([]);
   const [codigoBarras, setCodigoBarras] = useState('');
@@ -409,7 +411,15 @@ const PDV: React.FC = () => {
           <div className="nota-card">
             <div className="nota-header">
               <h2>NOTA NÃO FISCAL</h2>
-              <button className="nota-fechar" onClick={() => setNotaFiscal(null)}>✕</button>
+              <button
+                className="nota-fechar"
+                onClick={() => {
+                  setNotaFiscal(null);
+                  navigate('/admin');
+                }}
+              >
+                ✕
+              </button>
             </div>
             <div className="nota-empresa">
               <strong>{notaFiscal.empresa?.nome}</strong>
