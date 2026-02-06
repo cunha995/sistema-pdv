@@ -243,9 +243,12 @@ export const api = {
 
   // Caixa
   caixa: {
-    listarFechamentos: (operador_nome?: string) => {
-      const params = operador_nome ? `?operador_nome=${encodeURIComponent(operador_nome)}` : '';
-      return fetch(`${API_URL}/caixa/fechamentos${params}`).then(r => r.json());
+    listarFechamentos: (empresa_id?: number, operador_nome?: string) => {
+      const params = new URLSearchParams();
+      if (empresa_id) params.append('empresa_id', String(empresa_id));
+      if (operador_nome) params.append('operador_nome', operador_nome);
+      const qs = params.toString();
+      return fetch(`${API_URL}/caixa/fechamentos${qs ? `?${qs}` : ''}`).then(r => r.json());
     },
     criarFechamento: (data: any) => fetch(`${API_URL}/caixa/fechamentos`, {
       method: 'POST',

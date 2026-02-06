@@ -27,12 +27,16 @@ const Vendas: React.FC = () => {
   }, []);
 
   const carregarVendas = async () => {
-    const data = await api.vendas.listar();
+    const usuarioStr = localStorage.getItem('usuario');
+    const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+    const data = await api.vendas.listar(usuario?.empresa_id);
     setVendas(data);
   };
 
   const carregarFechamentos = async () => {
-    const data = await api.caixa.listarFechamentos();
+    const usuarioStr = localStorage.getItem('usuario');
+    const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+    const data = await api.caixa.listarFechamentos(usuario?.empresa_id);
     setFechamentos(data || []);
   };
 

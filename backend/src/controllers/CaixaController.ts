@@ -4,12 +4,17 @@ import { db } from '../database';
 export class CaixaController {
   static listar(req: Request, res: Response) {
     try {
-      const { operador_nome } = req.query;
+      const { operador_nome, empresa_id } = req.query;
 
       let query = 'SELECT * FROM caixa_fechamentos';
       const params: any[] = [];
+      if (empresa_id) {
+        query += ' WHERE empresa_id = ?';
+        params.push(empresa_id);
+      }
       if (operador_nome) {
-        query += ' WHERE operador_nome LIKE ?';
+        query += params.length ? ' AND' : ' WHERE';
+        query += ' operador_nome LIKE ?';
         params.push(`%${operador_nome}%`);
       }
       query += ' ORDER BY created_at DESC';
