@@ -267,8 +267,8 @@ const PDV: React.FC = () => {
       setDesconto(0);
       setMensagem('✓ Venda realizada com sucesso!');
       setTimeout(() => setMensagem(''), 3000);
-    } catch (error) {
-      setMensagem('❌ Erro ao finalizar venda!');
+    } catch (error: any) {
+      setMensagem(`❌ ${error?.message || 'Erro ao finalizar venda!'}`);
     }
   };
 
@@ -381,8 +381,10 @@ const PDV: React.FC = () => {
       data: new Date().toISOString()
     };
     localStorage.setItem('caixa_fechamento', JSON.stringify(fechamento));
+    const usuarioStr = localStorage.getItem('usuario');
+    const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
     api.caixa.criarFechamento({
-      empresa_id: caixaOperador?.empresa_id,
+      empresa_id: caixaOperador?.empresa_id || usuario?.empresa_id,
       operador_id: caixaOperador?.id,
       operador_nome: caixaOperador?.nome,
       operador_tipo: caixaOperador?.tipo,

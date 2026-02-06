@@ -8,6 +8,10 @@ export class VendaController {
     try {
       const { empresa_id } = req.query;
 
+      if (!empresa_id) {
+        return res.json([]);
+      }
+
       let query = `
         SELECT v.*, c.nome as cliente_nome 
         FROM vendas v
@@ -124,13 +128,15 @@ export class VendaController {
     try {
       const { data_inicio, data_fim, empresa_id } = req.query;
 
+      if (!empresa_id) {
+        return res.json({ total_vendas: 0, valor_total: 0, vendas: [] });
+      }
+
       let query = 'SELECT * FROM vendas';
       const params: any[] = [];
 
-      if (empresa_id) {
-        query += ' WHERE empresa_id = ?';
-        params.push(empresa_id);
-      }
+      query += ' WHERE empresa_id = ?';
+      params.push(empresa_id);
 
       if (data_inicio && data_fim) {
         query += params.length ? ' AND' : ' WHERE';
