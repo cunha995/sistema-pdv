@@ -16,7 +16,7 @@ const PDV: React.FC = () => {
   const [caixaSenha, setCaixaSenha] = useState('');
   const [caixaErro, setCaixaErro] = useState('');
   const [caixaCarregando, setCaixaCarregando] = useState(false);
-  const [caixaOperador, setCaixaOperador] = useState<{ nome: string; tipo: 'admin' | 'funcionario' } | null>(null);
+  const [caixaOperador, setCaixaOperador] = useState<{ id?: number; empresa_id?: number; nome: string; tipo: 'admin' | 'funcionario' } | null>(null);
   const [caixaAberto, setCaixaAberto] = useState(false);
   const [valorAbertura, setValorAbertura] = useState(0);
   const [fechamentoDinheiro, setFechamentoDinheiro] = useState('');
@@ -292,7 +292,12 @@ const PDV: React.FC = () => {
     try {
       const adminResp = await api.auth.login(caixaUsuario, caixaSenha);
       if (adminResp?.usuario?.nome) {
-        const operador = { nome: adminResp.usuario.nome, tipo: 'admin' as const };
+        const operador = {
+          id: adminResp.usuario.id,
+          empresa_id: adminResp.usuario.empresa_id,
+          nome: adminResp.usuario.nome,
+          tipo: 'admin' as const
+        };
         setCaixaOperador(operador);
         localStorage.setItem('caixa_operador', JSON.stringify(operador));
         setCaixaUsuario('');
@@ -307,7 +312,11 @@ const PDV: React.FC = () => {
     try {
       const funcResp = await api.funcionarios.login(caixaUsuario, caixaSenha);
       if (funcResp?.funcionario?.nome) {
-        const operador = { nome: funcResp.funcionario.nome, tipo: 'funcionario' as const };
+        const operador = {
+          id: funcResp.funcionario.id,
+          nome: funcResp.funcionario.nome,
+          tipo: 'funcionario' as const
+        };
         setCaixaOperador(operador);
         localStorage.setItem('caixa_operador', JSON.stringify(operador));
         setCaixaUsuario('');
@@ -334,11 +343,13 @@ const PDV: React.FC = () => {
     setFechamentoCartao('');
     setFechamentoPix('');
     setFechamentoObservacao('');
+    setTotalVendasSessao(0);
   };
 
   const abrirCaixa = (e: React.FormEvent) => {
     e.preventDefault();
     setCaixaAberto(true);
+    setTotalVendasSessao(0);
     localStorage.setItem('caixa_abertura', JSON.stringify({ valor: valorAbertura, data: new Date().toISOString() }));
   };
 
@@ -367,12 +378,27 @@ const PDV: React.FC = () => {
       data: new Date().toISOString()
     };
     localStorage.setItem('caixa_fechamento', JSON.stringify(fechamento));
+    api.caixa.criarFechamento({
+      empresa_id: caixaOperador?.empresa_id,
+      operador_id: caixaOperador?.id,
+      operador_nome: caixaOperador?.nome,
+      operador_tipo: caixaOperador?.tipo,
+      valor_abertura: valorAbertura,
+      recebiveis: totalVendasSessao,
+      dinheiro,
+      cartao,
+      pix,
+      observacoes: fechamentoObservacao
+    }).catch(() => {
+      // mantém fechamento local caso API falhe
+    });
     setMensagem('✓ Caixa fechado com sucesso!');
     setTimeout(() => setMensagem(''), 3000);
     setCaixaAberto(false);
     localStorage.removeItem('caixa_abertura');
     localStorage.removeItem('caixa_operador');
     setCaixaOperador(null);
+    setTotalVendasSessao(0);
     setMostrarFechamento(false);
   };
 

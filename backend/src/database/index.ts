@@ -170,6 +170,21 @@ db.exec(`
     FOREIGN KEY (empresa_id) REFERENCES empresas(id)
   );
 
+  CREATE TABLE IF NOT EXISTS caixa_fechamentos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    empresa_id INTEGER,
+    operador_id INTEGER,
+    operador_nome TEXT NOT NULL,
+    operador_tipo TEXT NOT NULL,
+    valor_abertura REAL DEFAULT 0,
+    recebiveis REAL DEFAULT 0,
+    dinheiro REAL NOT NULL,
+    cartao REAL NOT NULL,
+    pix REAL NOT NULL,
+    observacoes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   -- Inserir dados de exemplo de planos
   INSERT OR IGNORE INTO planos (id, nome, descricao, preco_mensal, limite_usuarios, limite_mesas, limite_produtos, inclui_delivery) VALUES
     (1, 'Starter', 'Plano básico para pequenos negócios', 99.90, 3, 5, 200, 0),

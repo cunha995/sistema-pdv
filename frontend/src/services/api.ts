@@ -236,5 +236,18 @@ export const api = {
         headers: { 'Authorization': `Bearer ${token}` }
       }).then(r => r.json());
     }
+  },
+
+  // Caixa
+  caixa: {
+    listarFechamentos: (operador_nome?: string) => {
+      const params = operador_nome ? `?operador_nome=${encodeURIComponent(operador_nome)}` : '';
+      return fetch(`${API_URL}/caixa/fechamentos${params}`).then(r => r.json());
+    },
+    criarFechamento: (data: any) => fetch(`${API_URL}/caixa/fechamentos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(r => r.json())
   }
 };

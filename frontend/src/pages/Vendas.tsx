@@ -2,17 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { Venda } from '../types';
 
+interface FechamentoCaixa {
+  id: number;
+  operador_nome: string;
+  operador_tipo: string;
+  valor_abertura: number;
+  recebiveis: number;
+  dinheiro: number;
+  cartao: number;
+  pix: number;
+  created_at: string;
+}
+
 const Vendas: React.FC = () => {
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [vendaSelecionada, setVendaSelecionada] = useState<Venda | null>(null);
+  const [fechamentos, setFechamentos] = useState<FechamentoCaixa[]>([]);
 
   useEffect(() => {
     carregarVendas();
+    carregarFechamentos();
   }, []);
 
   const carregarVendas = async () => {
     const data = await api.vendas.listar();
     setVendas(data);
+  };
+
+  const carregarFechamentos = async () => {
+    const data = await api.caixa.listarFechamentos();
+    setFechamentos(data || []);
   };
 
   const verDetalhes = async (id: number) => {
@@ -103,6 +122,43 @@ const Vendas: React.FC = () => {
           </table>
         </div>
       )}
+
+      <div className="card mt-20">
+        <h2>Fechamentos de Caixa por Funcionário</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Operador</th>
+              <th>Tipo</th>
+              <th>Abertura</th>
+              <th>Recebíveis</th>
+              <th>Dinheiro</th>
+              <th>Cartão</th>
+              <th>PIX</th>
+            </tr>
+          </thead>
+          <tbody>
+            {fechamentos.map((f) => (
+              <tr key={f.id}>
+                <td>{formatarData(f.created_at)}</td>
+                <td>{f.operador_nome}</td>
+                <td>{f.operador_tipo}</td>
+                <td>R$ {Number(f.valor_abertura || 0).toFixed(2)}</td>
+                <td>R$ {Number(f.recebiveis || 0).toFixed(2)}</td>
+                <td>R$ {Number(f.dinheiro || 0).toFixed(2)}</td>
+                <td>R$ {Number(f.cartao || 0).toFixed(2)}</td>
+                <td>R$ {Number(f.pix || 0).toFixed(2)}</td>
+              </tr>
+            ))}
+            {fechamentos.length === 0 && (
+              <tr>
+                <td colSpan={8}>Nenhum fechamento registrado</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
