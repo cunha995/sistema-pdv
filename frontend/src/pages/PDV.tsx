@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Produto, ItemVenda, Cliente } from '../types';
@@ -388,6 +388,47 @@ const PDV: React.FC = () => {
       .reduce((total, pedido) => total + parseFloat(pedido.total || 0), 0);
   };
 
+  const verificarPendencias = useCallback(async (silenciarSirene = false) => {
+    if (!caixaAberto) return;
+    try {
+      const pendentesPorMesa: number[] = [];
+      const pendentesIds = new Set<number>();
+
+      const resultados = await Promise.all(
+        mesasIds.map(async (mesaId) => {
+          const pedidos = await api.mesas.listarPedidos(mesaId);
+          return { mesaId, pedidos: Array.isArray(pedidos) ? pedidos : [] };
+        })
+      );
+
+      resultados.forEach(({ mesaId, pedidos }) => {
+        const pendentes = pedidos.filter((p: any) => p.status === 'pendente');
+        if (pendentes.length > 0) {
+          pendentesPorMesa.push(mesaId);
+        }
+        pendentes.forEach((p: any) => pendentesIds.add(p.id));
+      });
+
+      if (!primeiraChecagemRef.current) {
+        const prev = pedidosPendentesRef.current;
+        const temNovo = Array.from(pendentesIds).some((id) => !prev.has(id));
+        if (temNovo && !silenciarSirene) {
+          tocarSirene();
+          if (pendentesPorMesa.length > 0) {
+            setMensagem(`🔔 Pedido pendente: ${pendentesPorMesa.map((m) => `Mesa ${m}`).join(', ')}`);
+            setTimeout(() => setMensagem(''), 3000);
+          }
+        }
+      }
+
+      primeiraChecagemRef.current = false;
+      pedidosPendentesRef.current = pendentesIds;
+      setMesasComPendencia(pendentesPorMesa.sort((a, b) => a - b));
+    } catch (error) {
+      console.error('Erro ao verificar pendências das mesas:', error);
+    }
+  }, [caixaAberto, mesasIds]);
+
   useEffect(() => {
     if (!caixaAberto) {
       setMesasComPendencia([]);
@@ -398,56 +439,19 @@ const PDV: React.FC = () => {
 
     let ativo = true;
 
-    const verificarPendencias = async () => {
-      try {
-        const pendentesPorMesa: number[] = [];
-        const pendentesIds = new Set<number>();
-
-        const resultados = await Promise.all(
-          mesasIds.map(async (mesaId) => {
-            const pedidos = await api.mesas.listarPedidos(mesaId);
-            return { mesaId, pedidos: Array.isArray(pedidos) ? pedidos : [] };
-          })
-        );
-
-        resultados.forEach(({ mesaId, pedidos }) => {
-          const pendentes = pedidos.filter((p: any) => p.status === 'pendente');
-          if (pendentes.length > 0) {
-            pendentesPorMesa.push(mesaId);
-          }
-          pendentes.forEach((p: any) => pendentesIds.add(p.id));
-        });
-
-        if (!ativo) return;
-
-        if (!primeiraChecagemRef.current) {
-          const prev = pedidosPendentesRef.current;
-          const temNovo = Array.from(pendentesIds).some((id) => !prev.has(id));
-          if (temNovo) {
-            tocarSirene();
-            if (pendentesPorMesa.length > 0) {
-              setMensagem(`🔔 Pedido pendente: ${pendentesPorMesa.map((m) => `Mesa ${m}`).join(', ')}`);
-              setTimeout(() => setMensagem(''), 3000);
-            }
-          }
-        }
-
-        primeiraChecagemRef.current = false;
-        pedidosPendentesRef.current = pendentesIds;
-        setMesasComPendencia(pendentesPorMesa.sort((a, b) => a - b));
-      } catch (error) {
-        console.error('Erro ao verificar pendências das mesas:', error);
-      }
+    const executar = async () => {
+      if (!ativo) return;
+      await verificarPendencias();
     };
 
-    verificarPendencias();
-    const interval = setInterval(verificarPendencias, 5000);
+    executar();
+    const interval = setInterval(executar, 5000);
 
     return () => {
       ativo = false;
       clearInterval(interval);
     };
-  }, [caixaAberto]);
+  }, [caixaAberto, verificarPendencias]);
 
   const finalizarVenda = async () => {
     if (carrinho.length === 0) {
@@ -501,8 +505,13 @@ const PDV: React.FC = () => {
       setCarrinho([]);
       setDesconto(0);
       if (mesaParaFechar) {
-        api.mesas.finalizar(mesaParaFechar).catch(() => undefined);
+        try {
+          await api.mesas.finalizar(mesaParaFechar);
+        } catch {
+          // ignore
+        }
         setMesaParaFechar(null);
+        verificarPendencias(true);
       }
       setMensagem('✓ Venda realizada com sucesso!');
       setTimeout(() => setMensagem(''), 3000);
