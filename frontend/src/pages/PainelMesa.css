@@ -82,17 +82,20 @@
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  color: #000;
+  font-weight: 700;
+  text-shadow: none;
 }
 
 .historico-pedidos h2 {
-  color: #1976d2;
+  color: #000;
   margin-top: 0;
   margin-bottom: 15px;
   font-size: 1.3em;
 }
 
 .sem-pedidos {
-  color: #999;
+  color: #000;
   font-style: italic;
   text-align: center;
   padding: 20px;
@@ -109,6 +112,9 @@
   padding: 12px;
   margin-bottom: 10px;
   background: #f9f9f9;
+  color: #000;
+  font-weight: 700;
+  text-shadow: none;
 }
 
 .pedido-header {
@@ -120,7 +126,7 @@
 }
 
 .pedido-id {
-  color: #1976d2;
+  color: #000;
 }
 
 .status {
@@ -135,6 +141,16 @@
   color: #856404;
 }
 
+.status-aceito {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.status-preparando {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
 .status-pronto {
   background: #d4edda;
   color: #155724;
@@ -146,13 +162,14 @@
 }
 
 .pedido-total {
-  color: #27ae60;
-  font-weight: bold;
+  color: #000;
+  font-weight: 700;
 }
 
 .pedido-itens {
   font-size: 0.9em;
-  color: #666;
+  color: #000;
+  font-weight: 700;
 }
 
 .item-linha {

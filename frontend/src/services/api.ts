@@ -106,6 +106,9 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
+    }).then(r => r.json()),
+    finalizar: (mesaId: number) => fetch(`${API_URL}/mesas/${mesaId}/finalizar`, {
+      method: 'POST'
     }).then(r => r.json())
   },
 

@@ -37,6 +37,16 @@ const PedidosMesas: React.FC = () => {
     return p ? p.nome : `Produto #${id}`;
   };
 
+  const atualizarStatus = async (mesaId: number, pedidoId: number, status: string, mensagemCliente: string) => {
+    await fetch(`/api/mesas/${mesaId}/pedidos/${pedidoId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    carregarPedidos();
+    window.alert(mensagemCliente);
+  };
+
   return (
     <div className="pedidos-mesas-main">
       <h1>Pedidos por Mesa</h1>
@@ -48,7 +58,7 @@ const PedidosMesas: React.FC = () => {
             <ul>
               {(pedidos[mesa.id] || []).map(pedido => (
                 <li key={pedido.id}>
-                  <b>Pedido #{pedido.id}</b> - <span style={{color: pedido.status === 'pronto' ? 'green' : pedido.status === 'entregue' ? 'blue' : 'orange'}}>{pedido.status}</span> <br />
+                  <b>Pedido #{pedido.id}</b> - <span className={`status-${pedido.status}`}>{pedido.status}</span> <br />
                   {pedido.itens.map((item: any, idx: number) => (
                     <span key={idx}>{nomeProduto(item.produto_id)} x {item.quantidade}<br /></span>
                   ))}
@@ -56,24 +66,31 @@ const PedidosMesas: React.FC = () => {
                   <div style={{marginTop: 4}}>
                     {pedido.status !== 'entregue' && (
                       <>
-                        <button onClick={async () => {
-                          await fetch(`/api/mesas/${mesa.id}/pedidos/${pedido.id}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ status: 'pronto' })
-                          });
-                          carregarPedidos();
-                          window.alert('Cliente notificado: Pedido pronto!');
-                        }}>Marcar como Pronto</button>
-                        <button onClick={async () => {
-                          await fetch(`/api/mesas/${mesa.id}/pedidos/${pedido.id}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ status: 'entregue' })
-                          });
-                          carregarPedidos();
-                          window.alert('Cliente notificado: Pedido entregue!');
-                        }} style={{marginLeft: 8}}>Marcar como Entregue</button>
+                        {pedido.status === 'pendente' && (
+                          <button onClick={() => atualizarStatus(mesa.id, pedido.id, 'aceito', 'Cliente notificado: Pedido aceito!')}>
+                            Aceitar Pedido
+                          </button>
+                        )}
+                        {pedido.status !== 'pronto' && (
+                          <button
+                            onClick={() => atualizarStatus(mesa.id, pedido.id, 'preparando', 'Cliente notificado: Pedido em preparo!')}
+                            style={{marginLeft: 8}}
+                          >
+                            Marcar como Preparando
+                          </button>
+                        )}
+                        <button
+                          onClick={() => atualizarStatus(mesa.id, pedido.id, 'pronto', 'Cliente notificado: Pedido pronto!')}
+                          style={{marginLeft: 8}}
+                        >
+                          Marcar como Pronto
+                        </button>
+                        <button
+                          onClick={() => atualizarStatus(mesa.id, pedido.id, 'entregue', 'Cliente notificado: Pedido entregue!')}
+                          style={{marginLeft: 8}}
+                        >
+                          Marcar como Entregue
+                        </button>
                       </>
                     )}
                   </div>

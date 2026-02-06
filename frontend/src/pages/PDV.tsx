@@ -43,6 +43,7 @@ const PDV: React.FC = () => {
   const [mostrarMesas, setMostrarMesas] = useState(false);
   const [mesaSelecionada, setMesaSelecionada] = useState<number | null>(null);
   const [pedidosMesa, setPedidosMesa] = useState<any[]>([]);
+  const [mesaParaFechar, setMesaParaFechar] = useState<number | null>(null);
   const [mesasComPendencia, setMesasComPendencia] = useState<number[]>([]);
   const sireneAtivaRef = useRef(false);
   const primeiraChecagemRef = useRef(true);
@@ -279,10 +280,56 @@ const PDV: React.FC = () => {
     if (!mesaSelecionada) return;
 
     try {
-      await api.mesas.fecharConta(mesaSelecionada, {
+      const resp = await api.mesas.fecharConta(mesaSelecionada, {
         metodo_pagamento: metodoPagamento,
         desconto
       });
+      const usuarioStr = localStorage.getItem('usuario');
+      const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+      let empresa = {
+        nome: usuario?.empresa_nome || 'Empresa',
+        cnpj: '—',
+        endereco: '',
+        telefone: '',
+        email: ''
+      };
+
+      if (usuario?.empresa_id) {
+        try {
+          const empresaResp = await api.empresas.buscar(usuario.empresa_id);
+          if (empresaResp?.nome) {
+            empresa = empresaResp;
+          }
+        } catch {
+          // mantém dados básicos
+        }
+      }
+
+      const itensNota: ItemVenda[] = pedidosMesa
+        .filter(p => p.status !== 'fechado')
+        .flatMap((pedido: any) =>
+          (pedido.itens || []).map((item: any) => {
+            const produto = produtos.find((p) => p.id === item.produto_id);
+            return {
+              produto_id: item.produto_id,
+              produto_nome: produto?.nome || `Produto #${item.produto_id}`,
+              quantidade: item.quantidade,
+              preco_unitario: item.preco_unitario,
+              subtotal: item.subtotal
+            };
+          })
+        );
+
+      setNotaFiscal({
+        empresa,
+        vendaId: resp?.venda_id,
+        data: new Date().toLocaleString('pt-BR'),
+        itens: itensNota,
+        total: calcularTotalMesa() - desconto,
+        desconto,
+        metodo: metodoPagamento
+      });
+
       setMensagem('✓ Conta da mesa fechada com sucesso!');
       setMesaSelecionada(null);
       setPedidosMesa([]);
@@ -294,6 +341,45 @@ const PDV: React.FC = () => {
       setMensagem('❌ Erro ao fechar conta da mesa!');
       setTimeout(() => setMensagem(''), 2000);
     }
+  };
+
+  const lancarMesaNoPdv = () => {
+    if (!mesaSelecionada) return;
+    const itensMesa = pedidosMesa
+      .filter(p => p.status !== 'fechado')
+      .flatMap((pedido: any) => pedido.itens || []);
+
+    if (itensMesa.length === 0) {
+      setMensagem('❌ Nenhum item pendente para lançar no PDV.');
+      setTimeout(() => setMensagem(''), 2000);
+      return;
+    }
+
+    const agrupado = new Map<number, ItemVenda>();
+    itensMesa.forEach((item: any) => {
+      const existente = agrupado.get(item.produto_id);
+      const produto = produtos.find((p) => p.id === item.produto_id);
+      if (existente) {
+        existente.quantidade += item.quantidade;
+        existente.subtotal += item.subtotal;
+      } else {
+        agrupado.set(item.produto_id, {
+          produto_id: item.produto_id,
+          produto_nome: produto?.nome || `Produto #${item.produto_id}`,
+          quantidade: item.quantidade,
+          preco_unitario: item.preco_unitario,
+          subtotal: item.subtotal
+        });
+      }
+    });
+
+    setCarrinho(Array.from(agrupado.values()));
+    setMesaParaFechar(mesaSelecionada);
+    setMostrarMesas(false);
+    setMesaSelecionada(null);
+    setPedidosMesa([]);
+    setMensagem('✓ Itens da mesa lançados no PDV.');
+    setTimeout(() => setMensagem(''), 2000);
   };
 
   const calcularTotalMesa = () => {
@@ -414,6 +500,10 @@ const PDV: React.FC = () => {
       setTotalVendasSessao((prev) => prev + totalComDesconto);
       setCarrinho([]);
       setDesconto(0);
+      if (mesaParaFechar) {
+        api.mesas.finalizar(mesaParaFechar).catch(() => undefined);
+        setMesaParaFechar(null);
+      }
       setMensagem('✓ Venda realizada com sucesso!');
       setTimeout(() => setMensagem(''), 3000);
     } catch (error: any) {
@@ -802,6 +892,12 @@ const PDV: React.FC = () => {
                   ✕
                 </button>
               </div>
+
+              {pedidosMesa.filter(p => p.status !== 'fechado').length > 0 && (
+                <button className="btn-lancar-pdv" onClick={lancarMesaNoPdv}>
+                  ➜ Lançar no PDV
+                </button>
+              )}
 
               {pedidosMesa.length === 0 ? (
                 <div className="sem-pedidos">Nenhum pedido registrado para esta mesa</div>

@@ -513,6 +513,24 @@
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
 
+.btn-lancar-pdv {
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-lancar-pdv:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px rgba(37, 99, 235, 0.45);
+}
+
 .mesa-detalhes-header h3 {
   margin: 0;
   color: #f8fafc;
@@ -587,6 +605,16 @@
 .status-pendente {
   background: #fef3c7;
   color: #92400e;
+}
+
+.status-aceito {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.status-preparando {
+  background: #ede9fe;
+  color: #5b21b6;
 }
 
 .status-preparando {

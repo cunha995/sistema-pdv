@@ -17,4 +17,7 @@ router.post('/:mesa_id/chamar-atendente', MesaController.chamarAtendente);
 // Fechar conta (consolidar pedidos em venda)
 router.post('/:mesa_id/fechar-conta', MesaController.fecharConta);
 
+// Finalizar mesa (liberar pedidos sem nova venda)
+router.post('/:mesa_id/finalizar', MesaController.finalizarMesa);
+
 export default router;

@@ -171,4 +171,20 @@ export class MesaController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  // Finalizar mesa sem gerar nova venda (liberar para novos pedidos)
+  static finalizarMesa(req: any, res: any) {
+    try {
+      const { mesa_id } = req.params;
+
+      const stmtAtualizar = db.prepare(`
+        UPDATE pedidos_mesa SET status = 'fechado' WHERE mesa_id = ? AND status != 'fechado'
+      `);
+      const result = stmtAtualizar.run(mesa_id);
+
+      res.json({ mesa_id, fechados: result.changes || 0 });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }

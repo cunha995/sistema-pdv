@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { Produto } from '../types';
@@ -31,6 +31,7 @@ const PainelMesa: React.FC = () => {
   const [metodoPagamento, setMetodoPagamento] = useState('dinheiro');
   const [desconto, setDesconto] = useState(0);
   const [chamandoAtendente, setChamandoAtendente] = useState(false);
+  const statusAnteriorRef = useRef<Record<number, string>>({});
 
   useEffect(() => {
     api.produtos.listar().then(setProdutos);
@@ -43,6 +44,22 @@ const PainelMesa: React.FC = () => {
         const apiUrl = import.meta.env.VITE_API_URL || '/api';
         const response = await fetch(`${apiUrl}/mesas/${id}/pedidos`);
         const pedidos = await response.json();
+        const statusAnterior = statusAnteriorRef.current;
+        pedidos.forEach((pedido: Pedido) => {
+          const anterior = statusAnterior[pedido.id];
+          if (anterior && anterior !== pedido.status) {
+            if (pedido.status === 'aceito' || pedido.status === 'preparando') {
+              setMensagem('✅ Seu pedido foi aceito e está sendo preparado!');
+              setTimeout(() => setMensagem(''), 3000);
+            }
+            if (pedido.status === 'pronto') {
+              setMensagem('✅ Seu pedido está pronto!');
+              setTimeout(() => setMensagem(''), 3000);
+            }
+          }
+          statusAnterior[pedido.id] = pedido.status;
+        });
+
         setHistoricoPedidos(pedidos);
         const total = pedidos.reduce((acc: number, pedido: Pedido) => acc + pedido.total, 0);
         setTotalConta(total);

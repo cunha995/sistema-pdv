@@ -314,6 +314,13 @@ tr:hover {
   backdrop-filter: blur(10px);
 }
 
+.mesa-pedidos-card,
+.mesa-pedidos-card * {
+  color: #000 !important;
+  font-weight: 700;
+  text-shadow: none !important;
+}
+
 .mesa-card a {
   color: #cbd5f5;
   text-decoration: none;
@@ -327,7 +334,6 @@ tr:hover {
 
 .mesa-pedidos-card h2 {
   margin: 0 0 12px 0;
-  color: #f8fafc;
 }
 
 .mesa-pedidos-card ul {
@@ -344,12 +350,11 @@ tr:hover {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
-  color: var(--text);
 }
 
 .mesa-pedidos-card button {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
-  color: #fff;
+  color: #000;
   border: none;
   padding: 8px 14px;
   border-radius: 999px;
