@@ -203,6 +203,22 @@
   box-shadow: 0 20px 40px rgba(2, 6, 23, 0.5);
 }
 
+.caixa-auth-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.caixa-auth-close {
+  border: none;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fee2e2;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
 .caixa-auth-card h2 {
   margin: 0;
 }

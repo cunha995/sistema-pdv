@@ -518,7 +518,16 @@ const PDV: React.FC = () => {
       {!caixaOperador && (
         <div className="caixa-auth-overlay">
           <form className="caixa-auth-card" onSubmit={autenticarCaixa}>
-            <h2>Abertura de Caixa</h2>
+            <div className="caixa-auth-header">
+              <h2>Abertura de Caixa</h2>
+              <button
+                type="button"
+                className="caixa-auth-close"
+                onClick={() => navigate('/admin')}
+              >
+                ✕
+              </button>
+            </div>
             <p>Informe usuário e senha para iniciar o caixa.</p>
             <input
               type="text"
