@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { Venda } from '../types';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface FechamentoCaixa {
   id: number;
@@ -32,6 +34,34 @@ const Vendas: React.FC = () => {
   const carregarFechamentos = async () => {
     const data = await api.caixa.listarFechamentos();
     setFechamentos(data || []);
+  };
+
+  const gerarPdfFechamentos = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text('Relatorio de Fechamentos de Caixa', 14, 16);
+
+    const linhas = fechamentos.map((f) => ([
+      formatarData(f.created_at),
+      f.operador_nome,
+      f.operador_tipo,
+      `R$ ${Number(f.valor_abertura || 0).toFixed(2)}`,
+      `R$ ${Number(f.recebiveis || 0).toFixed(2)}`,
+      `R$ ${Number(f.dinheiro || 0).toFixed(2)}`,
+      `R$ ${Number(f.cartao || 0).toFixed(2)}`,
+      `R$ ${Number(f.pix || 0).toFixed(2)}`
+    ]));
+
+    autoTable(doc, {
+      head: [[
+        'Data', 'Operador', 'Tipo', 'Abertura', 'Recebiveis', 'Dinheiro', 'Cartao', 'PIX'
+      ]],
+      body: linhas,
+      startY: 24,
+      styles: { fontSize: 9 }
+    });
+
+    doc.save('fechamentos-caixa.pdf');
   };
 
   const verDetalhes = async (id: number) => {
@@ -124,7 +154,12 @@ const Vendas: React.FC = () => {
       )}
 
       <div className="card mt-20">
-        <h2>Fechamentos de Caixa por Funcionário</h2>
+        <div className="flex-between mb-20">
+          <h2>Fechamentos de Caixa por Funcionário</h2>
+          <button className="btn btn-primary" onClick={gerarPdfFechamentos}>
+            Gerar PDF
+          </button>
+        </div>
         <table>
           <thead>
             <tr>
