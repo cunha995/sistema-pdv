@@ -58,11 +58,12 @@
 
 .nota-card,
 .nota-card * {
-  color: #000000;
-  font-weight: 700;
+  color: #000000 !important;
+  font-weight: 700 !important;
   font-size: 15px;
   line-height: 1.5;
-  text-shadow: none;
+  text-shadow: none !important;
+  opacity: 1 !important;
 }
 
 .nota-header {
