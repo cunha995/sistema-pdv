@@ -23,6 +23,16 @@ const PDV: React.FC = () => {
   const [fechamentoCartao, setFechamentoCartao] = useState(0);
   const [fechamentoPix, setFechamentoPix] = useState(0);
   const [fechamentoObservacao, setFechamentoObservacao] = useState('');
+  const [mostrarFechamento, setMostrarFechamento] = useState(false);
+  const [notaFiscal, setNotaFiscal] = useState<{
+    empresa: any;
+    vendaId?: number;
+    data: string;
+    itens: ItemVenda[];
+    total: number;
+    desconto: number;
+    metodo: string;
+  } | null>(null);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [clienteFiltro, setClienteFiltro] = useState('');
   const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null);
@@ -208,6 +218,7 @@ const PDV: React.FC = () => {
     }
 
     try {
+      const itensVenda = [...carrinho];
       const venda = {
         cliente_id: clienteSelecionado?.id,
         total: totalComDesconto,
@@ -216,7 +227,37 @@ const PDV: React.FC = () => {
         itens: carrinho
       };
 
-      await api.vendas.criar(venda);
+      const resp = await api.vendas.criar(venda);
+      const usuarioStr = localStorage.getItem('usuario');
+      const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+      let empresa = {
+        nome: usuario?.empresa_nome || 'Empresa',
+        cnpj: '—',
+        endereco: '',
+        telefone: '',
+        email: ''
+      };
+
+      if (usuario?.empresa_id) {
+        try {
+          const empresaResp = await api.empresas.buscar(usuario.empresa_id);
+          if (empresaResp?.nome) {
+            empresa = empresaResp;
+          }
+        } catch {
+          // mantém dados básicos
+        }
+      }
+
+      setNotaFiscal({
+        empresa,
+        vendaId: resp?.id,
+        data: new Date().toLocaleString('pt-BR'),
+        itens: itensVenda,
+        total: totalComDesconto,
+        desconto,
+        metodo: metodoPagamento
+      });
       setCarrinho([]);
       setDesconto(0);
       setMensagem('✓ Venda realizada com sucesso!');
@@ -316,6 +357,43 @@ const PDV: React.FC = () => {
 
   return (
     <div className="pdv-container">
+      {notaFiscal && (
+        <div className="nota-overlay">
+          <div className="nota-card">
+            <div className="nota-header">
+              <h2>NOTA NÃO FISCAL</h2>
+              <button className="nota-fechar" onClick={() => setNotaFiscal(null)}>✕</button>
+            </div>
+            <div className="nota-empresa">
+              <strong>{notaFiscal.empresa?.nome}</strong>
+              <span>CNPJ: {notaFiscal.empresa?.cnpj || '—'}</span>
+              {notaFiscal.empresa?.endereco && <span>{notaFiscal.empresa.endereco}</span>}
+              {notaFiscal.empresa?.telefone && <span>Tel: {notaFiscal.empresa.telefone}</span>}
+              {notaFiscal.empresa?.email && <span>{notaFiscal.empresa.email}</span>}
+            </div>
+            <div className="nota-info">
+              <span>Venda #{notaFiscal.vendaId || '—'}</span>
+              <span>Data: {notaFiscal.data}</span>
+              <span>Método: {notaFiscal.metodo}</span>
+            </div>
+            <div className="nota-itens">
+              {notaFiscal.itens.map((item, idx) => (
+                <div key={idx} className="nota-item">
+                  <span>{item.quantidade}x {item.produto_nome}</span>
+                  <span>R$ {item.subtotal.toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="nota-total">
+              <span>Desconto: R$ {notaFiscal.desconto.toFixed(2)}</span>
+              <strong>Total: R$ {notaFiscal.total.toFixed(2)}</strong>
+            </div>
+            <div className="nota-actions">
+              <button onClick={() => window.print()}>Imprimir</button>
+            </div>
+          </div>
+        </div>
+      )}
       {!caixaOperador && (
         <div className="caixa-auth-overlay">
           <form className="caixa-auth-card" onSubmit={autenticarCaixa}>
@@ -374,6 +452,11 @@ const PDV: React.FC = () => {
         {caixaOperador && (
           <button className="btn-trocar-operador" onClick={trocarOperador}>
             Trocar Operador
+          </button>
+        )}
+        {caixaOperador && (
+          <button className="btn-fechamento-toggle" onClick={() => setMostrarFechamento(!mostrarFechamento)}>
+            {mostrarFechamento ? 'Fechar Painel' : 'Fechamento do Caixa'}
           </button>
         )}
         <button 
@@ -586,50 +669,52 @@ const PDV: React.FC = () => {
                     <div className="item-numero">{String(idx + 1).padStart(2, '0')}</div>
                     <div className="item-detalhes">
                       <div className="item-nome">{item.produto_nome}</div>
-                      <div className="item-valores">
-                        {item.quantidade} un × R$ {item.preco_unitario.toFixed(2)}
-                      </div>
-                    </div>
-                    <div className="item-controles">
-                      <button
-                        className="btn-qtd"
-                        onClick={() => atualizarQuantidade(item.produto_id, item.quantidade - 1)}
-                      >
-                        −
-                      </button>
-                      <span className="item-qtd">{item.quantidade}</span>
-                      <button
-                        className="btn-qtd"
-                        onClick={() => atualizarQuantidade(item.produto_id, item.quantidade + 1)}
-                      >
-                        +
-                      </button>
-                      <button
-                        className="btn-remover"
-                        onClick={() => removerItem(item.produto_id)}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    <div className="item-subtotal">R$ {item.subtotal.toFixed(2)}</div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Resumo e Pagamento */}
-          <div className="resumo-section">
-            <div className="cliente-section">
-              <label>Cliente cadastrado</label>
-              <input
-                type="text"
-                placeholder="🔍 Buscar cliente por nome, CPF, email..."
-                value={clienteFiltro}
-                onChange={(e) => setClienteFiltro(e.target.value)}
-                className="cliente-input"
-              />
-              {carregandoClientes ? (
+                      {mostrarFechamento && (
+                        <div className="fechamento-section">
+                          <h2>Fechamento do Caixa</h2>
+                          <div className="fechamento-linha">
+                            <label>Dinheiro</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={fechamentoDinheiro}
+                              onChange={(e) => setFechamentoDinheiro(Math.max(0, Number(e.target.value)))}
+                            />
+                          </div>
+                          <div className="fechamento-linha">
+                            <label>Cartão</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={fechamentoCartao}
+                              onChange={(e) => setFechamentoCartao(Math.max(0, Number(e.target.value)))}
+                            />
+                          </div>
+                          <div className="fechamento-linha">
+                            <label>PIX</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={fechamentoPix}
+                              onChange={(e) => setFechamentoPix(Math.max(0, Number(e.target.value)))}
+                            />
+                          </div>
+                          <div className="fechamento-linha">
+                            <label>Observações</label>
+                            <textarea
+                              value={fechamentoObservacao}
+                              onChange={(e) => setFechamentoObservacao(e.target.value)}
+                              rows={3}
+                            />
+                          </div>
+                          <button className="btn-fechar-caixa" onClick={fecharCaixa}>
+                            Fechar Caixa
+                          </button>
+                        </div>
+                      )}
                 <div className="cliente-loading">Carregando clientes...</div>
               ) : (
                 <div className="cliente-list">
