@@ -19,9 +19,9 @@ const PDV: React.FC = () => {
   const [caixaOperador, setCaixaOperador] = useState<{ nome: string; tipo: 'admin' | 'funcionario' } | null>(null);
   const [caixaAberto, setCaixaAberto] = useState(false);
   const [valorAbertura, setValorAbertura] = useState(0);
-  const [fechamentoDinheiro, setFechamentoDinheiro] = useState(0);
-  const [fechamentoCartao, setFechamentoCartao] = useState(0);
-  const [fechamentoPix, setFechamentoPix] = useState(0);
+  const [fechamentoDinheiro, setFechamentoDinheiro] = useState('');
+  const [fechamentoCartao, setFechamentoCartao] = useState('');
+  const [fechamentoPix, setFechamentoPix] = useState('');
   const [fechamentoObservacao, setFechamentoObservacao] = useState('');
   const [mostrarFechamento, setMostrarFechamento] = useState(false);
   const [notaFiscal, setNotaFiscal] = useState<{
@@ -328,9 +328,9 @@ const PDV: React.FC = () => {
     setCaixaOperador(null);
     setCaixaAberto(false);
     setValorAbertura(0);
-    setFechamentoDinheiro(0);
-    setFechamentoCartao(0);
-    setFechamentoPix(0);
+    setFechamentoDinheiro('');
+    setFechamentoCartao('');
+    setFechamentoPix('');
     setFechamentoObservacao('');
   };
 
@@ -341,10 +341,26 @@ const PDV: React.FC = () => {
   };
 
   const fecharCaixa = () => {
+    if (!fechamentoDinheiro || !fechamentoCartao || !fechamentoPix) {
+      setMensagem('❌ Informe dinheiro, cartão e PIX para fechar o caixa.');
+      setTimeout(() => setMensagem(''), 3000);
+      return;
+    }
+
+    const dinheiro = Math.max(0, Number(fechamentoDinheiro));
+    const cartao = Math.max(0, Number(fechamentoCartao));
+    const pix = Math.max(0, Number(fechamentoPix));
+
+    if (Number.isNaN(dinheiro) || Number.isNaN(cartao) || Number.isNaN(pix)) {
+      setMensagem('❌ Valores inválidos no fechamento do caixa.');
+      setTimeout(() => setMensagem(''), 3000);
+      return;
+    }
+
     const fechamento = {
-      dinheiro: fechamentoDinheiro,
-      cartao: fechamentoCartao,
-      pix: fechamentoPix,
+      dinheiro,
+      cartao,
+      pix,
       observacao: fechamentoObservacao,
       data: new Date().toISOString()
     };
@@ -353,6 +369,8 @@ const PDV: React.FC = () => {
     setTimeout(() => setMensagem(''), 3000);
     setCaixaAberto(false);
     localStorage.removeItem('caixa_abertura');
+    localStorage.removeItem('caixa_operador');
+    setCaixaOperador(null);
   };
 
   return (
@@ -808,7 +826,7 @@ const PDV: React.FC = () => {
                   min="0"
                   step="0.01"
                   value={fechamentoDinheiro}
-                  onChange={(e) => setFechamentoDinheiro(Math.max(0, Number(e.target.value)))}
+                  onChange={(e) => setFechamentoDinheiro(e.target.value)}
                 />
               </div>
               <div className="fechamento-linha">
@@ -818,7 +836,7 @@ const PDV: React.FC = () => {
                   min="0"
                   step="0.01"
                   value={fechamentoCartao}
-                  onChange={(e) => setFechamentoCartao(Math.max(0, Number(e.target.value)))}
+                  onChange={(e) => setFechamentoCartao(e.target.value)}
                 />
               </div>
               <div className="fechamento-linha">
@@ -828,7 +846,7 @@ const PDV: React.FC = () => {
                   min="0"
                   step="0.01"
                   value={fechamentoPix}
-                  onChange={(e) => setFechamentoPix(Math.max(0, Number(e.target.value)))}
+                  onChange={(e) => setFechamentoPix(e.target.value)}
                 />
               </div>
               <div className="fechamento-linha">
