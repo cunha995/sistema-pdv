@@ -403,11 +403,11 @@ const PDV: React.FC = () => {
       );
 
       resultados.forEach(({ mesaId, pedidos }) => {
-        const pendentes = pedidos.filter((p: any) => p.status === 'pendente');
-        if (pendentes.length > 0) {
+        const ativos = pedidos.filter((p: any) => p.status !== 'fechado');
+        if (ativos.length > 0) {
           pendentesPorMesa.push(mesaId);
         }
-        pendentes.forEach((p: any) => pendentesIds.add(p.id));
+        ativos.forEach((p: any) => pendentesIds.add(p.id));
       });
 
       if (!primeiraChecagemRef.current) {
