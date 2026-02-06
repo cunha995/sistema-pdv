@@ -222,6 +222,8 @@ const PDV: React.FC = () => {
 
     try {
       const itensVenda = [...carrinho];
+      const usuarioStr = localStorage.getItem('usuario');
+      const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
       const venda = {
         empresa_id: usuario?.empresa_id,
         cliente_id: clienteSelecionado?.id,
@@ -232,8 +234,6 @@ const PDV: React.FC = () => {
       };
 
       const resp = await api.vendas.criar(venda);
-      const usuarioStr = localStorage.getItem('usuario');
-      const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
       let empresa = {
         nome: usuario?.empresa_nome || 'Empresa',
         cnpj: '—',
