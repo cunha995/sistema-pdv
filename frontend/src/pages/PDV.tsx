@@ -335,6 +335,7 @@ const PDV: React.FC = () => {
       setPedidosMesa([]);
       setDesconto(0);
       setMostrarMesas(false);
+      verificarPendencias(true);
       setTimeout(() => setMensagem(''), 3000);
     } catch (error) {
       console.error('Erro ao fechar conta:', error);
@@ -863,7 +864,7 @@ const PDV: React.FC = () => {
         <div className="mesas-panel">
           <div className="mesas-header">
             <h2>Mesas Disponíveis</h2>
-            <p>Selecione uma mesa para visualizar e fechar a conta</p>
+            <p>Selecione uma mesa para visualizar e fechar no PDV</p>
           </div>
           {caixaAberto && mesasComPendencia.length > 0 && (
             <div className="mesas-alerta">
@@ -979,7 +980,7 @@ const PDV: React.FC = () => {
                       className="btn-fechar-conta"
                       onClick={fecharContaMesa}
                     >
-                      ✓ Fechar Conta da Mesa
+                      ✓ Fechar no PDV
                     </button>
                   </div>
                 </>
