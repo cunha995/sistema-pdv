@@ -123,6 +123,11 @@ export const api = {
 
       return json;
     },
+    atualizarStatus: (mesaId: number, pedidoId: number, status: string) => fetch(`${API_URL}/mesas/${mesaId}/pedidos/${pedidoId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    }).then(r => r.json()),
     fecharConta: (mesaId: number, data: any) => fetch(`${API_URL}/mesas/${mesaId}/fechar-conta`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

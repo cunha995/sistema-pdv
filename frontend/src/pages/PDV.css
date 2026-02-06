@@ -7,7 +7,7 @@
   background: radial-gradient(1200px circle at 10% 10%, rgba(99, 102, 241, 0.18) 0%, transparent 45%),
     linear-gradient(135deg, #0b1220 0%, #0a0f1c 60%, #060912 100%);
   font-family: 'Segoe UI', Arial, sans-serif;
-  color: #e2e8f0;
+  color: #000;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -16,22 +16,33 @@
 .pdv-container h2,
 .pdv-container h3,
 .pdv-container h4 {
-  color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  color: #000;
+  font-weight: 800;
+  text-shadow:
+    -1px -1px 0 #facc15,
+    1px -1px 0 #facc15,
+    -1px 1px 0 #facc15,
+    1px 1px 0 #facc15;
 }
 
 .pdv-container p,
 .pdv-container span,
 .pdv-container li,
 .pdv-container label {
-  color: #f1f5f9;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  color: #000;
+  font-weight: 700;
+  text-shadow:
+    -1px -1px 0 #facc15,
+    1px -1px 0 #facc15,
+    -1px 1px 0 #facc15,
+    1px 1px 0 #facc15;
 }
 
 .pdv-container input,
 .pdv-container textarea,
 .pdv-container select {
-  color: #f8fafc;
+  color: #000;
+  font-weight: 700;
 }
 
 .nota-overlay {
@@ -587,6 +598,29 @@
   margin-bottom: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid #f3f4f6;
+}
+
+.pedido-status-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-aceitar-pedido {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(34, 197, 94, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-aceitar-pedido:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 20px rgba(34, 197, 94, 0.45);
 }
 
 .pedido-id {

@@ -110,10 +110,10 @@ export class MesaController {
       const { mesa_id } = req.params;
       const { metodo_pagamento, desconto } = req.body;
 
-      // Buscar todos os pedidos pendentes da mesa
+      // Buscar todos os pedidos abertos da mesa
       const pedidos = db.prepare(`
         SELECT * FROM pedidos_mesa
-        WHERE mesa_id = ? AND status = 'pendente'
+        WHERE mesa_id = ? AND status != 'fechado'
       `).all(mesa_id);
 
       if (pedidos.length === 0) {
@@ -157,7 +157,7 @@ export class MesaController {
 
       // Marcar pedidos como fechados
       const stmtAtualizar = db.prepare(`
-        UPDATE pedidos_mesa SET status = 'fechado' WHERE mesa_id = ?
+        UPDATE pedidos_mesa SET status = 'fechado' WHERE mesa_id = ? AND status != 'fechado'
       `);
       stmtAtualizar.run(mesa_id);
 

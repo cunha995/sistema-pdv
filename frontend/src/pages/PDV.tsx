@@ -276,6 +276,20 @@ const PDV: React.FC = () => {
     }
   };
 
+  const aceitarPedidoMesa = async (mesaId: number, pedidoId: number) => {
+    try {
+      await api.mesas.atualizarStatus(mesaId, pedidoId, 'aceito');
+      const pedidosAtualizados = await api.mesas.listarPedidos(mesaId);
+      setPedidosMesa(pedidosAtualizados);
+      setMensagem('✓ Pedido aceito!');
+      setTimeout(() => setMensagem(''), 2000);
+    } catch (error) {
+      console.error('Erro ao aceitar pedido:', error);
+      setMensagem('❌ Erro ao aceitar pedido!');
+      setTimeout(() => setMensagem(''), 2000);
+    }
+  };
+
   const fecharContaMesa = async () => {
     if (!mesaSelecionada) return;
 
@@ -918,9 +932,19 @@ const PDV: React.FC = () => {
                       <div key={pedido.id} className="pedido-card">
                         <div className="pedido-header">
                           <span className="pedido-id">Pedido #{pedido.id}</span>
-                          <span className={`pedido-status status-${pedido.status}`}>
-                            {pedido.status}
-                          </span>
+                          <div className="pedido-status-group">
+                            <span className={`pedido-status status-${pedido.status}`}>
+                              {pedido.status}
+                            </span>
+                            {pedido.status === 'pendente' && (
+                              <button
+                                className="btn-aceitar-pedido"
+                                onClick={() => aceitarPedidoMesa(mesaSelecionada, pedido.id)}
+                              >
+                                Aceitar
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <div className="pedido-itens">
                           {pedido.itens?.map((item: any, idx: number) => (
