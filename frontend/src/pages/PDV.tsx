@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Produto, ItemVenda, Cliente } from '../types';
@@ -43,6 +43,13 @@ const PDV: React.FC = () => {
   const [mostrarMesas, setMostrarMesas] = useState(false);
   const [mesaSelecionada, setMesaSelecionada] = useState<number | null>(null);
   const [pedidosMesa, setPedidosMesa] = useState<any[]>([]);
+  const [mesasComPendencia, setMesasComPendencia] = useState<number[]>([]);
+  const sireneAtivaRef = useRef(false);
+  const primeiraChecagemRef = useRef(true);
+  const pedidosPendentesRef = useRef<Set<number>>(new Set());
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioUnlockedRef = useRef(false);
+  const mesasIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   useEffect(() => {
     carregarProdutos();
@@ -175,6 +182,87 @@ const PDV: React.FC = () => {
 
   const totalComDesconto = calcularTotal() - desconto;
 
+  const tocarSirene = async () => {
+    if (sireneAtivaRef.current) return;
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    try {
+      sireneAtivaRef.current = true;
+      const ctx = audioCtxRef.current || new AudioCtx();
+      audioCtxRef.current = ctx;
+
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
+      }
+
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      oscillator.type = 'sine';
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+
+      const now = ctx.currentTime;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.4, now + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.4);
+
+      oscillator.frequency.setValueAtTime(600, now);
+      oscillator.frequency.linearRampToValueAtTime(900, now + 0.6);
+      oscillator.frequency.linearRampToValueAtTime(500, now + 1.2);
+      oscillator.frequency.linearRampToValueAtTime(900, now + 1.8);
+      oscillator.frequency.linearRampToValueAtTime(600, now + 2.4);
+
+      oscillator.start();
+      oscillator.stop(now + 2.45);
+      oscillator.onended = () => {
+        sireneAtivaRef.current = false;
+      };
+    } catch {
+      sireneAtivaRef.current = false;
+    }
+  };
+
+  useEffect(() => {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+
+    const unlockAudio = async () => {
+      if (audioUnlockedRef.current) return;
+      try {
+        const ctx = audioCtxRef.current || new AudioCtx();
+        audioCtxRef.current = ctx;
+        if (ctx.state === 'suspended') {
+          await ctx.resume();
+        }
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.01);
+        audioUnlockedRef.current = true;
+      } catch {
+        // ignore
+      }
+    };
+
+    const handleFirstInteraction = () => {
+      unlockAudio();
+      document.removeEventListener('pointerdown', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+    };
+
+    document.addEventListener('pointerdown', handleFirstInteraction, { passive: true });
+    document.addEventListener('keydown', handleFirstInteraction);
+
+    return () => {
+      document.removeEventListener('pointerdown', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
+    };
+  }, []);
+
   const carregarPedidosMesa = async (mesaId: number) => {
     try {
       const pedidos = await api.mesas.listarPedidos(mesaId);
@@ -213,6 +301,67 @@ const PDV: React.FC = () => {
       .filter(p => p.status !== 'fechado')
       .reduce((total, pedido) => total + parseFloat(pedido.total || 0), 0);
   };
+
+  useEffect(() => {
+    if (!caixaAberto) {
+      setMesasComPendencia([]);
+      pedidosPendentesRef.current = new Set();
+      primeiraChecagemRef.current = true;
+      return;
+    }
+
+    let ativo = true;
+
+    const verificarPendencias = async () => {
+      try {
+        const pendentesPorMesa: number[] = [];
+        const pendentesIds = new Set<number>();
+
+        const resultados = await Promise.all(
+          mesasIds.map(async (mesaId) => {
+            const pedidos = await api.mesas.listarPedidos(mesaId);
+            return { mesaId, pedidos: Array.isArray(pedidos) ? pedidos : [] };
+          })
+        );
+
+        resultados.forEach(({ mesaId, pedidos }) => {
+          const pendentes = pedidos.filter((p: any) => p.status === 'pendente');
+          if (pendentes.length > 0) {
+            pendentesPorMesa.push(mesaId);
+          }
+          pendentes.forEach((p: any) => pendentesIds.add(p.id));
+        });
+
+        if (!ativo) return;
+
+        if (!primeiraChecagemRef.current) {
+          const prev = pedidosPendentesRef.current;
+          const temNovo = Array.from(pendentesIds).some((id) => !prev.has(id));
+          if (temNovo) {
+            tocarSirene();
+            if (pendentesPorMesa.length > 0) {
+              setMensagem(`🔔 Pedido pendente: ${pendentesPorMesa.map((m) => `Mesa ${m}`).join(', ')}`);
+              setTimeout(() => setMensagem(''), 3000);
+            }
+          }
+        }
+
+        primeiraChecagemRef.current = false;
+        pedidosPendentesRef.current = pendentesIds;
+        setMesasComPendencia(pendentesPorMesa.sort((a, b) => a - b));
+      } catch (error) {
+        console.error('Erro ao verificar pendências das mesas:', error);
+      }
+    };
+
+    verificarPendencias();
+    const interval = setInterval(verificarPendencias, 5000);
+
+    return () => {
+      ativo = false;
+      clearInterval(interval);
+    };
+  }, [caixaAberto]);
 
   const finalizarVenda = async () => {
     if (carrinho.length === 0) {
@@ -593,12 +742,22 @@ const PDV: React.FC = () => {
           </button>
         )}
         <button 
-          className="btn-mesas-toggle"
+          className={`btn-mesas-toggle ${caixaAberto && mesasComPendencia.length > 0 ? 'pendente' : ''}`}
           onClick={() => setMostrarMesas(!mostrarMesas)}
         >
           {mostrarMesas ? '✕ Fechar' : '🍽️ Mesas'}
+          {caixaAberto && mesasComPendencia.length > 0 && (
+            <span className="mesas-alerta-badge">!</span>
+          )}
         </button>
       </div>
+
+      {caixaAberto && mesasComPendencia.length > 0 && (
+        <div className="pdv-alerta-pendente">
+          <span>🚨 Pedidos pendentes:</span>
+          <strong>{mesasComPendencia.map((m) => `Mesa ${m}`).join(', ')}</strong>
+        </div>
+      )}
 
       {/* Painel de Mesas */}
       {mostrarMesas && (
@@ -607,15 +766,23 @@ const PDV: React.FC = () => {
             <h2>Mesas Disponíveis</h2>
             <p>Selecione uma mesa para visualizar e fechar a conta</p>
           </div>
+          {caixaAberto && mesasComPendencia.length > 0 && (
+            <div className="mesas-alerta">
+              <span>⚠️ Pedidos pendentes nas mesas:</span>
+              <strong>{mesasComPendencia.map((m) => `Mesa ${m}`).join(', ')}</strong>
+            </div>
+          )}
           <div className="mesas-grid">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mesaNum) => (
               <button
                 key={mesaNum}
-                className={`mesa-btn ${mesaSelecionada === mesaNum ? 'selecionada' : ''}`}
+                className={`mesa-btn ${mesaSelecionada === mesaNum ? 'selecionada' : ''} ${mesasComPendencia.includes(mesaNum) ? 'pendente' : ''}`}
                 onClick={() => carregarPedidosMesa(mesaNum)}
               >
                 <span className="mesa-numero">Mesa {mesaNum}</span>
-                <span className="mesa-status">Clique para ver</span>
+                <span className="mesa-status">
+                  {mesasComPendencia.includes(mesaNum) ? 'Pedido pendente' : 'Clique para ver'}
+                </span>
               </button>
             ))}
           </div>

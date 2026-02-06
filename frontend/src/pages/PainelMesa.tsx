@@ -30,6 +30,7 @@ const PainelMesa: React.FC = () => {
   const [mensagem, setMensagem] = useState('');
   const [metodoPagamento, setMetodoPagamento] = useState('dinheiro');
   const [desconto, setDesconto] = useState(0);
+  const [chamandoAtendente, setChamandoAtendente] = useState(false);
 
   useEffect(() => {
     api.produtos.listar().then(setProdutos);
@@ -102,6 +103,29 @@ const PainelMesa: React.FC = () => {
     }
   };
 
+  const chamarAtendente = async () => {
+    if (!id || chamandoAtendente) return;
+    setChamandoAtendente(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || '/api';
+      const response = await fetch(`${apiUrl}/mesas/${id}/chamar-atendente`, {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        setMensagem('✓ Atendente chamado!');
+      } else {
+        setMensagem('✗ Erro ao chamar atendente');
+      }
+    } catch (error) {
+      setMensagem('✗ Erro ao chamar atendente');
+      console.error(error);
+    } finally {
+      setChamandoAtendente(false);
+      setTimeout(() => setMensagem(''), 2000);
+    }
+  };
+
   const fecharConta = async () => {
     if (!id) return;
 
@@ -140,7 +164,16 @@ const PainelMesa: React.FC = () => {
   return (
     <div className="painel-mesa">
       <div className="painel-header">
-        <h1>Mesa {id}</h1>
+        <div className="painel-header-left">
+          <h1>Mesa {id}</h1>
+          <button
+            className="btn-atendente"
+            onClick={chamarAtendente}
+            disabled={chamandoAtendente}
+          >
+            {chamandoAtendente ? 'Chamando...' : '🔔 Chamar Atendente'}
+          </button>
+        </div>
         <div className="total-conta">
           <strong>Total da Conta: R$ {(totalConta - desconto).toFixed(2)}</strong>
         </div>

@@ -198,9 +198,16 @@
   border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 12px;
   font-size: 15px;
-  color: #f8fafc;
+  color: #000;
+  font-weight: 700;
   background: rgba(15, 23, 42, 0.6);
   transition: all 0.3s ease;
+}
+
+.login-form .form-group input::placeholder {
+  color: #000;
+  opacity: 0.6;
+  font-weight: 700;
 }
 
 .login-form .form-group input:focus {

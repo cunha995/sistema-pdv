@@ -86,6 +86,24 @@ export class MesaController {
     }
   }
 
+  // Chamar atendente
+  static chamarAtendente(req: any, res: any) {
+    try {
+      const { mesa_id } = req.params;
+
+      const stmt = db.prepare(`
+        INSERT INTO chamados_mesa (mesa_id, status)
+        VALUES (?, 'pendente')
+      `);
+
+      const result = stmt.run(mesa_id);
+
+      res.status(201).json({ id: result.lastInsertRowid, mesa_id, status: 'pendente' });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
   // Fechar conta (consolidar todos os pedidos em uma venda)
   static fecharConta(req: any, res: any) {
     try {

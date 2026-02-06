@@ -17,6 +17,13 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
+.painel-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .painel-header h1 {
   margin: 0;
   color: #2a4d7a;
@@ -29,6 +36,29 @@
   padding: 10px 20px;
   background: #e3f0ff;
   border-radius: 8px;
+}
+
+.btn-atendente {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  border: none;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 10px 20px rgba(239, 68, 68, 0.35);
+}
+
+.btn-atendente:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px rgba(239, 68, 68, 0.45);
+}
+
+.btn-atendente:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .mensagem {

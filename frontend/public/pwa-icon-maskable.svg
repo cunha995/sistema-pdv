@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Sistema PDV">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="#0b1220"/>
+  <rect x="48" y="48" width="416" height="416" rx="88" fill="url(#g)"/>
+  <path d="M164 320h184v36H164zM176 160h160a24 24 0 0 1 24 24v72a24 24 0 0 1-24 24H176a24 24 0 0 1-24-24v-72a24 24 0 0 1 24-24z" fill="#0b1220" opacity="0.9"/>
+  <circle cx="212" cy="220" r="22" fill="#e2e8f0"/>
+  <circle cx="300" cy="220" r="22" fill="#e2e8f0"/>
+</svg>

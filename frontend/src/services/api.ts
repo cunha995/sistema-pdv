@@ -66,11 +66,31 @@ export const api = {
       return fetch(`${API_URL}/vendas${params}`).then(r => r.json());
     },
     buscar: (id: number) => fetch(`${API_URL}/vendas/${id}`).then(r => r.json()),
-    criar: (data: any) => fetch(`${API_URL}/vendas`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }).then(r => r.json()),
+    criar: async (data: any) => {
+      const response = await fetch(`${API_URL}/vendas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const raw = await response.text();
+      let json: any = null;
+      try {
+        json = raw ? JSON.parse(raw) : null;
+      } catch {
+        json = null;
+      }
+
+      if (!response.ok) {
+        throw new Error(json?.error || 'Erro ao finalizar venda');
+      }
+
+      if (!json) {
+        throw new Error('Resposta inválida do servidor');
+      }
+
+      return json;
+    },
     relatorio: (dataInicio?: string, dataFim?: string) => {
       const params = new URLSearchParams();
       if (dataInicio) params.append('data_inicio', dataInicio);
