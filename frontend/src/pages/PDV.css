@@ -56,6 +56,12 @@
   gap: 12px;
 }
 
+.nota-card,
+.nota-card * {
+  color: #000000;
+  font-weight: 700;
+}
+
 .nota-header {
   display: flex;
   justify-content: space-between;
