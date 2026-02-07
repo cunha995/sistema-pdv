@@ -294,12 +294,14 @@ const PDV: React.FC = () => {
     if (!mesaSelecionada) return;
 
     try {
-      const resp = await api.mesas.fecharConta(mesaSelecionada, {
-        metodo_pagamento: metodoPagamento,
-        desconto
-      });
       const usuarioStr = localStorage.getItem('usuario');
       const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+      const empresaId = caixaOperador?.empresa_id || usuario?.empresa_id;
+      const resp = await api.mesas.fecharConta(mesaSelecionada, {
+        metodo_pagamento: metodoPagamento,
+        desconto,
+        empresa_id: empresaId
+      });
       let empresa = {
         nome: usuario?.empresa_nome || 'Empresa',
         cnpj: '—',
@@ -343,6 +345,8 @@ const PDV: React.FC = () => {
         desconto,
         metodo: metodoPagamento
       });
+
+      setTotalVendasSessao((prev) => prev + (calcularTotalMesa() - desconto));
 
       setMensagem('✓ Conta da mesa fechada com sucesso!');
       setMesaSelecionada(null);

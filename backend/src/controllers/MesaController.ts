@@ -108,7 +108,7 @@ export class MesaController {
   static fecharConta(req: any, res: any) {
     try {
       const { mesa_id } = req.params;
-      const { metodo_pagamento, desconto } = req.body;
+      const { metodo_pagamento, desconto, empresa_id } = req.body;
 
       // Buscar todos os pedidos abertos da mesa
       const pedidos = db.prepare(`
@@ -139,11 +139,11 @@ export class MesaController {
 
       // Criar venda consolidada
       const stmtVenda = db.prepare(`
-        INSERT INTO vendas (total, desconto, metodo_pagamento, observacoes)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO vendas (empresa_id, total, desconto, metodo_pagamento, observacoes)
+        VALUES (?, ?, ?, ?, ?)
       `);
 
-      const resultVenda = stmtVenda.run(totalComDesconto, desconto || 0, metodo_pagamento, `Mesa ${mesa_id}`);
+      const resultVenda = stmtVenda.run(empresa_id || null, totalComDesconto, desconto || 0, metodo_pagamento, `Mesa ${mesa_id}`);
 
       // Inserir itens da venda
       const stmtItemVenda = db.prepare(`
