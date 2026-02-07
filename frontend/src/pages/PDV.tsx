@@ -980,7 +980,8 @@ const PDV: React.FC = () => {
                             {pedido.status === 'pendente' && (
                               <button
                                 className="btn-aceitar-pedido"
-                                onClick={() => aceitarPedidoMesa(mesaSelecionada, pedido.id)}
+                                type="button"
+                                onClick={() => aceitarPedidoMesa(pedido.mesa_id || mesaSelecionada, pedido.id)}
                               >
                                 Aceitar
                               </button>

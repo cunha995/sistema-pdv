@@ -610,6 +610,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  position: relative;
+  z-index: 1;
 }
 
 .btn-aceitar-pedido {
@@ -622,6 +624,9 @@
   color: #fff;
   box-shadow: 0 8px 16px rgba(34, 197, 94, 0.35);
   transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
 }
 
 .btn-aceitar-pedido:hover {
@@ -640,6 +645,7 @@
   font-size: 0.85em;
   font-weight: 600;
   text-transform: uppercase;
+  pointer-events: none;
 }
 
 .status-pendente {
