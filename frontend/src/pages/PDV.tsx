@@ -51,6 +51,7 @@ const PDV: React.FC = () => {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
   const mesasIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const statusPendentes = new Set(['pendente', 'aceito', 'preparando', 'pronto']);
 
   useEffect(() => {
     carregarProdutos();
@@ -421,7 +422,7 @@ const PDV: React.FC = () => {
       );
 
       resultados.forEach(({ mesaId, pedidos }) => {
-        const ativos = pedidos.filter((p: any) => p.status !== 'fechado');
+        const ativos = pedidos.filter((p: any) => statusPendentes.has(p.status));
         if (ativos.length > 0) {
           pendentesPorMesa.push(mesaId);
         }
