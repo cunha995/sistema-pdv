@@ -45,6 +45,7 @@ const PDV: React.FC = () => {
   const [pedidosMesa, setPedidosMesa] = useState<any[]>([]);
   const [mesaParaFechar, setMesaParaFechar] = useState<number | null>(null);
   const [mesasComPendencia, setMesasComPendencia] = useState<number[]>([]);
+  const [mesasAceitas, setMesasAceitas] = useState<number[]>([]);
   const sireneAtivaRef = useRef(false);
   const primeiraChecagemRef = useRef(true);
   const pedidosPendentesRef = useRef<Set<number>>(new Set());
@@ -283,6 +284,7 @@ const PDV: React.FC = () => {
       const pedidosAtualizados = await api.mesas.listarPedidos(mesaId);
       setPedidosMesa(pedidosAtualizados);
       setMensagem('✓ Pedido aceito!');
+      verificarPendencias(true);
       setTimeout(() => setMensagem(''), 2000);
     } catch (error) {
       console.error('Erro ao aceitar pedido:', error);
@@ -412,6 +414,7 @@ const PDV: React.FC = () => {
     if (!caixaAberto) return;
     try {
       const pendentesPorMesa: number[] = [];
+      const aceitasPorMesa: number[] = [];
       const pendentesIds = new Set<number>();
 
       const resultados = await Promise.all(
@@ -422,11 +425,17 @@ const PDV: React.FC = () => {
       );
 
       resultados.forEach(({ mesaId, pedidos }) => {
-        const ativos = pedidos.filter((p: any) => statusPendentes.has(p.status));
-        if (ativos.length > 0) {
+        const pendentes = pedidos.filter((p: any) => p.status === 'pendente');
+        const aceitos = pedidos.filter((p: any) => p.status === 'aceito');
+
+        if (pendentes.length > 0) {
           pendentesPorMesa.push(mesaId);
         }
-        ativos.forEach((p: any) => pendentesIds.add(p.id));
+        if (aceitos.length > 0) {
+          aceitasPorMesa.push(mesaId);
+        }
+
+        pendentes.forEach((p: any) => pendentesIds.add(p.id));
       });
 
       if (!primeiraChecagemRef.current) {
@@ -444,6 +453,7 @@ const PDV: React.FC = () => {
       primeiraChecagemRef.current = false;
       pedidosPendentesRef.current = pendentesIds;
       setMesasComPendencia(pendentesPorMesa.sort((a, b) => a - b));
+      setMesasAceitas(aceitasPorMesa.sort((a, b) => a - b));
     } catch (error) {
       console.error('Erro ao verificar pendências das mesas:', error);
     }
@@ -452,6 +462,7 @@ const PDV: React.FC = () => {
   useEffect(() => {
     if (!caixaAberto) {
       setMesasComPendencia([]);
+      setMesasAceitas([]);
       pedidosPendentesRef.current = new Set();
       primeiraChecagemRef.current = true;
       return;
@@ -895,12 +906,16 @@ const PDV: React.FC = () => {
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mesaNum) => (
               <button
                 key={mesaNum}
-                className={`mesa-btn ${mesaSelecionada === mesaNum ? 'selecionada' : ''} ${mesasComPendencia.includes(mesaNum) ? 'pendente' : ''}`}
+                className={`mesa-btn ${mesaSelecionada === mesaNum ? 'selecionada' : ''} ${mesasComPendencia.includes(mesaNum) ? 'pendente' : ''} ${mesasAceitas.includes(mesaNum) ? 'aceita' : ''}`}
                 onClick={() => carregarPedidosMesa(mesaNum)}
               >
                 <span className="mesa-numero">Mesa {mesaNum}</span>
                 <span className="mesa-status">
-                  {mesasComPendencia.includes(mesaNum) ? 'Pedido pendente' : 'Clique para ver'}
+                  {mesasComPendencia.includes(mesaNum)
+                    ? 'Pedido pendente'
+                    : mesasAceitas.includes(mesaNum)
+                      ? 'Pedido aceito'
+                      : 'Clique para ver'}
                 </span>
               </button>
             ))}
