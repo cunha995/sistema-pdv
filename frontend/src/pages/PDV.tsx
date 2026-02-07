@@ -297,10 +297,11 @@ const PDV: React.FC = () => {
     if (!mesaSelecionada) return;
 
     try {
+      const mesaIdAtual = mesaSelecionada;
       const usuarioStr = localStorage.getItem('usuario');
       const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
       const empresaId = caixaOperador?.empresa_id || usuario?.empresa_id;
-      const resp = await api.mesas.fecharConta(mesaSelecionada, {
+      const resp = await api.mesas.fecharConta(mesaIdAtual, {
         metodo_pagamento: metodoPagamento,
         desconto,
         empresa_id: empresaId
@@ -351,11 +352,19 @@ const PDV: React.FC = () => {
 
       setTotalVendasSessao((prev) => prev + (calcularTotalMesa() - desconto));
 
+      try {
+        await api.mesas.finalizar(mesaIdAtual);
+      } catch {
+        // ignore
+      }
+
       setMensagem('✓ Conta da mesa fechada com sucesso!');
       setMesaSelecionada(null);
       setPedidosMesa([]);
       setDesconto(0);
       setMostrarMesas(false);
+      setMesasComPendencia((prev) => prev.filter((m) => m !== mesaIdAtual));
+      setMesasAceitas((prev) => prev.filter((m) => m !== mesaIdAtual));
       verificarPendencias(true);
       setTimeout(() => setMensagem(''), 3000);
     } catch (error) {
@@ -536,12 +545,15 @@ const PDV: React.FC = () => {
       setCarrinho([]);
       setDesconto(0);
       if (mesaParaFechar) {
+        const mesaIdFinal = mesaParaFechar;
         try {
-          await api.mesas.finalizar(mesaParaFechar);
+          await api.mesas.finalizar(mesaIdFinal);
         } catch {
           // ignore
         }
         setMesaParaFechar(null);
+        setMesasComPendencia((prev) => prev.filter((m) => m !== mesaIdFinal));
+        setMesasAceitas((prev) => prev.filter((m) => m !== mesaIdFinal));
         verificarPendencias(true);
       }
       setMensagem('✓ Venda realizada com sucesso!');
