@@ -648,6 +648,13 @@
   pointer-events: none;
 }
 
+.status-button {
+  pointer-events: auto;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+}
+
 .status-pendente {
   background: #fef3c7;
   color: #92400e;

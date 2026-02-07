@@ -974,9 +974,19 @@ const PDV: React.FC = () => {
                         <div className="pedido-header">
                           <span className="pedido-id">Pedido #{pedido.id}</span>
                           <div className="pedido-status-group">
-                            <span className={`pedido-status status-${pedido.status}`}>
-                              {pedido.status}
-                            </span>
+                            {pedido.status === 'pendente' ? (
+                              <button
+                                type="button"
+                                className={`pedido-status status-${pedido.status} status-button`}
+                                onClick={() => aceitarPedidoMesa(pedido.mesa_id || mesaSelecionada, pedido.id)}
+                              >
+                                {pedido.status}
+                              </button>
+                            ) : (
+                              <span className={`pedido-status status-${pedido.status}`}>
+                                {pedido.status}
+                              </span>
+                            )}
                             {pedido.status === 'pendente' && (
                               <button
                                 className="btn-aceitar-pedido"
