@@ -280,15 +280,24 @@ const PDV: React.FC = () => {
 
   const aceitarPedidoMesa = async (mesaId: number, pedidoId: number) => {
     try {
+      if (!mesaId) return;
       await api.mesas.atualizarStatus(mesaId, pedidoId, 'aceito');
       const pedidosAtualizados = await api.mesas.listarPedidos(mesaId);
       setPedidosMesa(pedidosAtualizados);
+
+      const temPendentes = pedidosAtualizados.some((p: any) => p.status === 'pendente');
+      const temAceitos = pedidosAtualizados.some((p: any) => p.status === 'aceito');
+
+      setMesasComPendencia((prev) => temPendentes ? prev.includes(mesaId) ? prev : [...prev, mesaId] : prev.filter((m) => m !== mesaId));
+      setMesasAceitas((prev) => temAceitos ? prev.includes(mesaId) ? prev : [...prev, mesaId] : prev.filter((m) => m !== mesaId));
+
       setMensagem('✓ Pedido aceito!');
       verificarPendencias(true);
       setTimeout(() => setMensagem(''), 2000);
     } catch (error) {
       console.error('Erro ao aceitar pedido:', error);
-      setMensagem('❌ Erro ao aceitar pedido!');
+      const mensagemErro = error instanceof Error ? error.message : 'Erro ao aceitar pedido';
+      setMensagem(`❌ ${mensagemErro}`);
       setTimeout(() => setMensagem(''), 2000);
     }
   };
