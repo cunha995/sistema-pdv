@@ -530,8 +530,15 @@
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
 
-.btn-lancar-pdv {
+.mesa-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
   margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-lancar-pdv {
   background: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
   color: #fff;
   border: none;
@@ -546,6 +553,23 @@
 .btn-lancar-pdv:hover {
   transform: translateY(-2px);
   box-shadow: 0 14px 26px rgba(37, 99, 235, 0.45);
+}
+
+.btn-fechar-mesa {
+  background: linear-gradient(135deg, #10b981 0%, #22c55e 100%);
+  color: #062414;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-fechar-mesa:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px rgba(16, 185, 129, 0.45);
 }
 
 .mesa-detalhes-header h3 {

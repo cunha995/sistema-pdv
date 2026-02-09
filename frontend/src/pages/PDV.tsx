@@ -433,6 +433,26 @@ const PDV: React.FC = () => {
     setTimeout(() => setMensagem(''), 2000);
   };
 
+  const finalizarMesaSelecionada = async () => {
+    if (!mesaSelecionada) return;
+    const mesaIdAtual = mesaSelecionada;
+    try {
+      await api.mesas.finalizar(mesaIdAtual);
+      setMensagem('✓ Mesa finalizada e liberada!');
+      setMesaSelecionada(null);
+      setPedidosMesa([]);
+      setDesconto(0);
+      setMesasComPendencia((prev) => prev.filter((m) => m !== mesaIdAtual));
+      setMesasAceitas((prev) => prev.filter((m) => m !== mesaIdAtual));
+      verificarPendencias(true);
+      setTimeout(() => setMensagem(''), 3000);
+    } catch (error) {
+      console.error('Erro ao finalizar mesa:', error);
+      setMensagem('❌ Erro ao finalizar mesa!');
+      setTimeout(() => setMensagem(''), 2000);
+    }
+  };
+
   const calcularTotalMesa = () => {
     return pedidosMesa
       .filter(p => p.status !== 'fechado')
@@ -729,7 +749,6 @@ const PDV: React.FC = () => {
                 className="nota-fechar"
                 onClick={() => {
                   setNotaFiscal(null);
-                  navigate('/admin');
                 }}
               >
                 ✕
@@ -970,9 +989,14 @@ const PDV: React.FC = () => {
               </div>
 
               {pedidosMesa.filter(p => p.status !== 'fechado').length > 0 && (
-                <button className="btn-lancar-pdv" onClick={lancarMesaNoPdv}>
-                  ➜ Lançar no PDV
-                </button>
+                <div className="mesa-actions">
+                  <button className="btn-lancar-pdv" onClick={lancarMesaNoPdv}>
+                    ➜ Lançar no PDV
+                  </button>
+                  <button className="btn-fechar-mesa" onClick={finalizarMesaSelecionada}>
+                    ✓ Fechar Mesa
+                  </button>
+                </div>
               )}
 
               {pedidosMesa.length === 0 ? (
