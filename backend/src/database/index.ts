@@ -224,6 +224,17 @@ try {
   console.error('Erro ao migrar vendas.empresa_id:', error);
 }
 
+// Migração simples: adicionar empresa_id na tabela produtos se não existir
+try {
+  const columns = db.prepare('PRAGMA table_info(produtos)').all();
+  const hasEmpresaId = columns.some((c: any) => c.name === 'empresa_id');
+  if (!hasEmpresaId) {
+    db.prepare('ALTER TABLE produtos ADD COLUMN empresa_id INTEGER').run();
+  }
+} catch (error) {
+  console.error('Erro ao migrar produtos.empresa_id:', error);
+}
+
 // Migrações: adicionar empresa_id em produtos e clientes
 try {
   const prodCols = db.prepare('PRAGMA table_info(produtos)').all();
