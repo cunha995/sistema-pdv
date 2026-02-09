@@ -20,6 +20,7 @@ interface LoginResponse {
 export default function Login() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
   const navigate = useNavigate();
@@ -100,14 +101,24 @@ export default function Login() {
 
             <div className="form-group">
               <label htmlFor="senha">Senha</label>
-              <input
-                type="password"
-                id="senha"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
+              <div className="password-field">
+                <input
+                  type={mostrarSenha ? 'text' : 'password'}
+                  id="senha"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+                <button
+                  type="button"
+                  className="toggle-password"
+                  onClick={() => setMostrarSenha((prev) => !prev)}
+                  aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                >
+                  {mostrarSenha ? 'Ocultar' : 'Mostrar'}
+                </button>
+              </div>
             </div>
 
             {erro && (
@@ -138,3 +149,4 @@ export default function Login() {
     </div>
   );
 }
+//.

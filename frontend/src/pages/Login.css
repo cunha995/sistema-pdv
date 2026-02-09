@@ -369,5 +369,31 @@
 
   .visual-metrics {
     grid-template-columns: 1fr;
+  .password-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .password-field input {
+    width: 100%;
+    padding-right: 96px;
+  }
+
+  .toggle-password {
+    position: absolute;
+    right: 8px;
+    border: none;
+    background: rgba(99, 102, 241, 0.15);
+    color: #e2e8f0;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .toggle-password:hover {
+    background: rgba(99, 102, 241, 0.3);
   }
 }
