@@ -10,7 +10,7 @@
     linear-gradient(135deg, #0b1220 0%, #0a0f1c 60%, #060912 100%);
   font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
   padding-bottom: 40px;
-  color: #e2e8f0;
+  color: #f1f5f9;
 }
 
 .dashboard-container h1,
@@ -25,8 +25,8 @@
 .dashboard-container span,
 .dashboard-container li,
 .dashboard-container label {
-  color: #f1f5f9;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  color: #e2e8f0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 /* Hero Header */
@@ -177,7 +177,7 @@
 }
 
 .stat-card {
-  background: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 100%);
+  background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 100%);
   border-radius: 18px;
   padding: 24px;
   display: flex;
@@ -186,7 +186,7 @@
   transition: all 0.3s;
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid rgba(148, 163, 184, 0.35);
   backdrop-filter: blur(12px);
 }
 
@@ -223,8 +223,8 @@
 
 .stat-label {
   font-size: 0.8em;
-  color: #cbd5f5;
-  font-weight: 600;
+  color: #fcd34d;
+  font-weight: 800;
   margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
@@ -232,8 +232,8 @@
 
 .stat-value {
   font-size: 2em;
-  font-weight: 700;
-  color: #f8fafc;
+  font-weight: 800;
+  color: #ffffff;
   margin-bottom: 8px;
   line-height: 1;
 }
@@ -271,14 +271,15 @@
 
 .stat-text {
   font-size: 0.85em;
-  color: #94a3b8;
+  color: #e2e8f0;
+  font-weight: 600;
 }
 
 /* Section Titles */
 .section-title {
   font-size: 1.5em;
-  font-weight: 700;
-  color: #f8fafc;
+  font-weight: 800;
+  color: #fcd34d;
   margin: 0 0 20px 0;
   display: flex;
   align-items: center;
@@ -349,14 +350,15 @@
 .action-content h3 {
   margin: 0 0 4px 0;
   font-size: 1.2em;
-  color: #f8fafc;
-  font-weight: 700;
+  color: #ffffff;
+  font-weight: 800;
 }
 
 .action-content p {
   margin: 0;
   font-size: 0.9em;
-  color: #94a3b8;
+  color: #e2e8f0;
+  font-weight: 600;
 }
 
 .action-arrow {
@@ -407,14 +409,15 @@
 .mgmt-card h3 {
   margin: 0 0 8px 0;
   font-size: 1.1em;
-  color: #f8fafc;
-  font-weight: 700;
+  color: #ffffff;
+  font-weight: 800;
 }
 
 .mgmt-card p {
   margin: 0;
   font-size: 0.85em;
-  color: #94a3b8;
+  color: #e2e8f0;
+  font-weight: 600;
 }
 
 /* Alerts Section */
@@ -435,7 +438,7 @@
 }
 
 .alerts-header .section-title {
-  color: #f8fafc;
+  color: #fcd34d;
   margin: 0;
 }
 
@@ -497,19 +500,20 @@
 .alert-content h4 {
   margin: 0 0 4px 0;
   font-size: 1em;
-  color: #f8fafc;
-  font-weight: 600;
+  color: #ffffff;
+  font-weight: 800;
 }
 
 .alert-content p {
   margin: 0;
   font-size: 0.9em;
-  color: #cbd5f5;
+  color: #e2e8f0;
+  font-weight: 600;
 }
 
 .alert-time {
   font-size: 0.8em;
-  color: #94a3b8;
+  color: #fcd34d;
   white-space: nowrap;
 }
 

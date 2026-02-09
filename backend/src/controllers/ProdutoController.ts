@@ -83,7 +83,7 @@ export class ProdutoController {
       res.status(201).json({ id: result.lastInsertRowid, message: 'Produto criado com sucesso' });
     } catch (error: any) {
       if (error.message.includes('UNIQUE constraint failed')) {
-        return res.status(400).json({ error: 'Código de barras já cadastrado' });
+        return res.status(400).json({ error: 'Código de barras já cadastrado para esta empresa' });
       }
       res.status(500).json({ error: 'Erro ao criar produto' });
     }
@@ -112,7 +112,7 @@ export class ProdutoController {
       res.json({ message: 'Produto atualizado com sucesso' });
     } catch (error: any) {
       if (error.message.includes('UNIQUE constraint failed')) {
-        return res.status(400).json({ error: 'Código de barras já cadastrado' });
+        return res.status(400).json({ error: 'Código de barras já cadastrado para esta empresa' });
       }
       res.status(500).json({ error: 'Erro ao atualizar produto' });
     }

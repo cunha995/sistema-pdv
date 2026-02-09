@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { ClienteController } from '../controllers/ClienteController';
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
+
+router.use(requireAuth);
 
 router.get('/', ClienteController.listar);
 router.get('/:id', ClienteController.buscarPorId);

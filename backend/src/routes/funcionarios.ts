@@ -1,10 +1,14 @@
 import express from 'express';
 import { FuncionarioController } from '../controllers/FuncionarioController';
+import { requireAuth } from '../middleware/auth';
 
 const router = express.Router();
 
-router.get('/', FuncionarioController.listar);
 router.post('/login', FuncionarioController.login);
+
+router.use(requireAuth);
+
+router.get('/', FuncionarioController.listar);
 router.get('/:id', FuncionarioController.buscar);
 router.post('/', FuncionarioController.criar);
 router.put('/:id', FuncionarioController.atualizar);

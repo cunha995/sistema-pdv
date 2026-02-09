@@ -101,6 +101,7 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS funcionarios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    empresa_id INTEGER,
     nome TEXT NOT NULL,
     cpf TEXT UNIQUE NOT NULL,
     email TEXT,
@@ -234,6 +235,73 @@ try {
   }
 } catch (error) {
   console.error('Erro ao migrar produtos.empresa_id:', error);
+}
+
+// Migração: permitir código de barras por empresa (unique por empresa_id + codigo_barras)
+try {
+  const indices = db.prepare('PRAGMA index_list(produtos)').all() as any[];
+  const hasCompositeIndex = indices.some((i: any) => i.name === 'idx_produtos_empresa_codigo');
+
+  if (!hasCompositeIndex) {
+    const hasSingleCodigoUnique = indices.some((i: any) => {
+      if (!i.unique) return false;
+      const cols = db.prepare(`PRAGMA index_info(${i.name})`).all() as any[];
+      return cols.length === 1 && (cols[0] as any)?.name === 'codigo_barras';
+    });
+
+    if (hasSingleCodigoUnique) {
+      db.exec(`
+        BEGIN TRANSACTION;
+
+        ALTER TABLE produtos RENAME TO produtos_old;
+
+        CREATE TABLE produtos (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          empresa_id INTEGER,
+          nome TEXT NOT NULL,
+          descricao TEXT,
+          preco REAL NOT NULL,
+          codigo_barras TEXT,
+          estoque INTEGER DEFAULT 0,
+          categoria TEXT,
+          ativo BOOLEAN DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        INSERT INTO produtos (id, empresa_id, nome, descricao, preco, codigo_barras, estoque, categoria, ativo, created_at, updated_at)
+        SELECT id, empresa_id, nome, descricao, preco, codigo_barras, estoque, categoria, ativo, created_at, updated_at
+        FROM produtos_old;
+
+        DROP TABLE produtos_old;
+
+        CREATE UNIQUE INDEX idx_produtos_empresa_codigo
+        ON produtos (empresa_id, codigo_barras)
+        WHERE codigo_barras IS NOT NULL;
+
+        COMMIT;
+      `);
+    } else {
+      db.exec(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_produtos_empresa_codigo
+        ON produtos (empresa_id, codigo_barras)
+        WHERE codigo_barras IS NOT NULL;
+      `);
+    }
+  }
+} catch (error) {
+  console.error('Erro ao migrar unique de produtos.codigo_barras:', error);
+}
+
+// Migração simples: adicionar empresa_id na tabela funcionarios se não existir
+try {
+  const columns = db.prepare('PRAGMA table_info(funcionarios)').all();
+  const hasEmpresaId = columns.some((c: any) => c.name === 'empresa_id');
+  if (!hasEmpresaId) {
+    db.prepare('ALTER TABLE funcionarios ADD COLUMN empresa_id INTEGER').run();
+  }
+} catch (error) {
+  console.error('Erro ao migrar funcionarios.empresa_id:', error);
 }
 
 // Migração simples: adicionar campos extras em planos se não existirem

@@ -14,11 +14,17 @@ export class FuncionarioController {
   // Listar todos os funcionários
   static listar(req: Request, res: Response) {
     try {
+      const { empresa_id } = req.query as { empresa_id?: string };
+      if (!empresa_id) {
+        return res.json([]);
+      }
+
       const funcionarios = db.prepare(`
         SELECT id, nome, cpf, email, telefone, cargo, ativo, created_at, updated_at 
         FROM funcionarios 
+        WHERE empresa_id = ?
         ORDER BY nome
-      `).all();
+      `).all(empresa_id);
       res.json(funcionarios);
     } catch (error) {
       console.error(error);
@@ -30,11 +36,15 @@ export class FuncionarioController {
   static buscar(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const { empresa_id } = req.query as { empresa_id?: string };
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
       const funcionario = db.prepare(`
         SELECT id, nome, cpf, email, telefone, cargo, ativo, created_at, updated_at 
         FROM funcionarios 
-        WHERE id = ?
-      `).get(id);
+        WHERE id = ? AND empresa_id = ?
+      `).get(id, empresa_id);
       
       if (!funcionario) {
         return res.status(404).json({ error: 'Funcionário não encontrado' });
@@ -50,14 +60,18 @@ export class FuncionarioController {
   // Criar novo funcionário
   static criar(req: Request, res: Response) {
     try {
-      const { nome, cpf, email, telefone, cargo, senha } = req.body;
+      const { nome, cpf, email, telefone, cargo, senha, empresa_id } = req.body;
+
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
 
       if (!nome || !cpf) {
         return res.status(400).json({ error: 'Nome e CPF são obrigatórios' });
       }
 
       // Verificar se CPF já existe
-      const cpfExistente = db.prepare('SELECT id FROM funcionarios WHERE cpf = ?').get(cpf);
+      const cpfExistente = db.prepare('SELECT id FROM funcionarios WHERE cpf = ? AND empresa_id = ?').get(cpf, empresa_id);
       if (cpfExistente) {
         return res.status(400).json({ error: 'CPF já cadastrado' });
       }
@@ -65,12 +79,13 @@ export class FuncionarioController {
       const senhaHash = senha ? hashSenha(senha) : null;
 
       const result = db.prepare(`
-        INSERT INTO funcionarios (nome, cpf, email, telefone, cargo, senha)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).run(nome, cpf, email, telefone, cargo || 'Operador de Caixa', senhaHash);
+        INSERT INTO funcionarios (empresa_id, nome, cpf, email, telefone, cargo, senha)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(empresa_id, nome, cpf, email, telefone, cargo || 'Operador de Caixa', senhaHash);
 
       res.status(201).json({
         id: result.lastInsertRowid,
+        empresa_id,
         nome,
         cpf,
         email,
@@ -91,9 +106,13 @@ export class FuncionarioController {
   static atualizar(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { nome, cpf, email, telefone, cargo, ativo, senha } = req.body;
+      const { nome, cpf, email, telefone, cargo, ativo, senha, empresa_id } = req.body;
 
-      const funcionario = db.prepare('SELECT id FROM funcionarios WHERE id = ?').get(id);
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
+
+      const funcionario = db.prepare('SELECT id FROM funcionarios WHERE id = ? AND empresa_id = ?').get(id, empresa_id);
       if (!funcionario) {
         return res.status(404).json({ error: 'Funcionário não encontrado' });
       }
@@ -105,15 +124,15 @@ export class FuncionarioController {
           UPDATE funcionarios 
           SET nome = ?, cpf = ?, email = ?, telefone = ?, cargo = ?, ativo = ?, senha = ?,
               updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `).run(nome, cpf, email, telefone, cargo, ativo !== undefined ? ativo : 1, senhaHash, id);
+          WHERE id = ? AND empresa_id = ?
+        `).run(nome, cpf, email, telefone, cargo, ativo !== undefined ? ativo : 1, senhaHash, id, empresa_id);
       } else {
         db.prepare(`
           UPDATE funcionarios 
           SET nome = ?, cpf = ?, email = ?, telefone = ?, cargo = ?, ativo = ?,
               updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `).run(nome, cpf, email, telefone, cargo, ativo !== undefined ? ativo : 1, id);
+          WHERE id = ? AND empresa_id = ?
+        `).run(nome, cpf, email, telefone, cargo, ativo !== undefined ? ativo : 1, id, empresa_id);
       }
 
       res.json({ message: 'Funcionário atualizado com sucesso' });
@@ -130,14 +149,19 @@ export class FuncionarioController {
   static deletar(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const { empresa_id } = req.query as { empresa_id?: string };
 
-      const funcionario = db.prepare('SELECT id FROM funcionarios WHERE id = ?').get(id);
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
+
+      const funcionario = db.prepare('SELECT id FROM funcionarios WHERE id = ? AND empresa_id = ?').get(id, empresa_id);
       if (!funcionario) {
         return res.status(404).json({ error: 'Funcionário não encontrado' });
       }
 
       // Soft delete - apenas desativa
-      db.prepare('UPDATE funcionarios SET ativo = 0 WHERE id = ?').run(id);
+      db.prepare('UPDATE funcionarios SET ativo = 0 WHERE id = ? AND empresa_id = ?').run(id, empresa_id);
 
       res.json({ message: 'Funcionário desativado com sucesso' });
     } catch (error) {
@@ -150,13 +174,18 @@ export class FuncionarioController {
   static ativar(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const { empresa_id } = req.query as { empresa_id?: string };
 
-      const funcionario = db.prepare('SELECT id FROM funcionarios WHERE id = ?').get(id);
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
+
+      const funcionario = db.prepare('SELECT id FROM funcionarios WHERE id = ? AND empresa_id = ?').get(id, empresa_id);
       if (!funcionario) {
         return res.status(404).json({ error: 'Funcionário não encontrado' });
       }
 
-      db.prepare('UPDATE funcionarios SET ativo = 1 WHERE id = ?').run(id);
+      db.prepare('UPDATE funcionarios SET ativo = 1 WHERE id = ? AND empresa_id = ?').run(id, empresa_id);
 
       res.json({ message: 'Funcionário ativado com sucesso' });
     } catch (error) {
@@ -168,16 +197,21 @@ export class FuncionarioController {
   // Login de funcionário
   static login(req: Request, res: Response) {
     try {
-      const { usuario, senha } = req.body;
+      const { usuario, senha, empresa_id } = req.body;
 
       if (!usuario || !senha) {
         return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
       }
 
-      const funcionario: any = db.prepare(`
-        SELECT * FROM funcionarios
-        WHERE (cpf = ? OR email = ? OR nome = ?) AND ativo = 1
-      `).get(usuario, usuario, usuario);
+      const funcionario: any = empresa_id
+        ? db.prepare(`
+          SELECT * FROM funcionarios
+          WHERE (cpf = ? OR email = ? OR nome = ?) AND ativo = 1 AND empresa_id = ?
+        `).get(usuario, usuario, usuario, empresa_id)
+        : db.prepare(`
+          SELECT * FROM funcionarios
+          WHERE (cpf = ? OR email = ? OR nome = ?) AND ativo = 1
+        `).get(usuario, usuario, usuario);
 
       if (!funcionario || !funcionario.senha) {
         return res.status(401).json({ error: 'Credenciais inválidas' });

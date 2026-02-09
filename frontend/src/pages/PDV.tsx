@@ -92,7 +92,7 @@ const PDV: React.FC = () => {
   const carregarClientes = async () => {
     try {
       setCarregandoClientes(true);
-      const data = await api.clientes.listar();
+      const data = await api.clientes.listar(empresaId);
       setClientes(data);
     } catch (error) {
       console.error('Erro ao carregar clientes:', error);

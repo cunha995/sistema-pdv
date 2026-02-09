@@ -31,28 +31,45 @@ const getEmpresaIdFromStorage = () => {
   }
 };
 
+const getAuthToken = () => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('token');
+};
+
+const fetchWithAuth = (input: RequestInfo | URL, init: RequestInit = {}) => {
+  const token = getAuthToken();
+  const existingHeaders = init.headers instanceof Headers
+    ? Object.fromEntries(init.headers.entries())
+    : (init.headers || {});
+  const headers = {
+    ...existingHeaders,
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+  return fetch(input, { ...init, headers });
+};
+
 export const api = {
   // Produtos
   produtos: {
     listar: (empresaId?: number) => {
       const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
       const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}&t=${Date.now()}` : `?t=${Date.now()}`;
-      return fetch(`${API_URL}/produtos${qs}`, { cache: 'no-store' }).then(r => r.json());
+      return fetchWithAuth(`${API_URL}/produtos${qs}`, { cache: 'no-store' }).then(r => r.json());
     },
     buscar: (id: number, empresaId?: number) => {
       const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
       const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}` : '';
-      return fetch(`${API_URL}/produtos/${id}${qs}`).then(r => r.json());
+      return fetchWithAuth(`${API_URL}/produtos/${id}${qs}`).then(r => r.json());
     },
     buscarPorCodigo: (codigo: string, empresaId?: number) => {
       const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
       const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}` : '';
-      return fetch(`${API_URL}/produtos/codigo/${codigo}${qs}`).then(r => r.json());
+      return fetchWithAuth(`${API_URL}/produtos/codigo/${codigo}${qs}`).then(r => r.json());
     },
     criar: (data: any) => {
       const resolvedEmpresaId = data?.empresa_id ?? getEmpresaIdFromStorage();
       const payload = resolvedEmpresaId ? { ...data, empresa_id: resolvedEmpresaId } : data;
-      return fetch(`${API_URL}/produtos`, {
+      return fetchWithAuth(`${API_URL}/produtos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -61,7 +78,7 @@ export const api = {
     atualizar: (id: number, data: any) => {
       const resolvedEmpresaId = data?.empresa_id ?? getEmpresaIdFromStorage();
       const payload = resolvedEmpresaId ? { ...data, empresa_id: resolvedEmpresaId } : data;
-      return fetch(`${API_URL}/produtos/${id}`, {
+      return fetchWithAuth(`${API_URL}/produtos/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -70,7 +87,7 @@ export const api = {
     deletar: (id: number, empresaId?: number) => {
       const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
       const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}` : '';
-      return fetch(`${API_URL}/produtos/${id}${qs}`, {
+      return fetchWithAuth(`${API_URL}/produtos/${id}${qs}`, {
       method: 'DELETE'
       }).then(r => r.json());
     }
@@ -81,17 +98,17 @@ export const api = {
     listar: (empresaId?: number) => {
       const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
       const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}&t=${Date.now()}` : `?t=${Date.now()}`;
-      return fetch(`${API_URL}/clientes${qs}`, { cache: 'no-store' }).then(r => r.json());
+      return fetchWithAuth(`${API_URL}/clientes${qs}`, { cache: 'no-store' }).then(r => r.json());
     },
     buscar: (id: number, empresaId?: number) => {
       const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
       const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}` : '';
-      return fetch(`${API_URL}/clientes/${id}${qs}`).then(r => r.json());
+      return fetchWithAuth(`${API_URL}/clientes/${id}${qs}`).then(r => r.json());
     },
     criar: (data: any) => {
       const resolvedEmpresaId = data?.empresa_id ?? getEmpresaIdFromStorage();
       const payload = resolvedEmpresaId ? { ...data, empresa_id: resolvedEmpresaId } : data;
-      return fetch(`${API_URL}/clientes`, {
+      return fetchWithAuth(`${API_URL}/clientes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -100,7 +117,7 @@ export const api = {
     atualizar: (id: number, data: any) => {
       const resolvedEmpresaId = data?.empresa_id ?? getEmpresaIdFromStorage();
       const payload = resolvedEmpresaId ? { ...data, empresa_id: resolvedEmpresaId } : data;
-      return fetch(`${API_URL}/clientes/${id}`, {
+      return fetchWithAuth(`${API_URL}/clientes/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -109,7 +126,7 @@ export const api = {
     deletar: (id: number, empresaId?: number) => {
       const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
       const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}` : '';
-      return fetch(`${API_URL}/clientes/${id}${qs}`, {
+      return fetchWithAuth(`${API_URL}/clientes/${id}${qs}`, {
       method: 'DELETE'
       }).then(r => r.json());
     }
@@ -119,11 +136,11 @@ export const api = {
   vendas: {
     listar: (empresa_id?: number) => {
       const params = empresa_id ? `?empresa_id=${empresa_id}&t=${Date.now()}` : `?t=${Date.now()}`;
-      return fetch(`${API_URL}/vendas${params}`, { cache: 'no-store' }).then(r => r.json());
+      return fetchWithAuth(`${API_URL}/vendas${params}`, { cache: 'no-store' }).then(r => r.json());
     },
-    buscar: (id: number) => fetch(`${API_URL}/vendas/${id}`).then(r => r.json()),
+    buscar: (id: number) => fetchWithAuth(`${API_URL}/vendas/${id}`).then(r => r.json()),
     criar: async (data: any) => {
-      const response = await fetch(`${API_URL}/vendas`, {
+      const response = await fetchWithAuth(`${API_URL}/vendas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -151,18 +168,18 @@ export const api = {
       const params = new URLSearchParams();
       if (dataInicio) params.append('data_inicio', dataInicio);
       if (dataFim) params.append('data_fim', dataFim);
-      return fetch(`${API_URL}/vendas/relatorio?${params}`).then(r => r.json());
+      return fetchWithAuth(`${API_URL}/vendas/relatorio?${params}`).then(r => r.json());
     }
   },
 
   // Mesas
   mesas: {
     listarPedidos: (mesaId: number) =>
-      fetch(`${API_URL}/mesas/${mesaId}/pedidos?t=${Date.now()}`, {
+      fetchWithAuth(`${API_URL}/mesas/${mesaId}/pedidos?t=${Date.now()}`, {
         cache: 'no-store'
       }).then(r => r.json()),
     criarPedido: async (mesaId: number, itens: any[]) => {
-      const response = await fetch(`${API_URL}/mesas/${mesaId}/pedidos`, {
+      const response = await fetchWithAuth(`${API_URL}/mesas/${mesaId}/pedidos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ itens })
@@ -183,7 +200,7 @@ export const api = {
       return json;
     },
     atualizarStatus: async (mesaId: number, pedidoId: number, status: string) => {
-      const response = await fetch(`${API_URL}/mesas/${mesaId}/pedidos/${pedidoId}`, {
+      const response = await fetchWithAuth(`${API_URL}/mesas/${mesaId}/pedidos/${pedidoId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -204,7 +221,7 @@ export const api = {
       return json;
     },
     cancelarPedido: async (mesaId: number, pedidoId: number) => {
-      const response = await fetch(`${API_URL}/mesas/${mesaId}/pedidos/${pedidoId}`, {
+      const response = await fetchWithAuth(`${API_URL}/mesas/${mesaId}/pedidos/${pedidoId}`, {
         method: 'DELETE'
       });
 
@@ -223,7 +240,7 @@ export const api = {
       return json;
     },
     fecharConta: async (mesaId: number, data: any) => {
-      const response = await fetch(`${API_URL}/mesas/${mesaId}/fechar-conta`, {
+      const response = await fetchWithAuth(`${API_URL}/mesas/${mesaId}/fechar-conta`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -244,7 +261,7 @@ export const api = {
       return json;
     },
     finalizar: async (mesaId: number) => {
-      const response = await fetch(`${API_URL}/mesas/${mesaId}/finalizar`, {
+      const response = await fetchWithAuth(`${API_URL}/mesas/${mesaId}/finalizar`, {
         method: 'POST'
       });
 
@@ -266,37 +283,40 @@ export const api = {
 
   // Funcionários
   funcionarios: {
-    listar: () => fetch(`${API_URL}/funcionarios`).then(r => r.json()),
-    buscar: (id: number) => fetch(`${API_URL}/funcionarios/${id}`).then(r => r.json()),
-    login: (usuario: string, senha: string) => fetch(`${API_URL}/funcionarios/login`, {
+    listar: () => fetchWithAuth(`${API_URL}/funcionarios`).then(r => r.json()),
+    buscar: (id: number) => fetchWithAuth(`${API_URL}/funcionarios/${id}`).then(r => r.json()),
+    login: (usuario: string, senha: string) => {
+      const empresa_id = getEmpresaIdFromStorage();
+      return fetchWithAuth(`${API_URL}/funcionarios/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usuario, senha })
-    }).then(r => r.json()),
-    criar: (data: any) => fetch(`${API_URL}/funcionarios`, {
+      body: JSON.stringify({ usuario, senha, empresa_id })
+      }).then(r => r.json());
+    },
+    criar: (data: any) => fetchWithAuth(`${API_URL}/funcionarios`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     }).then(r => r.json()),
-    atualizar: (id: number, data: any) => fetch(`${API_URL}/funcionarios/${id}`, {
+    atualizar: (id: number, data: any) => fetchWithAuth(`${API_URL}/funcionarios/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     }).then(r => r.json()),
-    deletar: (id: number) => fetch(`${API_URL}/funcionarios/${id}`, {
+    deletar: (id: number) => fetchWithAuth(`${API_URL}/funcionarios/${id}`, {
       method: 'DELETE'
     }).then(r => r.json()),
-    ativar: (id: number) => fetch(`${API_URL}/funcionarios/${id}/ativar`, {
+    ativar: (id: number) => fetchWithAuth(`${API_URL}/funcionarios/${id}/ativar`, {
       method: 'PATCH'
     }).then(r => r.json())
   },
 
   // Empresas
   empresas: {
-    listar: () => fetch(`${API_URL}/empresas`).then(r => r.json()),
-    buscar: (id: number) => fetch(`${API_URL}/empresas/${id}`).then(r => r.json()),
+    listar: () => fetchWithAuth(`${API_URL}/empresas`).then(r => r.json()),
+    buscar: (id: number) => fetchWithAuth(`${API_URL}/empresas/${id}`).then(r => r.json()),
     criar: async (data: any) => {
-      const response = await fetch(`${API_URL}/empresas`, {
+      const response = await fetchWithAuth(`${API_URL}/empresas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -308,7 +328,7 @@ export const api = {
       return json;
     },
     atualizar: async (id: number, data: any) => {
-      const response = await fetch(`${API_URL}/empresas/${id}`, {
+      const response = await fetchWithAuth(`${API_URL}/empresas/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -319,27 +339,27 @@ export const api = {
       }
       return json;
     },
-    deletar: (id: number) => fetch(`${API_URL}/empresas/${id}`, {
+    deletar: (id: number) => fetchWithAuth(`${API_URL}/empresas/${id}`, {
       method: 'DELETE'
     }).then(r => r.json()),
-    estatisticas: () => fetch(`${API_URL}/empresas/estatisticas`).then(r => r.json())
+    estatisticas: () => fetchWithAuth(`${API_URL}/empresas/estatisticas`).then(r => r.json())
   },
 
   // Planos
   planos: {
-    listar: () => fetch(`${API_URL}/planos`).then(r => r.json()),
-    buscar: (id: number) => fetch(`${API_URL}/planos/${id}`).then(r => r.json()),
-    criar: (data: any) => fetch(`${API_URL}/planos`, {
+    listar: () => fetchWithAuth(`${API_URL}/planos`).then(r => r.json()),
+    buscar: (id: number) => fetchWithAuth(`${API_URL}/planos/${id}`).then(r => r.json()),
+    criar: (data: any) => fetchWithAuth(`${API_URL}/planos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     }).then(r => r.json()),
-    atualizar: (id: number, data: any) => fetch(`${API_URL}/planos/${id}`, {
+    atualizar: (id: number, data: any) => fetchWithAuth(`${API_URL}/planos/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     }).then(r => r.json()),
-    deletar: (id: number) => fetch(`${API_URL}/planos/${id}`, {
+    deletar: (id: number) => fetchWithAuth(`${API_URL}/planos/${id}`, {
       method: 'DELETE'
     }).then(r => r.json())
   },
@@ -348,7 +368,7 @@ export const api = {
   auth: {
     login: async (email: string, senha: string) => {
       const attempt = async (baseUrl: string) => {
-        const response = await fetch(`${baseUrl}/auth/login`, {
+        const response = await fetchWithAuth(`${baseUrl}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, senha })
@@ -393,7 +413,7 @@ export const api = {
       }
     },
     criarUsuario: async (data: any) => {
-      const response = await fetch(`${API_URL}/auth/usuarios`, {
+      const response = await fetchWithAuth(`${API_URL}/auth/usuarios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -404,15 +424,12 @@ export const api = {
       }
       return json;
     },
-    listarUsuarios: (empresa_id: number) => fetch(`${API_URL}/auth/usuarios/${empresa_id}`).then(r => r.json()),
-    deletarUsuario: (id: number) => fetch(`${API_URL}/auth/usuarios/${id}`, {
+    listarUsuarios: (empresa_id: number) => fetchWithAuth(`${API_URL}/auth/usuarios/${empresa_id}`).then(r => r.json()),
+    deletarUsuario: (id: number) => fetchWithAuth(`${API_URL}/auth/usuarios/${id}`, {
       method: 'DELETE'
     }).then(r => r.json()),
     verificar: () => {
-      const token = localStorage.getItem('token');
-      return fetch(`${API_URL}/auth/verificar`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      }).then(r => r.json());
+      return fetchWithAuth(`${API_URL}/auth/verificar`).then(r => r.json());
     }
   },
 
@@ -423,9 +440,9 @@ export const api = {
       if (empresa_id) params.append('empresa_id', String(empresa_id));
       if (operador_nome) params.append('operador_nome', operador_nome);
       const qs = params.toString();
-      return fetch(`${API_URL}/caixa/fechamentos${qs ? `?${qs}` : ''}`).then(r => r.json());
+      return fetchWithAuth(`${API_URL}/caixa/fechamentos${qs ? `?${qs}` : ''}`).then(r => r.json());
     },
-    criarFechamento: (data: any) => fetch(`${API_URL}/caixa/fechamentos`, {
+    criarFechamento: (data: any) => fetchWithAuth(`${API_URL}/caixa/fechamentos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
