@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { Venda } from '../types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getUsuarioFromStorage } from '../services/authStorage';
 
 interface FechamentoCaixa {
   id: number;
@@ -27,8 +28,7 @@ const Vendas: React.FC = () => {
   }, []);
 
   const carregarVendas = async () => {
-    const usuarioStr = localStorage.getItem('usuario');
-    const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+    const usuario = getUsuarioFromStorage();
     const data = await api.vendas.listar(usuario?.empresa_id);
     const filtradas = usuario?.empresa_id
       ? (data || []).filter((v: any) => v.empresa_id === usuario.empresa_id)
@@ -37,8 +37,7 @@ const Vendas: React.FC = () => {
   };
 
   const carregarFechamentos = async () => {
-    const usuarioStr = localStorage.getItem('usuario');
-    const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+    const usuario = getUsuarioFromStorage();
     const data = await api.caixa.listarFechamentos(usuario?.empresa_id);
     const filtrados = usuario?.empresa_id
       ? (data || []).filter((f: any) => f.empresa_id === usuario.empresa_id)

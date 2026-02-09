@@ -1,3 +1,5 @@
+import { getTokenFromStorage, getUsuarioFromStorage } from './authStorage';
+
 const FALLBACK_API_URL = 'https://sistema-pdv-backend.onrender.com/api';
 const RAW_API_URL = import.meta.env.VITE_API_URL;
 const IS_DEV = import.meta.env.MODE === 'development';
@@ -21,23 +23,12 @@ export const API_URL = resolveApiUrl();
 
 const getEmpresaIdFromStorage = () => {
   if (typeof window === 'undefined') return undefined;
-  const usuarioStr = localStorage.getItem('usuario');
-  if (!usuarioStr) return undefined;
-  try {
-    const usuario = JSON.parse(usuarioStr);
-    return usuario?.empresa_id as number | undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-const getAuthToken = () => {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('token');
+  const usuario = getUsuarioFromStorage<{ empresa_id?: number }>();
+  return usuario?.empresa_id as number | undefined;
 };
 
 const fetchWithAuth = (input: RequestInfo | URL, init: RequestInit = {}) => {
-  const token = getAuthToken();
+  const token = getTokenFromStorage();
   const existingHeaders = init.headers instanceof Headers
     ? Object.fromEntries(init.headers.entries())
     : (init.headers || {});

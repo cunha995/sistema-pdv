@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { Produto } from '../types';
+import { getUsuarioFromStorage } from '../services/authStorage';
 
 const mesas = [
   { id: 1, nome: 'Mesa 1' },
@@ -14,8 +15,7 @@ const PedidosMesas: React.FC = () => {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const usuarioStr = localStorage.getItem('usuario');
-  const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+  const usuario = getUsuarioFromStorage();
   const empresaId = usuario?.empresa_id;
 
   const carregarPedidos = async () => {

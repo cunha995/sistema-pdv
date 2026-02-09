@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
+import { clearAuth, getUsuarioFromStorage } from '../services/authStorage';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
@@ -14,8 +15,7 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   // Pegar informações do usuário
-  const usuarioStr = localStorage.getItem('usuario');
-  const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+  const usuario = getUsuarioFromStorage();
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -69,8 +69,7 @@ const Dashboard: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('usuario');
+    clearAuth();
     navigate('/login');
   };
 

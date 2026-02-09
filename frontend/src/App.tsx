@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
+import { getTokenFromStorage } from './services/authStorage';
 
 import Dashboard from './pages/Dashboard';
 import PDV from './pages/PDV';
@@ -18,7 +19,7 @@ import Login from './pages/Login';
 
 // Componente de proteção de rotas
 function RotaProtegida({ children }: { children: React.ReactNode }) {
-  const token = localStorage.getItem('token');
+  const token = getTokenFromStorage();
   const location = useLocation();
 
   if (!token) {

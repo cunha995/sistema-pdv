@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { Produto } from '../types';
+import { getUsuarioFromStorage } from '../services/authStorage';
 import './PainelMesa.css';
 
 interface ItemPedido {
@@ -34,8 +35,7 @@ const PainelMesa: React.FC = () => {
   const statusAnteriorRef = useRef<Record<number, string>>({});
   const [clienteNome, setClienteNome] = useState('');
 
-  const usuarioStr = localStorage.getItem('usuario');
-  const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+  const usuario = getUsuarioFromStorage();
   const empresaId = usuario?.empresa_id;
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { Cliente } from '../types';
+import { getUsuarioFromStorage } from '../services/authStorage';
 
 const Clientes: React.FC = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -14,8 +15,7 @@ const Clientes: React.FC = () => {
     endereco: ''
   });
 
-  const usuarioStr = localStorage.getItem('usuario');
-  const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+  const usuario = getUsuarioFromStorage();
   const empresaId = usuario?.empresa_id;
 
   useEffect(() => {

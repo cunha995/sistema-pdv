@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { Produto } from '../types';
+import { getUsuarioFromStorage } from '../services/authStorage';
 
 const Produtos: React.FC = () => {
   const [produtos, setProdutos] = useState<Produto[]>([]);
@@ -15,8 +16,7 @@ const Produtos: React.FC = () => {
     categoria: ''
   });
 
-  const usuarioStr = localStorage.getItem('usuario');
-  const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+  const usuario = getUsuarioFromStorage();
   const empresaId = usuario?.empresa_id;
 
   useEffect(() => {

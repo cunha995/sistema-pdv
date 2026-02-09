@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Produto, ItemVenda, Cliente } from '../types';
+import { getUsuarioFromStorage } from '../services/authStorage';
 import './PDV.css';
 
 const PDV: React.FC = () => {
   const navigate = useNavigate();
-  const usuarioStr = localStorage.getItem('usuario');
-  const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+  const usuario = getUsuarioFromStorage();
   const empresaId = usuario?.empresa_id;
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carrinho, setCarrinho] = useState<ItemVenda[]>([]);
@@ -337,8 +337,7 @@ const PDV: React.FC = () => {
         setTimeout(() => setMensagem(''), 3000);
         return;
       }
-      const usuarioStr = localStorage.getItem('usuario');
-      const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+      const usuario = getUsuarioFromStorage();
       const empresaId = caixaOperador?.empresa_id || usuario?.empresa_id;
       const resp = await api.mesas.fecharConta(mesaIdAtual, {
         metodo_pagamento: metodoPagamento,
@@ -588,8 +587,7 @@ const PDV: React.FC = () => {
 
     try {
       const itensVenda = [...carrinho];
-      const usuarioStr = localStorage.getItem('usuario');
-      const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+      const usuario = getUsuarioFromStorage();
       const venda = {
         empresa_id: usuario?.empresa_id,
         cliente_id: clienteSelecionado?.id,
@@ -759,8 +757,7 @@ const PDV: React.FC = () => {
       data: new Date().toISOString()
     };
     localStorage.setItem('caixa_fechamento', JSON.stringify(fechamento));
-    const usuarioStr = localStorage.getItem('usuario');
-    const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+    const usuario = getUsuarioFromStorage();
     api.caixa.criarFechamento({
       empresa_id: caixaOperador?.empresa_id || usuario?.empresa_id,
       operador_id: caixaOperador?.id,

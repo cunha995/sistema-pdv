@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
+import { setAuthItem } from '../services/authStorage';
 import './Login.css';
 
 interface LoginResponse {
@@ -33,9 +34,9 @@ export default function Login() {
     try {
       const data = await api.auth.login(email, senha);
 
-      // Salvar dados no localStorage
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('usuario', JSON.stringify(data.usuario));
+      // Salvar dados no storage da sessao
+      setAuthItem('token', data.token);
+      setAuthItem('usuario', JSON.stringify(data.usuario));
 
       // Redirecionar para o dashboard
       navigate('/admin');
