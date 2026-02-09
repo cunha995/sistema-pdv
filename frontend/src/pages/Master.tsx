@@ -71,7 +71,8 @@ const Master: React.FC = () => {
     contato_nome: '',
     contato_email: '',
     contato_telefone: '',
-    plano_id: 1
+    plano_id: 1,
+    usuario_email: ''
   });
 
   const [formPlano, setFormPlano] = useState<Plano>({
@@ -133,7 +134,7 @@ const Master: React.FC = () => {
         const nomeEmpresa = formEmpresa.nome?.trim();
         const emailEmpresa = formEmpresa.email?.trim();
         const usuarioNome = formEmpresa.usuario_nome?.trim();
-        const usuarioEmail = formEmpresa.usuario_email?.trim() || emailEmpresa;
+        const usuarioEmail = formEmpresa.usuario_email?.trim();
         const usuarioSenha = formEmpresa.usuario_senha?.trim();
 
         if (!nomeEmpresa || !emailEmpresa) {
@@ -143,6 +144,11 @@ const Master: React.FC = () => {
 
         if (!usuarioNome) {
           setMensagem('❌ Informe o usuário de login');
+          return;
+        }
+
+        if (!usuarioEmail) {
+          setMensagem('❌ Informe o email de login');
           return;
         }
 
@@ -302,7 +308,8 @@ const Master: React.FC = () => {
       contato_nome: '',
       contato_email: '',
       contato_telefone: '',
-      plano_id: 1
+      plano_id: 1,
+      usuario_email: ''
     });
     setEditandoEmpresa(null);
     setMostrarFormEmpresa(false);
@@ -517,10 +524,10 @@ const Master: React.FC = () => {
                         onChange={(e) => setFormEmpresa({...formEmpresa, usuario_nome: e.target.value})}
                       />
                       <input
-                        type="text"
-                        placeholder="Email de cadastro (usa o da empresa)"
-                        value={formEmpresa.email || ''}
-                        readOnly
+                        type="email"
+                        placeholder="Email de login"
+                        value={formEmpresa.usuario_email || ''}
+                        onChange={(e) => setFormEmpresa({...formEmpresa, usuario_email: e.target.value})}
                       />
                     </div>
                     <div className="form-row">
