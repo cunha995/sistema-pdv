@@ -34,9 +34,13 @@ const PainelMesa: React.FC = () => {
   const statusAnteriorRef = useRef<Record<number, string>>({});
   const [clienteNome, setClienteNome] = useState('');
 
+  const usuarioStr = localStorage.getItem('usuario');
+  const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+  const empresaId = usuario?.empresa_id;
+
   useEffect(() => {
-    api.produtos.listar().then(setProdutos);
-  }, []);
+    api.produtos.listar(empresaId).then(setProdutos);
+  }, [empresaId]);
 
   useEffect(() => {
     if (!id) return;

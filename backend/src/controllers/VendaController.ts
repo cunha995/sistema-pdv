@@ -36,13 +36,18 @@ export class VendaController {
   static buscarPorId(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const { empresa_id } = req.query as { empresa_id?: string };
+
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
       
       const venda = db.prepare(`
         SELECT v.*, c.nome as cliente_nome 
         FROM vendas v
         LEFT JOIN clientes c ON v.cliente_id = c.id
-        WHERE v.id = ?
-      `).get(id);
+        WHERE v.id = ? AND v.empresa_id = ?
+      `).get(id, empresa_id);
       
       if (!venda) {
         return res.status(404).json({ error: 'Venda não encontrada' });

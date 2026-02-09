@@ -19,59 +19,100 @@ const resolveApiUrl = () => {
 
 export const API_URL = resolveApiUrl();
 
+const getEmpresaIdFromStorage = () => {
+  if (typeof window === 'undefined') return undefined;
+  const usuarioStr = localStorage.getItem('usuario');
+  if (!usuarioStr) return undefined;
+  try {
+    const usuario = JSON.parse(usuarioStr);
+    return usuario?.empresa_id as number | undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export const api = {
   // Produtos
   produtos: {
     listar: (empresaId?: number) => {
-      const qs = empresaId ? `?empresa_id=${empresaId}&t=${Date.now()}` : `?t=${Date.now()}`;
+      const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
+      const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}&t=${Date.now()}` : `?t=${Date.now()}`;
       return fetch(`${API_URL}/produtos${qs}`, { cache: 'no-store' }).then(r => r.json());
     },
     buscar: (id: number, empresaId?: number) => {
-      const qs = empresaId ? `?empresa_id=${empresaId}` : '';
+      const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
+      const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}` : '';
       return fetch(`${API_URL}/produtos/${id}${qs}`).then(r => r.json());
     },
     buscarPorCodigo: (codigo: string, empresaId?: number) => {
-      const qs = empresaId ? `?empresa_id=${empresaId}` : '';
+      const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
+      const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}` : '';
       return fetch(`${API_URL}/produtos/codigo/${codigo}${qs}`).then(r => r.json());
     },
-    criar: (data: any) => fetch(`${API_URL}/produtos`, {
+    criar: (data: any) => {
+      const resolvedEmpresaId = data?.empresa_id ?? getEmpresaIdFromStorage();
+      const payload = resolvedEmpresaId ? { ...data, empresa_id: resolvedEmpresaId } : data;
+      return fetch(`${API_URL}/produtos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }).then(r => r.json()),
-    atualizar: (id: number, data: any) => fetch(`${API_URL}/produtos/${id}`, {
+      body: JSON.stringify(payload)
+      }).then(r => r.json());
+    },
+    atualizar: (id: number, data: any) => {
+      const resolvedEmpresaId = data?.empresa_id ?? getEmpresaIdFromStorage();
+      const payload = resolvedEmpresaId ? { ...data, empresa_id: resolvedEmpresaId } : data;
+      return fetch(`${API_URL}/produtos/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }).then(r => r.json()),
-    deletar: (id: number) => fetch(`${API_URL}/produtos/${id}`, {
+      body: JSON.stringify(payload)
+      }).then(r => r.json());
+    },
+    deletar: (id: number, empresaId?: number) => {
+      const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
+      const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}` : '';
+      return fetch(`${API_URL}/produtos/${id}${qs}`, {
       method: 'DELETE'
-    }).then(r => r.json())
+      }).then(r => r.json());
+    }
   },
 
   // Clientes
   clientes: {
     listar: (empresaId?: number) => {
-      const qs = empresaId ? `?empresa_id=${empresaId}&t=${Date.now()}` : `?t=${Date.now()}`;
+      const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
+      const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}&t=${Date.now()}` : `?t=${Date.now()}`;
       return fetch(`${API_URL}/clientes${qs}`, { cache: 'no-store' }).then(r => r.json());
     },
     buscar: (id: number, empresaId?: number) => {
-      const qs = empresaId ? `?empresa_id=${empresaId}` : '';
+      const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
+      const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}` : '';
       return fetch(`${API_URL}/clientes/${id}${qs}`).then(r => r.json());
     },
-    criar: (data: any) => fetch(`${API_URL}/clientes`, {
+    criar: (data: any) => {
+      const resolvedEmpresaId = data?.empresa_id ?? getEmpresaIdFromStorage();
+      const payload = resolvedEmpresaId ? { ...data, empresa_id: resolvedEmpresaId } : data;
+      return fetch(`${API_URL}/clientes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }).then(r => r.json()),
-    atualizar: (id: number, data: any) => fetch(`${API_URL}/clientes/${id}`, {
+      body: JSON.stringify(payload)
+      }).then(r => r.json());
+    },
+    atualizar: (id: number, data: any) => {
+      const resolvedEmpresaId = data?.empresa_id ?? getEmpresaIdFromStorage();
+      const payload = resolvedEmpresaId ? { ...data, empresa_id: resolvedEmpresaId } : data;
+      return fetch(`${API_URL}/clientes/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }).then(r => r.json()),
-    deletar: (id: number) => fetch(`${API_URL}/clientes/${id}`, {
+      body: JSON.stringify(payload)
+      }).then(r => r.json());
+    },
+    deletar: (id: number, empresaId?: number) => {
+      const resolvedEmpresaId = empresaId ?? getEmpresaIdFromStorage();
+      const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}` : '';
+      return fetch(`${API_URL}/clientes/${id}${qs}`, {
       method: 'DELETE'
-    }).then(r => r.json())
+      }).then(r => r.json());
+    }
   },
 
   // Vendas

@@ -7,15 +7,14 @@ export class ProdutoController {
   static listar(req: Request, res: Response) {
     try {
       const { empresa_id } = req.query as { empresa_id?: string };
-      if (empresa_id) {
-        const produtos = db.prepare(
-          'SELECT * FROM produtos WHERE ativo = 1 AND empresa_id = ? ORDER BY nome'
-        ).all(empresa_id);
-        return res.json(produtos);
+      if (!empresa_id) {
+        return res.json([]);
       }
 
-      const produtos = db.prepare('SELECT * FROM produtos WHERE ativo = 1 ORDER BY nome').all();
-      res.json(produtos);
+      const produtos = db.prepare(
+        'SELECT * FROM produtos WHERE ativo = 1 AND empresa_id = ? ORDER BY nome'
+      ).all(empresa_id);
+      return res.json(produtos);
     } catch (error) {
       res.status(500).json({ error: 'Erro ao listar produtos' });
     }
@@ -26,13 +25,12 @@ export class ProdutoController {
     try {
       const { id } = req.params;
       const { empresa_id } = req.query as { empresa_id?: string };
-      const produto = db.prepare('SELECT * FROM produtos WHERE id = ?').get(id);
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
+      const produto = db.prepare('SELECT * FROM produtos WHERE id = ? AND empresa_id = ?').get(id, empresa_id);
       
       if (!produto) {
-        return res.status(404).json({ error: 'Produto não encontrado' });
-      }
-
-      if (empresa_id && String((produto as any).empresa_id) !== String(empresa_id)) {
         return res.status(404).json({ error: 'Produto não encontrado' });
       }
       
@@ -47,14 +45,12 @@ export class ProdutoController {
     try {
       const { codigo } = req.params;
       const { empresa_id } = req.query as { empresa_id?: string };
-      let produto: any = null;
-      if (empresa_id) {
-        produto = db.prepare(
-          'SELECT * FROM produtos WHERE codigo_barras = ? AND ativo = 1 AND empresa_id = ?'
-        ).get(codigo, empresa_id);
-      } else {
-        produto = db.prepare('SELECT * FROM produtos WHERE codigo_barras = ? AND ativo = 1').get(codigo);
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
       }
+      const produto = db.prepare(
+        'SELECT * FROM produtos WHERE codigo_barras = ? AND ativo = 1 AND empresa_id = ?'
+      ).get(codigo, empresa_id);
       
       if (!produto) {
         return res.status(404).json({ error: 'Produto não encontrado' });
@@ -71,6 +67,10 @@ export class ProdutoController {
     try {
       const { nome, descricao, preco, codigo_barras, estoque, categoria, empresa_id }: Produto = req.body;
       
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
+
       if (!nome || !preco) {
         return res.status(400).json({ error: 'Nome e preço são obrigatórios' });
       }
@@ -78,7 +78,7 @@ export class ProdutoController {
       const result = db.prepare(`
         INSERT INTO produtos (empresa_id, nome, descricao, preco, codigo_barras, estoque, categoria)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).run(empresa_id || null, nome, descricao || null, preco, codigo_barras || null, estoque || 0, categoria || null);
+      `).run(empresa_id, nome, descricao || null, preco, codigo_barras || null, estoque || 0, categoria || null);
 
       res.status(201).json({ id: result.lastInsertRowid, message: 'Produto criado com sucesso' });
     } catch (error: any) {
@@ -93,13 +93,17 @@ export class ProdutoController {
   static atualizar(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { nome, descricao, preco, codigo_barras, estoque, categoria }: Produto = req.body;
+      const { nome, descricao, preco, codigo_barras, estoque, categoria, empresa_id }: Produto = req.body;
+
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
 
       const result = db.prepare(`
         UPDATE produtos 
         SET nome = ?, descricao = ?, preco = ?, codigo_barras = ?, estoque = ?, categoria = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(nome, descricao || null, preco, codigo_barras || null, estoque, categoria || null, id);
+        WHERE id = ? AND empresa_id = ?
+      `).run(nome, descricao || null, preco, codigo_barras || null, estoque, categoria || null, id, empresa_id);
 
       if (result.changes === 0) {
         return res.status(404).json({ error: 'Produto não encontrado' });
@@ -118,8 +122,13 @@ export class ProdutoController {
   static deletar(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const { empresa_id } = req.query as { empresa_id?: string };
+
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
       
-      const result = db.prepare('UPDATE produtos SET ativo = 0 WHERE id = ?').run(id);
+      const result = db.prepare('UPDATE produtos SET ativo = 0 WHERE id = ? AND empresa_id = ?').run(id, empresa_id);
       
       if (result.changes === 0) {
         return res.status(404).json({ error: 'Produto não encontrado' });
@@ -135,13 +144,17 @@ export class ProdutoController {
   static atualizarEstoque(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { quantidade } = req.body;
+      const { quantidade, empresa_id } = req.body;
+
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
 
       const result = db.prepare(`
         UPDATE produtos 
         SET estoque = estoque + ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(quantidade, id);
+        WHERE id = ? AND empresa_id = ?
+      `).run(quantidade, id, empresa_id);
 
       if (result.changes === 0) {
         return res.status(404).json({ error: 'Produto não encontrado' });

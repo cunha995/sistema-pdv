@@ -7,13 +7,12 @@ export class ClienteController {
   static listar(req: Request, res: Response) {
     try {
       const { empresa_id } = req.query as { empresa_id?: string };
-      if (empresa_id) {
-        const clientes = db.prepare('SELECT * FROM clientes WHERE empresa_id = ? ORDER BY nome').all(empresa_id);
-        return res.json(clientes);
+      if (!empresa_id) {
+        return res.json([]);
       }
 
-      const clientes = db.prepare('SELECT * FROM clientes ORDER BY nome').all();
-      res.json(clientes);
+      const clientes = db.prepare('SELECT * FROM clientes WHERE empresa_id = ? ORDER BY nome').all(empresa_id);
+      return res.json(clientes);
     } catch (error) {
       res.status(500).json({ error: 'Erro ao listar clientes' });
     }
@@ -24,13 +23,12 @@ export class ClienteController {
     try {
       const { id } = req.params;
       const { empresa_id } = req.query as { empresa_id?: string };
-      const cliente = db.prepare('SELECT * FROM clientes WHERE id = ?').get(id);
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
+      const cliente = db.prepare('SELECT * FROM clientes WHERE id = ? AND empresa_id = ?').get(id, empresa_id);
       
       if (!cliente) {
-        return res.status(404).json({ error: 'Cliente não encontrado' });
-      }
-
-      if (empresa_id && String((cliente as any).empresa_id) !== String(empresa_id)) {
         return res.status(404).json({ error: 'Cliente não encontrado' });
       }
       
@@ -45,6 +43,10 @@ export class ClienteController {
     try {
       const { nome, cpf, telefone, email, endereco, empresa_id }: Cliente = req.body;
       
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
+
       if (!nome) {
         return res.status(400).json({ error: 'Nome é obrigatório' });
       }
@@ -52,7 +54,7 @@ export class ClienteController {
       const result = db.prepare(`
         INSERT INTO clientes (empresa_id, nome, cpf, telefone, email, endereco)
         VALUES (?, ?, ?, ?, ?, ?)
-      `).run(empresa_id || null, nome, cpf || null, telefone || null, email || null, endereco || null);
+      `).run(empresa_id, nome, cpf || null, telefone || null, email || null, endereco || null);
 
       res.status(201).json({ id: result.lastInsertRowid, message: 'Cliente criado com sucesso' });
     } catch (error: any) {
@@ -67,13 +69,17 @@ export class ClienteController {
   static atualizar(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { nome, cpf, telefone, email, endereco }: Cliente = req.body;
+      const { nome, cpf, telefone, email, endereco, empresa_id }: Cliente = req.body;
+
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
 
       const result = db.prepare(`
         UPDATE clientes 
         SET nome = ?, cpf = ?, telefone = ?, email = ?, endereco = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(nome, cpf || null, telefone || null, email || null, endereco || null, id);
+        WHERE id = ? AND empresa_id = ?
+      `).run(nome, cpf || null, telefone || null, email || null, endereco || null, id, empresa_id);
 
       if (result.changes === 0) {
         return res.status(404).json({ error: 'Cliente não encontrado' });
@@ -92,8 +98,13 @@ export class ClienteController {
   static deletar(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const { empresa_id } = req.query as { empresa_id?: string };
+
+      if (!empresa_id) {
+        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      }
       
-      const result = db.prepare('DELETE FROM clientes WHERE id = ?').run(id);
+      const result = db.prepare('DELETE FROM clientes WHERE id = ? AND empresa_id = ?').run(id, empresa_id);
       
       if (result.changes === 0) {
         return res.status(404).json({ error: 'Cliente não encontrado' });

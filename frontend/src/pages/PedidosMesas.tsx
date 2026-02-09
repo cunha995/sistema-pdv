@@ -14,6 +14,10 @@ const PedidosMesas: React.FC = () => {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const usuarioStr = localStorage.getItem('usuario');
+  const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+  const empresaId = usuario?.empresa_id;
+
   const carregarPedidos = async () => {
     setLoading(true);
     const result: Record<string, any[]> = {};
@@ -31,10 +35,10 @@ const PedidosMesas: React.FC = () => {
 
   useEffect(() => {
     carregarPedidos();
-    api.produtos.listar().then(setProdutos);
+    api.produtos.listar(empresaId).then(setProdutos);
     const interval = setInterval(carregarPedidos, 5000); // Atualiza a cada 5s
     return () => clearInterval(interval);
-  }, []);
+  }, [empresaId]);
 
   const nomeProduto = (id: number) => {
     const p = produtos.find((p: Produto) => p.id === id);
