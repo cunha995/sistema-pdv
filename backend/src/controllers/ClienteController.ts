@@ -6,6 +6,12 @@ export class ClienteController {
   // Listar todos os clientes
   static listar(req: Request, res: Response) {
     try {
+      const { empresa_id } = req.query as { empresa_id?: string };
+      if (empresa_id) {
+        const clientes = db.prepare('SELECT * FROM clientes WHERE empresa_id = ? ORDER BY nome').all(empresa_id);
+        return res.json(clientes);
+      }
+
       const clientes = db.prepare('SELECT * FROM clientes ORDER BY nome').all();
       res.json(clientes);
     } catch (error) {
@@ -17,9 +23,14 @@ export class ClienteController {
   static buscarPorId(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const { empresa_id } = req.query as { empresa_id?: string };
       const cliente = db.prepare('SELECT * FROM clientes WHERE id = ?').get(id);
       
       if (!cliente) {
+        return res.status(404).json({ error: 'Cliente não encontrado' });
+      }
+
+      if (empresa_id && String((cliente as any).empresa_id) !== String(empresa_id)) {
         return res.status(404).json({ error: 'Cliente não encontrado' });
       }
       
@@ -32,16 +43,16 @@ export class ClienteController {
   // Criar novo cliente
   static criar(req: Request, res: Response) {
     try {
-      const { nome, cpf, telefone, email, endereco }: Cliente = req.body;
+      const { nome, cpf, telefone, email, endereco, empresa_id }: Cliente = req.body;
       
       if (!nome) {
         return res.status(400).json({ error: 'Nome é obrigatório' });
       }
 
       const result = db.prepare(`
-        INSERT INTO clientes (nome, cpf, telefone, email, endereco)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(nome, cpf || null, telefone || null, email || null, endereco || null);
+        INSERT INTO clientes (empresa_id, nome, cpf, telefone, email, endereco)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(empresa_id || null, nome, cpf || null, telefone || null, email || null, endereco || null);
 
       res.status(201).json({ id: result.lastInsertRowid, message: 'Cliente criado com sucesso' });
     } catch (error: any) {

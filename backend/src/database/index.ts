@@ -24,6 +24,7 @@ console.log(`📁 Banco de dados: ${dbPath}`);
 db.exec(`
   CREATE TABLE IF NOT EXISTS produtos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    empresa_id INTEGER,
     nome TEXT NOT NULL,
     descricao TEXT,
     preco REAL NOT NULL,
@@ -37,6 +38,7 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS clientes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    empresa_id INTEGER,
     nome TEXT NOT NULL,
     cpf TEXT UNIQUE,
     telefone TEXT,
@@ -220,6 +222,27 @@ try {
   }
 } catch (error) {
   console.error('Erro ao migrar vendas.empresa_id:', error);
+}
+
+// Migrações: adicionar empresa_id em produtos e clientes
+try {
+  const prodCols = db.prepare('PRAGMA table_info(produtos)').all();
+  const prodHasEmpresaId = prodCols.some((c: any) => c.name === 'empresa_id');
+  if (!prodHasEmpresaId) {
+    db.prepare('ALTER TABLE produtos ADD COLUMN empresa_id INTEGER').run();
+  }
+} catch (error) {
+  console.error('Erro ao migrar produtos.empresa_id:', error);
+}
+
+try {
+  const cliCols = db.prepare('PRAGMA table_info(clientes)').all();
+  const cliHasEmpresaId = cliCols.some((c: any) => c.name === 'empresa_id');
+  if (!cliHasEmpresaId) {
+    db.prepare('ALTER TABLE clientes ADD COLUMN empresa_id INTEGER').run();
+  }
+} catch (error) {
+  console.error('Erro ao migrar clientes.empresa_id:', error);
 }
 
 export default db;

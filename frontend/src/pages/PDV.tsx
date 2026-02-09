@@ -6,6 +6,9 @@ import './PDV.css';
 
 const PDV: React.FC = () => {
   const navigate = useNavigate();
+  const usuarioStr = localStorage.getItem('usuario');
+  const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+  const empresaId = usuario?.empresa_id;
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [carrinho, setCarrinho] = useState<ItemVenda[]>([]);
   const [codigoBarras, setCodigoBarras] = useState('');
@@ -79,7 +82,7 @@ const PDV: React.FC = () => {
 
   const carregarProdutos = async () => {
     try {
-      const data = await api.produtos.listar();
+      const data = await api.produtos.listar(empresaId);
       setProdutos(data);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
@@ -103,7 +106,7 @@ const PDV: React.FC = () => {
       let produtoSelecionado = produto;
 
       if (!produtoSelecionado && codigoBarras) {
-        produtoSelecionado = await api.produtos.buscarPorCodigo(codigoBarras);
+        produtoSelecionado = await api.produtos.buscarPorCodigo(codigoBarras, empresaId);
       }
 
       if (!produtoSelecionado) {

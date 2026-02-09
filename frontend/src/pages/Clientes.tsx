@@ -14,12 +14,16 @@ const Clientes: React.FC = () => {
     endereco: ''
   });
 
+  const usuarioStr = localStorage.getItem('usuario');
+  const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+  const empresaId = usuario?.empresa_id;
+
   useEffect(() => {
     carregarClientes();
-  }, []);
+  }, [empresaId]);
 
   const carregarClientes = async () => {
-    const data = await api.clientes.listar();
+    const data = await api.clientes.listar(empresaId);
     setClientes(data);
   };
 
@@ -30,7 +34,7 @@ const Clientes: React.FC = () => {
       if (clienteEdit) {
         await api.clientes.atualizar(clienteEdit.id!, formData);
       } else {
-        await api.clientes.criar(formData);
+        await api.clientes.criar({ ...formData, empresa_id: empresaId });
       }
       
       carregarClientes();

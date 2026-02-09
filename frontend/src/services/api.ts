@@ -22,9 +22,18 @@ export const API_URL = resolveApiUrl();
 export const api = {
   // Produtos
   produtos: {
-    listar: () => fetch(`${API_URL}/produtos`).then(r => r.json()),
-    buscar: (id: number) => fetch(`${API_URL}/produtos/${id}`).then(r => r.json()),
-    buscarPorCodigo: (codigo: string) => fetch(`${API_URL}/produtos/codigo/${codigo}`).then(r => r.json()),
+    listar: (empresaId?: number) => {
+      const qs = empresaId ? `?empresa_id=${empresaId}` : '';
+      return fetch(`${API_URL}/produtos${qs}`).then(r => r.json());
+    },
+    buscar: (id: number, empresaId?: number) => {
+      const qs = empresaId ? `?empresa_id=${empresaId}` : '';
+      return fetch(`${API_URL}/produtos/${id}${qs}`).then(r => r.json());
+    },
+    buscarPorCodigo: (codigo: string, empresaId?: number) => {
+      const qs = empresaId ? `?empresa_id=${empresaId}` : '';
+      return fetch(`${API_URL}/produtos/codigo/${codigo}${qs}`).then(r => r.json());
+    },
     criar: (data: any) => fetch(`${API_URL}/produtos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -42,8 +51,14 @@ export const api = {
 
   // Clientes
   clientes: {
-    listar: () => fetch(`${API_URL}/clientes`).then(r => r.json()),
-    buscar: (id: number) => fetch(`${API_URL}/clientes/${id}`).then(r => r.json()),
+    listar: (empresaId?: number) => {
+      const qs = empresaId ? `?empresa_id=${empresaId}` : '';
+      return fetch(`${API_URL}/clientes${qs}`).then(r => r.json());
+    },
+    buscar: (id: number, empresaId?: number) => {
+      const qs = empresaId ? `?empresa_id=${empresaId}` : '';
+      return fetch(`${API_URL}/clientes/${id}${qs}`).then(r => r.json());
+    },
     criar: (data: any) => fetch(`${API_URL}/clientes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

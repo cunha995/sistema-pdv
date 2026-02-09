@@ -6,6 +6,14 @@ export class ProdutoController {
   // Listar todos os produtos
   static listar(req: Request, res: Response) {
     try {
+      const { empresa_id } = req.query as { empresa_id?: string };
+      if (empresa_id) {
+        const produtos = db.prepare(
+          'SELECT * FROM produtos WHERE ativo = 1 AND empresa_id = ? ORDER BY nome'
+        ).all(empresa_id);
+        return res.json(produtos);
+      }
+
       const produtos = db.prepare('SELECT * FROM produtos WHERE ativo = 1 ORDER BY nome').all();
       res.json(produtos);
     } catch (error) {
@@ -17,9 +25,14 @@ export class ProdutoController {
   static buscarPorId(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const { empresa_id } = req.query as { empresa_id?: string };
       const produto = db.prepare('SELECT * FROM produtos WHERE id = ?').get(id);
       
       if (!produto) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+
+      if (empresa_id && String((produto as any).empresa_id) !== String(empresa_id)) {
         return res.status(404).json({ error: 'Produto não encontrado' });
       }
       
@@ -33,7 +46,15 @@ export class ProdutoController {
   static buscarPorCodigoBarras(req: Request, res: Response) {
     try {
       const { codigo } = req.params;
-      const produto = db.prepare('SELECT * FROM produtos WHERE codigo_barras = ? AND ativo = 1').get(codigo);
+      const { empresa_id } = req.query as { empresa_id?: string };
+      let produto: any = null;
+      if (empresa_id) {
+        produto = db.prepare(
+          'SELECT * FROM produtos WHERE codigo_barras = ? AND ativo = 1 AND empresa_id = ?'
+        ).get(codigo, empresa_id);
+      } else {
+        produto = db.prepare('SELECT * FROM produtos WHERE codigo_barras = ? AND ativo = 1').get(codigo);
+      }
       
       if (!produto) {
         return res.status(404).json({ error: 'Produto não encontrado' });
@@ -48,16 +69,16 @@ export class ProdutoController {
   // Criar novo produto
   static criar(req: Request, res: Response) {
     try {
-      const { nome, descricao, preco, codigo_barras, estoque, categoria }: Produto = req.body;
+      const { nome, descricao, preco, codigo_barras, estoque, categoria, empresa_id }: Produto = req.body;
       
       if (!nome || !preco) {
         return res.status(400).json({ error: 'Nome e preço são obrigatórios' });
       }
 
       const result = db.prepare(`
-        INSERT INTO produtos (nome, descricao, preco, codigo_barras, estoque, categoria)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).run(nome, descricao || null, preco, codigo_barras || null, estoque || 0, categoria || null);
+        INSERT INTO produtos (empresa_id, nome, descricao, preco, codigo_barras, estoque, categoria)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(empresa_id || null, nome, descricao || null, preco, codigo_barras || null, estoque || 0, categoria || null);
 
       res.status(201).json({ id: result.lastInsertRowid, message: 'Produto criado com sucesso' });
     } catch (error: any) {

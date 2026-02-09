@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
@@ -36,21 +37,23 @@ const Dashboard: React.FC = () => {
           const totalGeral = vendas.reduce((sum: number, v: any) => sum + (v.total || 0), 0);
           setVendasHoje({ total: totalHoje, quantidade: vendasDeHoje.length });
           setTotalCaixa(totalGeral);
+
+          const produtos = await api.produtos.listar(usuario.empresa_id);
+          setProdutosAtivos(produtos.length);
+          setEstoqueBaixo(produtos.filter((p: any) => p.estoque <= 10).length);
+
+          const clientes = await api.clientes.listar(usuario.empresa_id);
+          setClientesTotal(clientes.length);
         }
-
-        const produtos = await api.produtos.listar();
-        setProdutosAtivos(produtos.length);
-        setEstoqueBaixo(produtos.filter((p: any) => p.estoque <= 10).length);
-
-        const clientes = await api.clientes.listar();
-        setClientesTotal(clientes.length);
       } catch (error) {
         console.error('Erro ao carregar dashboard:', error);
       }
     };
 
     carregarDados();
-  }, []);
+    const interval = setInterval(carregarDados, 10000);
+    return () => clearInterval(interval);
+  }, [usuario?.empresa_id]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });

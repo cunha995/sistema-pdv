@@ -10,15 +10,15 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/pwa-icon.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
+      "src": "/pwa-icon.png.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "/pwa-icon-maskable.svg",
+      "src": "/pwa-icon.png.jpeg",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/jpeg",
       "purpose": "maskable"
     }
   ]

@@ -1,5 +1,6 @@
 export interface Produto {
   id?: number;
+  empresa_id?: number;
   nome: string;
   descricao?: string;
   preco: number;
@@ -13,6 +14,7 @@ export interface Produto {
 
 export interface Cliente {
   id?: number;
+  empresa_id?: number;
   nome: string;
   cpf?: string;
   telefone?: string;

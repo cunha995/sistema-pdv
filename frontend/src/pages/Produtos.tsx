@@ -15,12 +15,16 @@ const Produtos: React.FC = () => {
     categoria: ''
   });
 
+  const usuarioStr = localStorage.getItem('usuario');
+  const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
+  const empresaId = usuario?.empresa_id;
+
   useEffect(() => {
     carregarProdutos();
-  }, []);
+  }, [empresaId]);
 
   const carregarProdutos = async () => {
-    const data = await api.produtos.listar();
+    const data = await api.produtos.listar(empresaId);
     setProdutos(data);
   };
 
@@ -31,7 +35,7 @@ const Produtos: React.FC = () => {
       if (produtoEdit) {
         await api.produtos.atualizar(produtoEdit.id!, formData);
       } else {
-        await api.produtos.criar(formData);
+        await api.produtos.criar({ ...formData, empresa_id: empresaId });
       }
       
       carregarProdutos();
