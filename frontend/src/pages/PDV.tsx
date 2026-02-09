@@ -318,6 +318,22 @@ const PDV: React.FC = () => {
 
     try {
       const mesaIdAtual = mesaSelecionada;
+      const pedidosAtualizados = await api.mesas.listarPedidos(mesaIdAtual);
+      const pendentes = (pedidosAtualizados || []).filter(
+        (p: any) => p.status !== 'fechado' && p.status !== 'cancelado'
+      );
+      if (pendentes.length === 0) {
+        setMensagem('⚠️ Nenhum pedido pendente para fechar. Mesa liberada.');
+        setMesaSelecionada(null);
+        setPedidosMesa([]);
+        setDesconto(0);
+        setMostrarMesas(false);
+        setMesasComPendencia((prev) => prev.filter((m) => m !== mesaIdAtual));
+        setMesasAceitas((prev) => prev.filter((m) => m !== mesaIdAtual));
+        verificarPendencias(true);
+        setTimeout(() => setMensagem(''), 3000);
+        return;
+      }
       const usuarioStr = localStorage.getItem('usuario');
       const usuario = usuarioStr ? JSON.parse(usuarioStr) : null;
       const empresaId = caixaOperador?.empresa_id || usuario?.empresa_id;
@@ -397,6 +413,20 @@ const PDV: React.FC = () => {
       setTimeout(() => setMensagem(''), 3000);
     } catch (error: any) {
       console.error('Erro ao fechar conta:', error);
+      if (error?.message?.includes('Nenhum pedido pendente')) {
+        setMensagem('⚠️ Nenhum pedido pendente para fechar. Mesa liberada.');
+        setMesaSelecionada(null);
+        setPedidosMesa([]);
+        setDesconto(0);
+        setMostrarMesas(false);
+        if (mesaSelecionada) {
+          setMesasComPendencia((prev) => prev.filter((m) => m !== mesaSelecionada));
+          setMesasAceitas((prev) => prev.filter((m) => m !== mesaSelecionada));
+        }
+        verificarPendencias(true);
+        setTimeout(() => setMensagem(''), 3000);
+        return;
+      }
       setMensagem(`❌ ${error?.message || 'Erro ao fechar conta da mesa!'}`);
       setTimeout(() => setMensagem(''), 3000);
     }
