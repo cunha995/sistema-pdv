@@ -166,8 +166,8 @@
 }
 
 .brand-icon {
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   border-radius: 16px;
   background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   color: #fff;
@@ -179,7 +179,7 @@
 }
 
 .brand-icon-photo {
-  background: url('/login-hero.jpg') center/cover no-repeat;
+  background: #0b1220 url('/login-hero.jpg') center/contain no-repeat;
   border: 1px solid rgba(148, 163, 184, 0.45);
   position: relative;
   overflow: hidden;
