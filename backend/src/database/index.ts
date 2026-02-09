@@ -116,6 +116,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL UNIQUE,
     descricao TEXT,
+    servicos TEXT,
     preco_mensal REAL NOT NULL,
     limite_usuarios INTEGER DEFAULT 5,
     limite_mesas INTEGER DEFAULT 10,
@@ -240,11 +241,15 @@ try {
   const columns = db.prepare('PRAGMA table_info(planos)').all();
   const hasCategoria = columns.some((c: any) => c.name === 'categoria');
   const hasDetalhes = columns.some((c: any) => c.name === 'detalhes');
+  const hasServicos = columns.some((c: any) => c.name === 'servicos');
   if (!hasCategoria) {
     db.prepare('ALTER TABLE planos ADD COLUMN categoria TEXT').run();
   }
   if (!hasDetalhes) {
     db.prepare('ALTER TABLE planos ADD COLUMN detalhes TEXT').run();
+  }
+  if (!hasServicos) {
+    db.prepare('ALTER TABLE planos ADD COLUMN servicos TEXT').run();
   }
 } catch (error) {
   console.error('Erro ao migrar planos.categoria/detalhes:', error);

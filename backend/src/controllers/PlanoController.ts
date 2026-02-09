@@ -42,6 +42,7 @@ export class PlanoController {
         descricao,
         categoria,
         detalhes,
+        servicos,
         preco_mensal,
         limite_usuarios,
         limite_mesas,
@@ -62,14 +63,15 @@ export class PlanoController {
 
       const result = db.prepare(`
         INSERT INTO planos (
-          nome, descricao, categoria, detalhes, preco_mensal, limite_usuarios, limite_mesas,
+          nome, descricao, categoria, detalhes, servicos, preco_mensal, limite_usuarios, limite_mesas,
           limite_produtos, limite_vendas_mes, inclui_delivery, inclui_relatorios
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         nome,
         descricao,
         categoria || null,
         detalhes || null,
+        servicos || null,
         preco_mensal,
         limite_usuarios || 5,
         limite_mesas || 10,
@@ -100,6 +102,7 @@ export class PlanoController {
         descricao,
         categoria,
         detalhes,
+        servicos,
         preco_mensal,
         limite_usuarios,
         limite_mesas,
@@ -117,7 +120,7 @@ export class PlanoController {
 
       db.prepare(`
         UPDATE planos 
-        SET nome = ?, descricao = ?, categoria = ?, detalhes = ?, preco_mensal = ?,
+        SET nome = ?, descricao = ?, categoria = ?, detalhes = ?, servicos = ?, preco_mensal = ?,
             limite_usuarios = ?, limite_mesas = ?, limite_produtos = ?,
             limite_vendas_mes = ?, inclui_delivery = ?, inclui_relatorios = ?,
             ativo = ?, updated_at = CURRENT_TIMESTAMP
@@ -127,6 +130,7 @@ export class PlanoController {
         descricao,
         categoria || null,
         detalhes || null,
+        servicos || null,
         preco_mensal,
         limite_usuarios,
         limite_mesas,

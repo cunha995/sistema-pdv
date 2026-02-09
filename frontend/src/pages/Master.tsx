@@ -33,6 +33,7 @@ interface Plano {
   descricao: string;
   categoria?: string;
   detalhes?: string;
+  servicos?: string;
   preco_mensal: number;
   limite_usuarios: number;
   limite_mesas: number;
@@ -78,6 +79,7 @@ const Master: React.FC = () => {
     descricao: '',
     categoria: '',
     detalhes: '',
+    servicos: '',
     preco_mensal: 99.90,
     limite_usuarios: 5,
     limite_mesas: 10,
@@ -662,6 +664,15 @@ const Master: React.FC = () => {
                     rows={3}
                   />
                 </div>
+                <div className="field-group full">
+                  <label className="field-label">Serviços/Categorias adicionais</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Suporte premium, Integração, Treinamento (separe por vírgula)"
+                    value={formPlano.servicos || ''}
+                    onChange={(e) => setFormPlano({...formPlano, servicos: e.target.value})}
+                  />
+                </div>
                 <div className="form-row">
                   <div className="field-group">
                     <label className="field-label">Limite de Usuários</label>
@@ -734,6 +745,11 @@ const Master: React.FC = () => {
                   <li>💳 {plano.limite_vendas_mes === -1 ? 'Vendas ilimitadas' : `${plano.limite_vendas_mes} vendas/mês`}</li>
                   {plano.inclui_delivery && <li>✓ Delivery incluído</li>}
                   {plano.inclui_relatorios && <li>✓ Relatórios incluídos</li>}
+                  {plano.servicos?.split(',').map((item, index) => {
+                    const label = item.trim();
+                    if (!label) return null;
+                    return <li key={`${plano.id}-servico-${index}`}>✓ {label}</li>;
+                  })}
                 </ul>
                 <div className="plano-actions">
                   <button className="btn-editar-plano" onClick={() => handleEditarPlano(plano)}>✏️ Editar</button>
