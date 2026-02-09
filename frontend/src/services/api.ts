@@ -304,7 +304,7 @@ export const api = {
 
   // Empresas
   empresas: {
-    listar: () => fetchWithAuth(`${API_URL}/empresas`).then(r => r.json()),
+    listar: () => fetchWithAuth(`${API_URL}/empresas?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json()),
     buscar: (id: number) => fetchWithAuth(`${API_URL}/empresas/${id}`).then(r => r.json()),
     criar: async (data: any) => {
       const response = await fetchWithAuth(`${API_URL}/empresas`, {

@@ -209,8 +209,8 @@ const Master: React.FC = () => {
         }
       }
       limparFormEmpresa();
-      // Revalidar em segundo plano para garantir consistência
-      setTimeout(() => carregarEmpresas(), 800);
+      // Revalidar imediatamente para garantir consistência
+      carregarEmpresas();
       setTimeout(() => setMensagem(''), 4000);
     } catch (error: any) {
       console.error('Erro ao salvar empresa:', error);
