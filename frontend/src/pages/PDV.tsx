@@ -387,10 +387,10 @@ const PDV: React.FC = () => {
       setMesasAceitas((prev) => prev.filter((m) => m !== mesaIdAtual));
       verificarPendencias(true);
       setTimeout(() => setMensagem(''), 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao fechar conta:', error);
-      setMensagem('❌ Erro ao fechar conta da mesa!');
-      setTimeout(() => setMensagem(''), 2000);
+      setMensagem(`❌ ${error?.message || 'Erro ao fechar conta da mesa!'}`);
+      setTimeout(() => setMensagem(''), 3000);
     }
   };
 

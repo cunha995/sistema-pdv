@@ -163,6 +163,12 @@ export class MesaController {
         VALUES (?, ?, ?, ?, ?)
       `);
 
+      const stmtEstoque = db.prepare(`
+        UPDATE produtos 
+        SET estoque = estoque - ? 
+        WHERE id = ?
+      `);
+
       todosItens.forEach((item: any) => {
         stmtItemVenda.run(
           resultVenda.lastInsertRowid, 
@@ -171,18 +177,9 @@ export class MesaController {
           item.preco_unitario, 
           item.subtotal
         );
-        
-        // Atualizar estoque do produto
-        const stmtEstoque = db.prepare(`
-          UPDATE produtos 
-          SET estoque = estoque - ? 
-          WHERE id = ? AND estoque >= ?
-        `);
-        const result = stmtEstoque.run(item.quantidade, item.produto_id, item.quantidade);
-        
-        if (result.changes === 0) {
-          throw new Error(`Estoque insuficiente para produto #${item.produto_id}`);
-        }
+
+        // Atualizar estoque do produto sem bloquear o fechamento
+        stmtEstoque.run(item.quantidade, item.produto_id);
       });
 
       // Marcar TODOS os pedidos da mesa como fechados
