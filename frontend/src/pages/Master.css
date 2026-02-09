@@ -612,6 +612,12 @@
   font-size: 0.95em;
 }
 
+.plano-categoria {
+  color: #fbbf24;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
 .features {
   flex: 1;
   margin: 0 0 16px 0;

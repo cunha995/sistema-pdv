@@ -40,6 +40,8 @@ export class PlanoController {
       const {
         nome,
         descricao,
+        categoria,
+        detalhes,
         preco_mensal,
         limite_usuarios,
         limite_mesas,
@@ -60,13 +62,21 @@ export class PlanoController {
 
       const result = db.prepare(`
         INSERT INTO planos (
-          nome, descricao, preco_mensal, limite_usuarios, limite_mesas,
+          nome, descricao, categoria, detalhes, preco_mensal, limite_usuarios, limite_mesas,
           limite_produtos, limite_vendas_mes, inclui_delivery, inclui_relatorios
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
-        nome, descricao, preco_mensal,
-        limite_usuarios || 5, limite_mesas || 10, limite_produtos || 500,
-        limite_vendas_mes || -1, inclui_delivery ? 1 : 0, inclui_relatorios ? 1 : 0
+        nome,
+        descricao,
+        categoria || null,
+        detalhes || null,
+        preco_mensal,
+        limite_usuarios || 5,
+        limite_mesas || 10,
+        limite_produtos || 500,
+        limite_vendas_mes || -1,
+        inclui_delivery ? 1 : 0,
+        inclui_relatorios ? 1 : 0
       );
 
       res.status(201).json({
@@ -88,6 +98,8 @@ export class PlanoController {
       const {
         nome,
         descricao,
+        categoria,
+        detalhes,
         preco_mensal,
         limite_usuarios,
         limite_mesas,
@@ -105,16 +117,25 @@ export class PlanoController {
 
       db.prepare(`
         UPDATE planos 
-        SET nome = ?, descricao = ?, preco_mensal = ?,
+        SET nome = ?, descricao = ?, categoria = ?, detalhes = ?, preco_mensal = ?,
             limite_usuarios = ?, limite_mesas = ?, limite_produtos = ?,
             limite_vendas_mes = ?, inclui_delivery = ?, inclui_relatorios = ?,
             ativo = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `).run(
-        nome, descricao, preco_mensal,
-        limite_usuarios, limite_mesas, limite_produtos,
-        limite_vendas_mes, inclui_delivery ? 1 : 0, inclui_relatorios ? 1 : 0,
-        ativo !== undefined ? ativo : 1, id
+        nome,
+        descricao,
+        categoria || null,
+        detalhes || null,
+        preco_mensal,
+        limite_usuarios,
+        limite_mesas,
+        limite_produtos,
+        limite_vendas_mes,
+        inclui_delivery ? 1 : 0,
+        inclui_relatorios ? 1 : 0,
+        ativo !== undefined ? ativo : 1,
+        id
       );
 
       res.json({ message: 'Plano atualizado com sucesso' });

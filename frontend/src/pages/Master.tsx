@@ -31,10 +31,13 @@ interface Plano {
   id?: number;
   nome: string;
   descricao: string;
+  categoria?: string;
+  detalhes?: string;
   preco_mensal: number;
   limite_usuarios: number;
   limite_mesas: number;
   limite_produtos: number;
+  limite_vendas_mes?: number;
   inclui_delivery: boolean;
   inclui_relatorios: boolean;
   ativo?: boolean;
@@ -73,10 +76,13 @@ const Master: React.FC = () => {
   const [formPlano, setFormPlano] = useState<Plano>({
     nome: '',
     descricao: '',
+    categoria: '',
+    detalhes: '',
     preco_mensal: 99.90,
     limite_usuarios: 5,
     limite_mesas: 10,
     limite_produtos: 500,
+    limite_vendas_mes: -1,
     inclui_delivery: false,
     inclui_relatorios: true
   });
@@ -162,7 +168,7 @@ const Master: React.FC = () => {
         const empresaParaLista: Empresa = {
           ...dadosEmpresa,
           id: empresaCriada.id,
-          ativo: 1,
+          ativo: true,
           plano_nome: planoSelecionado?.nome,
           preco_mensal: planoSelecionado?.preco_mensal
         };
@@ -299,10 +305,13 @@ const Master: React.FC = () => {
     setFormPlano({
       nome: '',
       descricao: '',
+      categoria: '',
+      detalhes: '',
       preco_mensal: 99.90,
       limite_usuarios: 5,
       limite_mesas: 10,
       limite_produtos: 500,
+      limite_vendas_mes: -1,
       inclui_delivery: false,
       inclui_relatorios: true
     });
@@ -609,11 +618,31 @@ const Master: React.FC = () => {
                     onChange={(e) => setFormPlano({...formPlano, preco_mensal: Number(e.target.value)})}
                   />
                 </div>
+                <div className="form-row">
+                  <input
+                    type="text"
+                    placeholder="Categoria do Plano"
+                    value={formPlano.categoria || ''}
+                    onChange={(e) => setFormPlano({...formPlano, categoria: e.target.value})}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Limite de Vendas/Mês"
+                    value={formPlano.limite_vendas_mes ?? -1}
+                    onChange={(e) => setFormPlano({...formPlano, limite_vendas_mes: Number(e.target.value)})}
+                  />
+                </div>
                 <textarea
                   placeholder="Descrição"
                   value={formPlano.descricao}
                   onChange={(e) => setFormPlano({...formPlano, descricao: e.target.value})}
                   rows={2}
+                />
+                <textarea
+                  placeholder="Detalhes (ex: suporte, SLA, recursos extras)"
+                  value={formPlano.detalhes || ''}
+                  onChange={(e) => setFormPlano({...formPlano, detalhes: e.target.value})}
+                  rows={3}
                 />
                 <div className="form-row">
                   <input
@@ -669,10 +698,13 @@ const Master: React.FC = () => {
                   <div className="preco">R$ {plano.preco_mensal.toFixed(2)}<span>/mês</span></div>
                 </div>
                 <p className="descricao">{plano.descricao}</p>
+                {plano.categoria && <div className="plano-categoria">Categoria: {plano.categoria}</div>}
+                {plano.detalhes && <p className="descricao">{plano.detalhes}</p>}
                 <ul className="features">
                   <li>👥 {plano.limite_usuarios === -1 ? 'Ilimitados' : plano.limite_usuarios} usuários</li>
                   <li>🍽️ {plano.limite_mesas === -1 ? 'Ilimitadas' : plano.limite_mesas} mesas</li>
                   <li>📦 {plano.limite_produtos === -1 ? 'Ilimitados' : plano.limite_produtos} produtos</li>
+                  <li>💳 {plano.limite_vendas_mes === -1 ? 'Vendas ilimitadas' : `${plano.limite_vendas_mes} vendas/mês`}</li>
                   {plano.inclui_delivery && <li>✓ Delivery incluído</li>}
                   {plano.inclui_relatorios && <li>✓ Relatórios incluídos</li>}
                 </ul>
