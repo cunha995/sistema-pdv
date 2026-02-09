@@ -346,7 +346,7 @@ const PDV: React.FC = () => {
       }
 
       const itensNota: ItemVenda[] = pedidosMesa
-        .filter(p => p.status !== 'fechado')
+        .filter(p => p.status !== 'fechado' && p.status !== 'cancelado')
         .flatMap((pedido: any) =>
           (pedido.itens || []).map((item: any) => {
             const produto = produtos.find((p) => p.id === item.produto_id);
@@ -397,7 +397,7 @@ const PDV: React.FC = () => {
   const lancarMesaNoPdv = () => {
     if (!mesaSelecionada) return;
     const itensMesa = pedidosMesa
-      .filter(p => p.status !== 'fechado')
+      .filter(p => p.status !== 'fechado' && p.status !== 'cancelado')
       .flatMap((pedido: any) => pedido.itens || []);
 
     if (itensMesa.length === 0) {
@@ -455,7 +455,7 @@ const PDV: React.FC = () => {
 
   const calcularTotalMesa = () => {
     return pedidosMesa
-      .filter(p => p.status !== 'fechado')
+      .filter(p => p.status !== 'fechado' && p.status !== 'cancelado')
       .reduce((total, pedido) => total + parseFloat(pedido.total || 0), 0);
   };
 
@@ -988,7 +988,7 @@ const PDV: React.FC = () => {
                 </button>
               </div>
 
-              {pedidosMesa.filter(p => p.status !== 'fechado').length > 0 && (
+              {pedidosMesa.filter(p => p.status !== 'fechado' && p.status !== 'cancelado').length > 0 && (
                 <div className="mesa-actions">
                   <button className="btn-lancar-pdv" onClick={lancarMesaNoPdv}>
                     ➜ Lançar no PDV
@@ -1004,7 +1004,7 @@ const PDV: React.FC = () => {
               ) : (
                 <>
                   <div className="pedidos-lista">
-                    {pedidosMesa.filter(p => p.status !== 'fechado').map((pedido) => (
+                    {pedidosMesa.filter(p => p.status !== 'fechado' && p.status !== 'cancelado').map((pedido) => (
                       <div key={pedido.id} className="pedido-card">
                         <div className="pedido-header">
                           <span className="pedido-id">Pedido #{pedido.id}</span>

@@ -41,8 +41,9 @@
 .pdv-container input,
 .pdv-container textarea,
 .pdv-container select {
-  color: #000;
+  color: #facc15;
   font-weight: 700;
+  caret-color: #facc15;
 }
 
 .nota-overlay {
