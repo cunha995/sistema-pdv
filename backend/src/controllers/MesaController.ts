@@ -157,6 +157,18 @@ export class MesaController {
         `Mesa ${mesa_id}`
       );
 
+      // Atualizar faturamento/quantidade na empresa
+      if (empresa_id) {
+        const stmtEmpresa = db.prepare(`
+          UPDATE empresas
+          SET total_vendas = COALESCE(total_vendas, 0) + ?,
+              quantidade_vendas = COALESCE(quantidade_vendas, 0) + 1,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `);
+        stmtEmpresa.run(totalComDesconto, empresa_id);
+      }
+
       // Inserir itens da venda
       const stmtItemVenda = db.prepare(`
         INSERT INTO itens_venda (venda_id, produto_id, quantidade, preco_unitario, subtotal)
