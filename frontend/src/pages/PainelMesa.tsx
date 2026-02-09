@@ -178,6 +178,18 @@ const PainelMesa: React.FC = () => {
         
         // Limpar histórico de status
         statusAnteriorRef.current = {};
+
+        try {
+          const pedidosAtualizados = await api.mesas.listarPedidos(Number(id));
+          const pedidosAtivos = pedidosAtualizados.filter((pedido: Pedido) => 
+            pedido.status !== 'fechado' && pedido.status !== 'cancelado'
+          );
+          setHistoricoPedidos(pedidosAtivos);
+          const total = pedidosAtivos.reduce((acc: number, pedido: Pedido) => acc + pedido.total, 0);
+          setTotalConta(total);
+        } catch {
+          // ignore refresh errors
+        }
         
         setTimeout(() => setMensagem(''), 3000);
       } else {
