@@ -2,16 +2,32 @@ import { Request, Response } from 'express';
 import { db } from '../database';
 import { Cliente } from '../models/types';
 
+const getEmpresaIdFromAuth = (req: Request) => {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) return undefined;
+  const token = auth.slice(7);
+  try {
+    const decoded = Buffer.from(token, 'base64').toString('utf8');
+    const parts = decoded.split(':');
+    const empresaId = Number(parts[1]);
+    return Number.isFinite(empresaId) ? empresaId : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export class ClienteController {
   // Listar todos os clientes
   static listar(req: Request, res: Response) {
     try {
       const { empresa_id } = req.query as { empresa_id?: string };
-      if (!empresa_id) {
+      const tokenEmpresaId = getEmpresaIdFromAuth(req);
+      const empresaId = empresa_id ? Number(empresa_id) : tokenEmpresaId;
+      if (!empresaId) {
         return res.json([]);
       }
 
-      const clientes = db.prepare('SELECT * FROM clientes WHERE empresa_id = ? ORDER BY nome').all(empresa_id);
+      const clientes = db.prepare('SELECT * FROM clientes WHERE empresa_id = ? ORDER BY nome').all(empresaId);
       return res.json(clientes);
     } catch (error) {
       res.status(500).json({ error: 'Erro ao listar clientes' });
@@ -23,10 +39,15 @@ export class ClienteController {
     try {
       const { id } = req.params;
       const { empresa_id } = req.query as { empresa_id?: string };
-      if (!empresa_id) {
+      const tokenEmpresaId = getEmpresaIdFromAuth(req);
+      const empresaId = empresa_id ? Number(empresa_id) : tokenEmpresaId;
+      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
+      }
+      if (!empresaId) {
         return res.status(400).json({ error: 'empresa_id obrigatório' });
       }
-      const cliente = db.prepare('SELECT * FROM clientes WHERE id = ? AND empresa_id = ?').get(id, empresa_id);
+      const cliente = db.prepare('SELECT * FROM clientes WHERE id = ? AND empresa_id = ?').get(id, empresaId);
       
       if (!cliente) {
         return res.status(404).json({ error: 'Cliente não encontrado' });
@@ -42,8 +63,14 @@ export class ClienteController {
   static criar(req: Request, res: Response) {
     try {
       const { nome, cpf, telefone, email, endereco, empresa_id }: Cliente = req.body;
+      const tokenEmpresaId = getEmpresaIdFromAuth(req);
+      const empresaId = empresa_id ?? tokenEmpresaId;
+
+      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
+      }
       
-      if (!empresa_id) {
+      if (!empresaId) {
         return res.status(400).json({ error: 'empresa_id obrigatório' });
       }
 
@@ -54,7 +81,7 @@ export class ClienteController {
       const result = db.prepare(`
         INSERT INTO clientes (empresa_id, nome, cpf, telefone, email, endereco)
         VALUES (?, ?, ?, ?, ?, ?)
-      `).run(empresa_id, nome, cpf || null, telefone || null, email || null, endereco || null);
+      `).run(empresaId, nome, cpf || null, telefone || null, email || null, endereco || null);
 
       res.status(201).json({ id: result.lastInsertRowid, message: 'Cliente criado com sucesso' });
     } catch (error: any) {
@@ -70,8 +97,14 @@ export class ClienteController {
     try {
       const { id } = req.params;
       const { nome, cpf, telefone, email, endereco, empresa_id }: Cliente = req.body;
+      const tokenEmpresaId = getEmpresaIdFromAuth(req);
+      const empresaId = empresa_id ?? tokenEmpresaId;
 
-      if (!empresa_id) {
+      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
+      }
+
+      if (!empresaId) {
         return res.status(400).json({ error: 'empresa_id obrigatório' });
       }
 
@@ -79,7 +112,7 @@ export class ClienteController {
         UPDATE clientes 
         SET nome = ?, cpf = ?, telefone = ?, email = ?, endereco = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ? AND empresa_id = ?
-      `).run(nome, cpf || null, telefone || null, email || null, endereco || null, id, empresa_id);
+      `).run(nome, cpf || null, telefone || null, email || null, endereco || null, id, empresaId);
 
       if (result.changes === 0) {
         return res.status(404).json({ error: 'Cliente não encontrado' });
@@ -99,12 +132,18 @@ export class ClienteController {
     try {
       const { id } = req.params;
       const { empresa_id } = req.query as { empresa_id?: string };
+      const tokenEmpresaId = getEmpresaIdFromAuth(req);
+      const empresaId = empresa_id ? Number(empresa_id) : tokenEmpresaId;
 
-      if (!empresa_id) {
+      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
+      }
+
+      if (!empresaId) {
         return res.status(400).json({ error: 'empresa_id obrigatório' });
       }
       
-      const result = db.prepare('DELETE FROM clientes WHERE id = ? AND empresa_id = ?').run(id, empresa_id);
+      const result = db.prepare('DELETE FROM clientes WHERE id = ? AND empresa_id = ?').run(id, empresaId);
       
       if (result.changes === 0) {
         return res.status(404).json({ error: 'Cliente não encontrado' });

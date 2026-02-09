@@ -3,12 +3,28 @@ import { db } from '../database';
 import { Venda } from '../models/types';
 
 export class VendaController {
+  static getEmpresaIdFromAuth(req: Request) {
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith('Bearer ')) return undefined;
+    const token = auth.slice(7);
+    try {
+      const decoded = Buffer.from(token, 'base64').toString('utf8');
+      const parts = decoded.split(':');
+      const empresaId = Number(parts[1]);
+      return Number.isFinite(empresaId) ? empresaId : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
   // Listar todas as vendas
   static listar(req: Request, res: Response) {
     try {
       const { empresa_id } = req.query;
+      const tokenEmpresaId = VendaController.getEmpresaIdFromAuth(req);
+      const empresaId = empresa_id ? Number(empresa_id) : tokenEmpresaId;
 
-      if (!empresa_id) {
+      if (!empresaId) {
         return res.json([]);
       }
 
@@ -18,9 +34,9 @@ export class VendaController {
         LEFT JOIN clientes c ON v.cliente_id = c.id
       `;
       const params: any[] = [];
-      if (empresa_id) {
+      if (empresaId) {
         query += ' WHERE v.empresa_id = ?';
-        params.push(empresa_id);
+        params.push(empresaId);
       }
       query += ' ORDER BY v.created_at DESC';
 
@@ -37,8 +53,14 @@ export class VendaController {
     try {
       const { id } = req.params;
       const { empresa_id } = req.query as { empresa_id?: string };
+      const tokenEmpresaId = VendaController.getEmpresaIdFromAuth(req);
+      const empresaId = empresa_id ? Number(empresa_id) : tokenEmpresaId;
 
-      if (!empresa_id) {
+      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
+      }
+
+      if (!empresaId) {
         return res.status(400).json({ error: 'empresa_id obrigatório' });
       }
       
@@ -47,7 +69,7 @@ export class VendaController {
         FROM vendas v
         LEFT JOIN clientes c ON v.cliente_id = c.id
         WHERE v.id = ? AND v.empresa_id = ?
-      `).get(id, empresa_id);
+      `).get(id, empresaId);
       
       if (!venda) {
         return res.status(404).json({ error: 'Venda não encontrada' });
@@ -71,6 +93,16 @@ export class VendaController {
     const transaction = db.transaction((vendaData: Venda) => {
       try {
         const { empresa_id, cliente_id, total, desconto, metodo_pagamento, observacoes, itens } = vendaData;
+        const tokenEmpresaId = VendaController.getEmpresaIdFromAuth(req);
+        const empresaId = empresa_id ?? tokenEmpresaId;
+
+        if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+          throw new Error('Empresa inválida');
+        }
+
+        if (!empresaId) {
+          throw new Error('empresa_id obrigatório');
+        }
 
         // Validações
         if (!itens || itens.length === 0) {
@@ -81,7 +113,7 @@ export class VendaController {
         const resultVenda = db.prepare(`
           INSERT INTO vendas (empresa_id, cliente_id, total, desconto, metodo_pagamento, observacoes)
           VALUES (?, ?, ?, ?, ?, ?)
-        `).run(empresa_id || null, cliente_id || null, total, desconto || 0, metodo_pagamento || null, observacoes || null);
+        `).run(empresaId, cliente_id || null, total, desconto || 0, metodo_pagamento || null, observacoes || null);
 
         const vendaId = resultVenda.lastInsertRowid;
 
@@ -132,8 +164,10 @@ export class VendaController {
   static relatorio(req: Request, res: Response) {
     try {
       const { data_inicio, data_fim, empresa_id } = req.query;
+      const tokenEmpresaId = VendaController.getEmpresaIdFromAuth(req);
+      const empresaId = empresa_id ? Number(empresa_id) : tokenEmpresaId;
 
-      if (!empresa_id) {
+      if (!empresaId) {
         return res.json({ total_vendas: 0, valor_total: 0, vendas: [] });
       }
 
@@ -141,7 +175,7 @@ export class VendaController {
       const params: any[] = [];
 
       query += ' WHERE empresa_id = ?';
-      params.push(empresa_id);
+      params.push(empresaId);
 
       if (data_inicio && data_fim) {
         query += params.length ? ' AND' : ' WHERE';
