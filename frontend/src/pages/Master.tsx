@@ -602,67 +602,94 @@ const Master: React.FC = () => {
               <div className="form-title">{editandoPlano ? '✏️ Editar' : '➕ Novo'} Plano</div>
               <form onSubmit={handleSubmitPlano} className="master-form">
                 <div className="form-row">
-                  <input
-                    type="text"
-                    placeholder="Nome do Plano"
-                    required
-                    value={formPlano.nome}
-                    onChange={(e) => setFormPlano({...formPlano, nome: e.target.value})}
+                  <div className="field-group">
+                    <label className="field-label">Nome do Plano</label>
+                    <input
+                      type="text"
+                      placeholder="Nome do Plano"
+                      required
+                      value={formPlano.nome}
+                      onChange={(e) => setFormPlano({...formPlano, nome: e.target.value})}
+                    />
+                  </div>
+                  <div className="field-group">
+                    <label className="field-label">Preço Mensal</label>
+                    <input
+                      type="number"
+                      placeholder="Preço Mensal"
+                      step="0.01"
+                      required
+                      value={formPlano.preco_mensal}
+                      onChange={(e) => setFormPlano({...formPlano, preco_mensal: Number(e.target.value)})}
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="field-group">
+                    <label className="field-label">Categoria do Plano</label>
+                    <input
+                      type="text"
+                      placeholder="Categoria do Plano"
+                      value={formPlano.categoria || ''}
+                      onChange={(e) => setFormPlano({...formPlano, categoria: e.target.value})}
+                    />
+                  </div>
+                  <div className="field-group">
+                    <label className="field-label">Limite de Vendas/Mês</label>
+                    <input
+                      type="number"
+                      placeholder="Limite de Vendas/Mês"
+                      value={formPlano.limite_vendas_mes ?? -1}
+                      onChange={(e) => setFormPlano({...formPlano, limite_vendas_mes: Number(e.target.value)})}
+                    />
+                  </div>
+                </div>
+                <div className="field-group full">
+                  <label className="field-label">Descrição</label>
+                  <textarea
+                    placeholder="Descrição"
+                    value={formPlano.descricao}
+                    onChange={(e) => setFormPlano({...formPlano, descricao: e.target.value})}
+                    rows={2}
                   />
-                  <input
-                    type="number"
-                    placeholder="Preço Mensal"
-                    step="0.01"
-                    required
-                    value={formPlano.preco_mensal}
-                    onChange={(e) => setFormPlano({...formPlano, preco_mensal: Number(e.target.value)})}
+                </div>
+                <div className="field-group full">
+                  <label className="field-label">Detalhes do Plano</label>
+                  <textarea
+                    placeholder="Detalhes (ex: suporte, SLA, recursos extras)"
+                    value={formPlano.detalhes || ''}
+                    onChange={(e) => setFormPlano({...formPlano, detalhes: e.target.value})}
+                    rows={3}
                   />
                 </div>
                 <div className="form-row">
-                  <input
-                    type="text"
-                    placeholder="Categoria do Plano"
-                    value={formPlano.categoria || ''}
-                    onChange={(e) => setFormPlano({...formPlano, categoria: e.target.value})}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Limite de Vendas/Mês"
-                    value={formPlano.limite_vendas_mes ?? -1}
-                    onChange={(e) => setFormPlano({...formPlano, limite_vendas_mes: Number(e.target.value)})}
-                  />
-                </div>
-                <textarea
-                  placeholder="Descrição"
-                  value={formPlano.descricao}
-                  onChange={(e) => setFormPlano({...formPlano, descricao: e.target.value})}
-                  rows={2}
-                />
-                <textarea
-                  placeholder="Detalhes (ex: suporte, SLA, recursos extras)"
-                  value={formPlano.detalhes || ''}
-                  onChange={(e) => setFormPlano({...formPlano, detalhes: e.target.value})}
-                  rows={3}
-                />
-                <div className="form-row">
-                  <input
-                    type="number"
-                    placeholder="Limite Usuários"
-                    value={formPlano.limite_usuarios}
-                    onChange={(e) => setFormPlano({...formPlano, limite_usuarios: Number(e.target.value)})}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Limite Mesas"
-                    value={formPlano.limite_mesas}
-                    onChange={(e) => setFormPlano({...formPlano, limite_mesas: Number(e.target.value)})}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Limite Produtos"
-                    value={formPlano.limite_produtos}
-                    onChange={(e) => setFormPlano({...formPlano, limite_produtos: Number(e.target.value)})}
-                  />
+                  <div className="field-group">
+                    <label className="field-label">Limite de Usuários</label>
+                    <input
+                      type="number"
+                      placeholder="Limite Usuários"
+                      value={formPlano.limite_usuarios}
+                      onChange={(e) => setFormPlano({...formPlano, limite_usuarios: Number(e.target.value)})}
+                    />
+                  </div>
+                  <div className="field-group">
+                    <label className="field-label">Limite de Mesas</label>
+                    <input
+                      type="number"
+                      placeholder="Limite Mesas"
+                      value={formPlano.limite_mesas}
+                      onChange={(e) => setFormPlano({...formPlano, limite_mesas: Number(e.target.value)})}
+                    />
+                  </div>
+                  <div className="field-group">
+                    <label className="field-label">Limite de Produtos</label>
+                    <input
+                      type="number"
+                      placeholder="Limite Produtos"
+                      value={formPlano.limite_produtos}
+                      onChange={(e) => setFormPlano({...formPlano, limite_produtos: Number(e.target.value)})}
+                    />
+                  </div>
                 </div>
                 <div className="form-checkboxes">
                   <label>
