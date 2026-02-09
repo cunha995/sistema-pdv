@@ -101,7 +101,10 @@ export const api = {
 
   // Mesas
   mesas: {
-    listarPedidos: (mesaId: number) => fetch(`${API_URL}/mesas/${mesaId}/pedidos`).then(r => r.json()),
+    listarPedidos: (mesaId: number) =>
+      fetch(`${API_URL}/mesas/${mesaId}/pedidos?t=${Date.now()}`, {
+        cache: 'no-store'
+      }).then(r => r.json()),
     criarPedido: async (mesaId: number, itens: any[]) => {
       const response = await fetch(`${API_URL}/mesas/${mesaId}/pedidos`, {
         method: 'POST',
