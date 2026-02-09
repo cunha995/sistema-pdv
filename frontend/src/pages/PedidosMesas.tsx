@@ -1,4 +1,4 @@
-
+import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { Produto } from '../types';
 
@@ -19,7 +19,11 @@ const PedidosMesas: React.FC = () => {
     const result: Record<string, any[]> = {};
     for (const mesa of mesas) {
       const resp = await fetch(`/api/mesas/${mesa.id}/pedidos`);
-      result[mesa.id] = await resp.json();
+      const todosPedidos = await resp.json();
+      // Filtrar apenas pedidos ativos (não fechados/cancelados)
+      result[mesa.id] = todosPedidos.filter((p: any) => 
+        p.status !== 'fechado' && p.status !== 'cancelado'
+      );
     }
     setPedidos(result);
     setLoading(false);
@@ -33,7 +37,7 @@ const PedidosMesas: React.FC = () => {
   }, []);
 
   const nomeProduto = (id: number) => {
-    const p = produtos.find(p => p.id === id);
+    const p = produtos.find((p: Produto) => p.id === id);
     return p ? p.nome : `Produto #${id}`;
   };
 
@@ -47,6 +51,21 @@ const PedidosMesas: React.FC = () => {
     window.alert(mensagemCliente);
   };
 
+  const cancelarPedido = async (mesaId: number, pedidoId: number) => {
+    if (!window.confirm('Deseja realmente cancelar este pedido?')) {
+      return;
+    }
+
+    try {
+      await api.mesas.cancelarPedido(mesaId, pedidoId);
+      carregarPedidos();
+      window.alert('Pedido cancelado com sucesso');
+    } catch (error) {
+      window.alert('Erro ao cancelar pedido');
+      console.error(error);
+    }
+  };
+
   return (
     <div className="pedidos-mesas-main">
       <h1>Pedidos por Mesa</h1>
@@ -56,7 +75,7 @@ const PedidosMesas: React.FC = () => {
           <div key={mesa.id} className="mesa-pedidos-card">
             <h2>{mesa.nome}</h2>
             <ul>
-              {(pedidos[mesa.id] || []).map(pedido => (
+              {(pedidos[mesa.id] || []).map((pedido: any) => (
                 <li key={pedido.id}>
                   <b>Pedido #{pedido.id}</b> - <span className={`status-${pedido.status}`}>{pedido.status}</span> <br />
                   {pedido.itens.map((item: any, idx: number) => (
@@ -64,7 +83,7 @@ const PedidosMesas: React.FC = () => {
                   ))}
                   <small>{new Date(pedido.criado_em).toLocaleString()}</small>
                   <div style={{marginTop: 4}}>
-                    {pedido.status !== 'entregue' && (
+                    {pedido.status !== 'entregue' && pedido.status !== 'cancelado' && (
                       <>
                         {pedido.status === 'pendente' && (
                           <button onClick={() => atualizarStatus(mesa.id, pedido.id, 'aceito', 'Cliente notificado: Pedido aceito!')}>
@@ -91,6 +110,14 @@ const PedidosMesas: React.FC = () => {
                         >
                           Marcar como Entregue
                         </button>
+                        {pedido.status === 'pendente' && (
+                          <button
+                            onClick={() => cancelarPedido(mesa.id, pedido.id)}
+                            style={{marginLeft: 8, background: '#dc3545'}}
+                          >
+                            Cancelar Pedido
+                          </button>
+                        )}
                       </>
                     )}
                   </div>

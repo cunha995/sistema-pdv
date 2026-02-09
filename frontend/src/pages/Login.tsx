@@ -77,7 +77,7 @@ export default function Login() {
 
         <div className="login-card">
           <div className="login-brand">
-            <div className="brand-icon">⚡</div>
+            <div className="brand-icon brand-icon-photo" />
             <div className="brand-text">
               <h1>PDV Master</h1>
               <p>Acesso Administrativo</p>

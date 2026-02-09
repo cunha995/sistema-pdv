@@ -52,7 +52,11 @@ const PainelMesa: React.FC = () => {
     const buscarPedidos = async () => {
       try {
         const pedidos = await api.mesas.listarPedidos(Number(id));
-        const pedidosAtivos = pedidos.filter((pedido: Pedido) => pedido.status !== 'fechado');
+        // Filtrar apenas pedidos que não estão fechados
+        const pedidosAtivos = pedidos.filter((pedido: Pedido) => 
+          pedido.status !== 'fechado' && pedido.status !== 'cancelado'
+        );
+        
         const statusAnterior = statusAnteriorRef.current;
         pedidosAtivos.forEach((pedido: Pedido) => {
           const anterior = statusAnterior[pedido.id];
@@ -152,20 +156,33 @@ const PainelMesa: React.FC = () => {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metodo_pagamento, desconto: parseFloat(desconto.toString()) }),
+          body: JSON.stringify({ metodo_pagamento: metodoPagamento, desconto: parseFloat(desconto.toString()) }),
         }
       );
 
       if (response.ok) {
         const result = await response.json();
         setMensagem(`✓ Conta fechada! Venda #${result.venda_id}`);
+        
+        // Limpar todos os estados
         setHistoricoPedidos([]);
         setTotalConta(0);
         setPedidoAtual([]);
         setDesconto(0);
+        setClienteNome('');
+        
+        // Limpar localStorage
+        if (id) {
+          localStorage.removeItem(`mesa_cliente_nome_${id}`);
+        }
+        
+        // Limpar histórico de status
+        statusAnteriorRef.current = {};
+        
         setTimeout(() => setMensagem(''), 3000);
       } else {
-        setMensagem('✗ Erro ao fechar conta');
+        const errorData = await response.json();
+        setMensagem(`✗ ${errorData.error || 'Erro ao fechar conta'}`);
       }
     } catch (error) {
       setMensagem('✗ Erro ao fechar conta');
@@ -266,7 +283,7 @@ const PainelMesa: React.FC = () => {
                   <div key={item.produto.id} className="carrinho-item">
                     <span>{item.quantidade}x {item.produto.nome}</span>
                     <span>R$ {(item.produto.preco * item.quantidade).toFixed(2)}</span>
-                    <button onClick={() => removerDoPedido(item.produto.id)}>✕</button>
+                    <button onClick={() => item.produto.id && removerDoPedido(item.produto.id)}>✕</button>
                   </div>
                 ))}
               </div>

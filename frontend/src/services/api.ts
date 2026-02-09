@@ -144,6 +144,25 @@ export const api = {
 
       return json;
     },
+    cancelarPedido: async (mesaId: number, pedidoId: number) => {
+      const response = await fetch(`${API_URL}/mesas/${mesaId}/pedidos/${pedidoId}`, {
+        method: 'DELETE'
+      });
+
+      const raw = await response.text();
+      let json: any = null;
+      try {
+        json = raw ? JSON.parse(raw) : null;
+      } catch {
+        json = null;
+      }
+
+      if (!response.ok) {
+        throw new Error(json?.error || 'Erro ao cancelar pedido');
+      }
+
+      return json;
+    },
     fecharConta: (mesaId: number, data: any) => fetch(`${API_URL}/mesas/${mesaId}/fechar-conta`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

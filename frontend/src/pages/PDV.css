@@ -614,6 +614,10 @@
   z-index: 1;
 }
 
+.pedido-status-group.pendente {
+  cursor: pointer;
+}
+
 .btn-aceitar-pedido {
   border: none;
   border-radius: 999px;
@@ -670,7 +674,7 @@
   color: #5b21b6;
 }
 
-.status-preparando {
+.status-entregue {
   background: #dbeafe;
   color: #1e40af;
 }

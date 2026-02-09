@@ -106,18 +106,23 @@ export class MesaController {
 
   // Fechar conta (consolidar todos os pedidos em uma venda)
   static fecharConta(req: any, res: any) {
-    try {
+    const transaction = db.transaction(() => {
       const { mesa_id } = req.params;
       const { metodo_pagamento, desconto, empresa_id } = req.body;
+
+      // Validar método de pagamento
+      if (!metodo_pagamento) {
+        throw new Error('Método de pagamento obrigatório');
+      }
 
       // Buscar todos os pedidos abertos da mesa
       const pedidos = db.prepare(`
         SELECT * FROM pedidos_mesa
-        WHERE mesa_id = ? AND status != 'fechado'
+        WHERE mesa_id = ? AND status != 'fechado' AND status != 'cancelado'
       `).all(mesa_id);
 
       if (pedidos.length === 0) {
-        return res.status(400).json({ error: 'Nenhum pedido pendente para fechar' });
+        throw new Error('Nenhum pedido pendente para fechar');
       }
 
       // Calcular total
@@ -135,7 +140,8 @@ export class MesaController {
         });
       });
 
-      const totalComDesconto = Math.max(0, totalVenda - (desconto || 0));
+      const descontoValor = desconto || 0;
+      const totalComDesconto = Math.max(0, totalVenda - descontoValor);
 
       // Criar venda consolidada
       const stmtVenda = db.prepare(`
@@ -143,7 +149,13 @@ export class MesaController {
         VALUES (?, ?, ?, ?, ?)
       `);
 
-      const resultVenda = stmtVenda.run(empresa_id || null, totalComDesconto, desconto || 0, metodo_pagamento, `Mesa ${mesa_id}`);
+      const resultVenda = stmtVenda.run(
+        empresa_id || null, 
+        totalComDesconto, 
+        descontoValor, 
+        metodo_pagamento, 
+        `Mesa ${mesa_id}`
+      );
 
       // Inserir itens da venda
       const stmtItemVenda = db.prepare(`
@@ -152,22 +164,51 @@ export class MesaController {
       `);
 
       todosItens.forEach((item: any) => {
-        stmtItemVenda.run(resultVenda.lastInsertRowid, item.produto_id, item.quantidade, item.preco_unitario, item.subtotal);
+        stmtItemVenda.run(
+          resultVenda.lastInsertRowid, 
+          item.produto_id, 
+          item.quantidade, 
+          item.preco_unitario, 
+          item.subtotal
+        );
+        
+        // Atualizar estoque do produto
+        const stmtEstoque = db.prepare(`
+          UPDATE produtos 
+          SET estoque = estoque - ? 
+          WHERE id = ? AND estoque >= ?
+        `);
+        const result = stmtEstoque.run(item.quantidade, item.produto_id, item.quantidade);
+        
+        if (result.changes === 0) {
+          throw new Error(`Estoque insuficiente para produto #${item.produto_id}`);
+        }
       });
 
-      // Marcar pedidos como fechados
+      // Marcar TODOS os pedidos da mesa como fechados
       const stmtAtualizar = db.prepare(`
-        UPDATE pedidos_mesa SET status = 'fechado' WHERE mesa_id = ? AND status != 'fechado'
+        UPDATE pedidos_mesa 
+        SET status = 'fechado', updated_at = CURRENT_TIMESTAMP 
+        WHERE mesa_id = ? AND (status != 'fechado' AND status != 'cancelado')
       `);
-      stmtAtualizar.run(mesa_id);
+      const resultUpdate = stmtAtualizar.run(mesa_id);
 
-      res.json({ 
+      return { 
         venda_id: resultVenda.lastInsertRowid, 
         mesa_id, 
         total: totalComDesconto,
-        pedidos: pedidos.length
-      });
+        total_original: totalVenda,
+        desconto: descontoValor,
+        pedidos_fechados: resultUpdate.changes,
+        itens_total: todosItens.length
+      };
+    });
+
+    try {
+      const resultado = transaction();
+      res.json(resultado);
     } catch (error: any) {
+      console.error('Erro ao fechar conta:', error);
       res.status(500).json({ error: error.message });
     }
   }
@@ -178,11 +219,41 @@ export class MesaController {
       const { mesa_id } = req.params;
 
       const stmtAtualizar = db.prepare(`
-        UPDATE pedidos_mesa SET status = 'fechado' WHERE mesa_id = ? AND status != 'fechado'
+        UPDATE pedidos_mesa 
+        SET status = 'fechado', updated_at = CURRENT_TIMESTAMP 
+        WHERE mesa_id = ? AND status != 'fechado' AND status != 'cancelado'
       `);
       const result = stmtAtualizar.run(mesa_id);
 
       res.json({ mesa_id, fechados: result.changes || 0 });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Cancelar pedido específico
+  static cancelarPedido(req: any, res: any) {
+    try {
+      const { mesa_id, pedido_id } = req.params;
+
+      // Verificar se o pedido existe e pertence à mesa
+      const pedido = db.prepare(`
+        SELECT * FROM pedidos_mesa WHERE id = ? AND mesa_id = ?
+      `).get(pedido_id, mesa_id);
+
+      if (!pedido) {
+        return res.status(404).json({ error: 'Pedido não encontrado' });
+      }
+
+      // Cancelar o pedido
+      const stmt = db.prepare(`
+        UPDATE pedidos_mesa 
+        SET status = 'cancelado', updated_at = CURRENT_TIMESTAMP 
+        WHERE id = ? AND mesa_id = ?
+      `);
+
+      stmt.run(pedido_id, mesa_id);
+      res.json({ success: true, pedido_id, status: 'cancelado' });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

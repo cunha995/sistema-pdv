@@ -52,7 +52,6 @@ const PDV: React.FC = () => {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
   const mesasIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  const statusPendentes = new Set(['pendente', 'aceito', 'preparando', 'pronto']);
 
   useEffect(() => {
     carregarProdutos();
@@ -278,10 +277,14 @@ const PDV: React.FC = () => {
     }
   };
 
-  const aceitarPedidoMesa = async (mesaId: number, pedidoId: number) => {
+  const atualizarStatusPedidoMesa = async (
+    mesaId: number,
+    pedidoId: number,
+    status: 'aceito' | 'preparando' | 'pronto' | 'entregue'
+  ) => {
     try {
       if (!mesaId) return;
-      await api.mesas.atualizarStatus(mesaId, pedidoId, 'aceito');
+      await api.mesas.atualizarStatus(mesaId, pedidoId, status);
       const pedidosAtualizados = await api.mesas.listarPedidos(mesaId);
       setPedidosMesa(pedidosAtualizados);
 
@@ -291,16 +294,24 @@ const PDV: React.FC = () => {
       setMesasComPendencia((prev) => temPendentes ? prev.includes(mesaId) ? prev : [...prev, mesaId] : prev.filter((m) => m !== mesaId));
       setMesasAceitas((prev) => temAceitos ? prev.includes(mesaId) ? prev : [...prev, mesaId] : prev.filter((m) => m !== mesaId));
 
-      setMensagem('✓ Pedido aceito!');
+      const mensagens: Record<string, string> = {
+        aceito: '✓ Pedido aceito!',
+        preparando: '✓ Pedido em preparo!',
+        pronto: '✓ Pedido pronto!',
+        entregue: '✓ Pedido entregue!'
+      };
+
+      setMensagem(mensagens[status] || '✓ Status atualizado!');
       verificarPendencias(true);
       setTimeout(() => setMensagem(''), 2000);
     } catch (error) {
-      console.error('Erro ao aceitar pedido:', error);
-      const mensagemErro = error instanceof Error ? error.message : 'Erro ao aceitar pedido';
+      console.error('Erro ao atualizar pedido:', error);
+      const mensagemErro = error instanceof Error ? error.message : 'Erro ao atualizar pedido';
       setMensagem(`❌ ${mensagemErro}`);
       setTimeout(() => setMensagem(''), 2000);
     }
   };
+
 
   const fecharContaMesa = async () => {
     if (!mesaSelecionada) return;
@@ -973,12 +984,14 @@ const PDV: React.FC = () => {
                       <div key={pedido.id} className="pedido-card">
                         <div className="pedido-header">
                           <span className="pedido-id">Pedido #{pedido.id}</span>
-                          <div className="pedido-status-group">
+                          <div
+                            className={`pedido-status-group ${pedido.status === 'pendente' ? 'pendente' : ''}`}
+                          >
                             {pedido.status === 'pendente' ? (
                               <button
                                 type="button"
                                 className={`pedido-status status-${pedido.status} status-button`}
-                                onClick={() => aceitarPedidoMesa(pedido.mesa_id || mesaSelecionada, pedido.id)}
+                                onClick={() => atualizarStatusPedidoMesa(pedido.mesa_id || mesaSelecionada, pedido.id, 'aceito')}
                               >
                                 {pedido.status}
                               </button>
@@ -991,9 +1004,36 @@ const PDV: React.FC = () => {
                               <button
                                 className="btn-aceitar-pedido"
                                 type="button"
-                                onClick={() => aceitarPedidoMesa(pedido.mesa_id || mesaSelecionada, pedido.id)}
+                                onClick={() => atualizarStatusPedidoMesa(pedido.mesa_id || mesaSelecionada, pedido.id, 'aceito')}
                               >
                                 Aceitar
+                              </button>
+                            )}
+                            {pedido.status === 'aceito' && (
+                              <button
+                                className="btn-aceitar-pedido"
+                                type="button"
+                                onClick={() => atualizarStatusPedidoMesa(pedido.mesa_id || mesaSelecionada, pedido.id, 'preparando')}
+                              >
+                                Preparando
+                              </button>
+                            )}
+                            {pedido.status === 'preparando' && (
+                              <button
+                                className="btn-aceitar-pedido"
+                                type="button"
+                                onClick={() => atualizarStatusPedidoMesa(pedido.mesa_id || mesaSelecionada, pedido.id, 'pronto')}
+                              >
+                                Pronto
+                              </button>
+                            )}
+                            {pedido.status === 'pronto' && (
+                              <button
+                                className="btn-aceitar-pedido"
+                                type="button"
+                                onClick={() => atualizarStatusPedidoMesa(pedido.mesa_id || mesaSelecionada, pedido.id, 'entregue')}
+                              >
+                                Entregue
                               </button>
                             )}
                           </div>

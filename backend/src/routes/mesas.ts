@@ -11,6 +11,9 @@ router.get('/:mesa_id/pedidos', MesaController.listarPedidos);
 // Atualizar status do pedido
 router.patch('/:mesa_id/pedidos/:pedido_id', MesaController.atualizarStatusPedido);
 
+// Cancelar pedido específico
+router.delete('/:mesa_id/pedidos/:pedido_id', MesaController.cancelarPedido);
+
 // Chamar atendente
 router.post('/:mesa_id/chamar-atendente', MesaController.chamarAtendente);
 

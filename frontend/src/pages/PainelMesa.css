@@ -186,9 +186,20 @@
   color: #155724;
 }
 
-.status-fechado {
+.status-entregue {
   background: #d1ecf1;
   color: #0c5460;
+}
+
+.status-fechado {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.status-cancelado {
+  background: #f8d7da;
+  color: #721c24;
+  text-decoration: line-through;
 }
 
 .pedido-total {
