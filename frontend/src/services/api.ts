@@ -163,14 +163,46 @@ export const api = {
 
       return json;
     },
-    fecharConta: (mesaId: number, data: any) => fetch(`${API_URL}/mesas/${mesaId}/fechar-conta`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    }).then(r => r.json()),
-    finalizar: (mesaId: number) => fetch(`${API_URL}/mesas/${mesaId}/finalizar`, {
-      method: 'POST'
-    }).then(r => r.json())
+    fecharConta: async (mesaId: number, data: any) => {
+      const response = await fetch(`${API_URL}/mesas/${mesaId}/fechar-conta`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const raw = await response.text();
+      let json: any = null;
+      try {
+        json = raw ? JSON.parse(raw) : null;
+      } catch {
+        json = null;
+      }
+
+      if (!response.ok) {
+        throw new Error(json?.error || 'Erro ao fechar conta');
+      }
+
+      return json;
+    },
+    finalizar: async (mesaId: number) => {
+      const response = await fetch(`${API_URL}/mesas/${mesaId}/finalizar`, {
+        method: 'POST'
+      });
+
+      const raw = await response.text();
+      let json: any = null;
+      try {
+        json = raw ? JSON.parse(raw) : null;
+      } catch {
+        json = null;
+      }
+
+      if (!response.ok) {
+        throw new Error(json?.error || 'Erro ao finalizar mesa');
+      }
+
+      return json;
+    }
   },
 
   // Funcionários

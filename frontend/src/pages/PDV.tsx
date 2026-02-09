@@ -437,7 +437,13 @@ const PDV: React.FC = () => {
     if (!mesaSelecionada) return;
     const mesaIdAtual = mesaSelecionada;
     try {
-      await api.mesas.finalizar(mesaIdAtual);
+      const resp = await api.mesas.finalizar(mesaIdAtual);
+      if (resp?.fechados === 0) {
+        setMensagem('⚠️ Nenhum pedido pendente para fechar nesta mesa.');
+        setTimeout(() => setMensagem(''), 3000);
+        await verificarPendencias(true);
+        return;
+      }
       setMensagem('✓ Mesa finalizada e liberada!');
       setMesaSelecionada(null);
       setPedidosMesa([]);
