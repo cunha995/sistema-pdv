@@ -375,7 +375,15 @@ const PDV: React.FC = () => {
       try {
         await api.mesas.finalizar(mesaIdAtual);
       } catch {
-        // ignore
+        try {
+          await Promise.all(
+            pedidosMesa.map((pedido: any) =>
+              api.mesas.atualizarStatus(mesaIdAtual, pedido.id, 'fechado')
+            )
+          );
+        } catch {
+          // ignore
+        }
       }
 
       setMensagem('✓ Conta da mesa fechada com sucesso!');
