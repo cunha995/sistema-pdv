@@ -23,29 +23,17 @@ export class AuthController {
         return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
       }
 
-      // Buscar usuário por email primeiro
-      let usuario: any = db.prepare(`
+      if (!String(email).includes('@')) {
+        return res.status(400).json({ error: 'Use o email para entrar' });
+      }
+
+      // Buscar usuário por email
+      const usuario: any = db.prepare(`
         SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa
         FROM usuarios u
         JOIN empresas e ON u.empresa_id = e.id
         WHERE u.email = ? AND u.ativo = 1
       `).get(email);
-
-      // Se não achou por email, tentar por nome (usuario)
-      if (!usuario) {
-        const usuariosMesmoNome = db.prepare(`
-          SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa
-          FROM usuarios u
-          JOIN empresas e ON u.empresa_id = e.id
-          WHERE u.nome = ? AND u.ativo = 1
-        `).all(email);
-
-        if (usuariosMesmoNome.length > 1) {
-          return res.status(409).json({ error: 'Usuário duplicado. Use o email para entrar.' });
-        }
-
-        usuario = usuariosMesmoNome[0];
-      }
 
       if (!usuario) {
         return res.status(401).json({ error: 'Credenciais inválidas' });

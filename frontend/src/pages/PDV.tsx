@@ -908,7 +908,7 @@ const PDV: React.FC = () => {
             <p>Informe usuário e senha para iniciar o caixa.</p>
             <input
               type="text"
-              placeholder="CPF, email ou usuário"
+              placeholder="Email (admin) ou CPF (funcionário)"
               value={caixaUsuario}
               onChange={(e) => setCaixaUsuario(e.target.value)}
               required
