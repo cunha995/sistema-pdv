@@ -669,7 +669,7 @@ const PDV: React.FC = () => {
     setCaixaCarregando(true);
 
     try {
-      const adminResp = await api.auth.login(caixaUsuario, caixaSenha);
+      const adminResp = await api.auth.login(caixaUsuario, caixaSenha, usuario?.empresa_id);
       if (adminResp?.usuario?.nome) {
         const operador = {
           id: adminResp.usuario.id,

@@ -17,23 +17,42 @@ export class AuthController {
   // Login
   static login(req: Request, res: Response) {
     try {
-      const { email, senha } = req.body;
+      const { email, senha, empresa_id } = req.body;
 
       if (!email || !senha) {
         return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
       }
 
-      if (!String(email).includes('@')) {
-        return res.status(400).json({ error: 'Use o email para entrar' });
-      }
+      const isEmail = String(email).includes('@');
+      let usuario: any = null;
 
-      // Buscar usuário por email
-      const usuario: any = db.prepare(`
-        SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa
-        FROM usuarios u
-        JOIN empresas e ON u.empresa_id = e.id
-        WHERE u.email = ? AND u.ativo = 1
-      `).get(email);
+      if (isEmail) {
+        if (empresa_id) {
+          usuario = db.prepare(`
+            SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa
+            FROM usuarios u
+            JOIN empresas e ON u.empresa_id = e.id
+            WHERE u.email = ? AND u.empresa_id = ? AND u.ativo = 1
+          `).get(email, empresa_id);
+        } else {
+          usuario = db.prepare(`
+            SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa
+            FROM usuarios u
+            JOIN empresas e ON u.empresa_id = e.id
+            WHERE u.email = ? AND u.ativo = 1
+          `).get(email);
+        }
+      } else {
+        if (!empresa_id) {
+          return res.status(400).json({ error: 'Informe o ID da empresa para entrar com usuário' });
+        }
+        usuario = db.prepare(`
+          SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa
+          FROM usuarios u
+          JOIN empresas e ON u.empresa_id = e.id
+          WHERE u.nome = ? AND u.empresa_id = ? AND u.ativo = 1
+        `).get(email, empresa_id);
+      }
 
       if (!usuario) {
         return res.status(401).json({ error: 'Credenciais inválidas' });

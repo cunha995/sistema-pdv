@@ -357,12 +357,12 @@ export const api = {
 
   // Autenticação
   auth: {
-    login: async (email: string, senha: string) => {
+    login: async (email: string, senha: string, empresaId?: number) => {
       const attempt = async (baseUrl: string) => {
         const response = await fetchWithAuth(`${baseUrl}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, senha })
+          body: JSON.stringify({ email, senha, empresa_id: empresaId })
         });
 
         const raw = await response.text();
