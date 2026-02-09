@@ -1,8 +1,0 @@
-services:
-  - type: static
-    name: sistema-pdv-frontend
-    plan: free
-    staticPublishPath: frontend/dist
-    routes:
-      - path: /*
-        destination: /index.html
