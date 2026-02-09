@@ -37,8 +37,8 @@ const Produtos: React.FC = () => {
       } else {
         await api.produtos.criar({ ...formData, empresa_id: empresaId });
       }
-      
-      carregarProdutos();
+
+      await carregarProdutos();
       resetForm();
     } catch (error) {
       alert('Erro ao salvar produto');
@@ -54,7 +54,7 @@ const Produtos: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (confirm('Deseja realmente deletar este produto?')) {
       await api.produtos.deletar(id);
-      carregarProdutos();
+      await carregarProdutos();
     }
   };
 

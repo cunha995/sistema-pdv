@@ -23,8 +23,8 @@ export const api = {
   // Produtos
   produtos: {
     listar: (empresaId?: number) => {
-      const qs = empresaId ? `?empresa_id=${empresaId}` : '';
-      return fetch(`${API_URL}/produtos${qs}`).then(r => r.json());
+      const qs = empresaId ? `?empresa_id=${empresaId}&t=${Date.now()}` : `?t=${Date.now()}`;
+      return fetch(`${API_URL}/produtos${qs}`, { cache: 'no-store' }).then(r => r.json());
     },
     buscar: (id: number, empresaId?: number) => {
       const qs = empresaId ? `?empresa_id=${empresaId}` : '';
@@ -52,8 +52,8 @@ export const api = {
   // Clientes
   clientes: {
     listar: (empresaId?: number) => {
-      const qs = empresaId ? `?empresa_id=${empresaId}` : '';
-      return fetch(`${API_URL}/clientes${qs}`).then(r => r.json());
+      const qs = empresaId ? `?empresa_id=${empresaId}&t=${Date.now()}` : `?t=${Date.now()}`;
+      return fetch(`${API_URL}/clientes${qs}`, { cache: 'no-store' }).then(r => r.json());
     },
     buscar: (id: number, empresaId?: number) => {
       const qs = empresaId ? `?empresa_id=${empresaId}` : '';
@@ -77,8 +77,8 @@ export const api = {
   // Vendas
   vendas: {
     listar: (empresa_id?: number) => {
-      const params = empresa_id ? `?empresa_id=${empresa_id}` : '';
-      return fetch(`${API_URL}/vendas${params}`).then(r => r.json());
+      const params = empresa_id ? `?empresa_id=${empresa_id}&t=${Date.now()}` : `?t=${Date.now()}`;
+      return fetch(`${API_URL}/vendas${params}`, { cache: 'no-store' }).then(r => r.json());
     },
     buscar: (id: number) => fetch(`${API_URL}/vendas/${id}`).then(r => r.json()),
     criar: async (data: any) => {
