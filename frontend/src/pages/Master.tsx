@@ -132,7 +132,7 @@ const Master: React.FC = () => {
         // Normalizar valores
         const nomeEmpresa = formEmpresa.nome?.trim();
         const emailEmpresa = formEmpresa.email?.trim();
-        const usuarioNome = formEmpresa.usuario_nome?.trim() || 'admin';
+        const usuarioNome = formEmpresa.usuario_nome?.trim();
         const usuarioEmail = formEmpresa.usuario_email?.trim() || emailEmpresa;
         const usuarioSenha = formEmpresa.usuario_senha?.trim();
 
@@ -141,8 +141,13 @@ const Master: React.FC = () => {
           return;
         }
 
+        if (!usuarioNome) {
+          setMensagem('❌ Informe o usuário de login');
+          return;
+        }
+
         if (!usuarioSenha) {
-          setMensagem('❌ Informe a senha do usuário admin');
+          setMensagem('❌ Informe a senha do usuário');
           return;
         }
 
@@ -508,7 +513,7 @@ const Master: React.FC = () => {
                       <input
                         type="text"
                         placeholder="Usuário (login)"
-                        value={formEmpresa.usuario_nome || 'admin'}
+                        value={formEmpresa.usuario_nome || ''}
                         onChange={(e) => setFormEmpresa({...formEmpresa, usuario_nome: e.target.value})}
                       />
                       <input
@@ -521,7 +526,7 @@ const Master: React.FC = () => {
                     <div className="form-row">
                       <input
                         type="password"
-                        placeholder="Senha do admin"
+                        placeholder="Senha do usuário"
                         required
                         value={formEmpresa.usuario_senha || ''}
                         onChange={(e) => setFormEmpresa({...formEmpresa, usuario_senha: e.target.value})}
