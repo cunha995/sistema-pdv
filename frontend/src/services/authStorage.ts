@@ -1,6 +1,10 @@
 export const getAuthItem = (key: 'token' | 'usuario') => {
   if (typeof window === 'undefined') return null;
-  return sessionStorage.getItem(key) ?? localStorage.getItem(key);
+  const legacy = localStorage.getItem(key);
+  if (legacy) {
+    localStorage.removeItem(key);
+  }
+  return sessionStorage.getItem(key);
 };
 
 export const setAuthItem = (key: 'token' | 'usuario', value: string) => {
