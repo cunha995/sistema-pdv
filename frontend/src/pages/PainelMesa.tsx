@@ -76,6 +76,16 @@ const PainelMesa: React.FC = () => {
         setHistoricoPedidos(pedidosAtivos);
         const total = pedidosAtivos.reduce((acc: number, pedido: Pedido) => acc + pedido.total, 0);
         setTotalConta(total);
+
+        if (pedidosAtivos.length === 0) {
+          setPedidoAtual([]);
+          setDesconto(0);
+          statusAnteriorRef.current = {};
+          if (id) {
+            localStorage.removeItem(`mesa_cliente_nome_${id}`);
+          }
+          setClienteNome('');
+        }
       } catch (error) {
         console.error('Erro ao buscar pedidos:', error);
       }
