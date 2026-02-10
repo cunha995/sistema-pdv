@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { db } from '../database';
+import { getTenantDb } from '../database/tenant';
+import { getAuthContext } from '../middleware/auth';
 import crypto from 'crypto';
 
 function hashSenha(senha: string): string {
@@ -14,17 +15,23 @@ export class FuncionarioController {
   // Listar todos os funcionários
   static listar(req: Request, res: Response) {
     try {
-      const { empresa_id } = req.query as { empresa_id?: string };
-      if (!empresa_id) {
-        return res.json([]);
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
       }
 
-      const funcionarios = db.prepare(`
+      const { empresa_id } = req.query as { empresa_id?: string };
+      if (empresa_id && Number(empresa_id) !== auth.empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
+      }
+
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const funcionarios = tenantDb.prepare(`
         SELECT id, nome, cpf, email, telefone, cargo, ativo, created_at, updated_at 
         FROM funcionarios 
         WHERE empresa_id = ?
         ORDER BY nome
-      `).all(empresa_id);
+      `).all(auth.empresaId);
       res.json(funcionarios);
     } catch (error) {
       console.error(error);
@@ -36,15 +43,21 @@ export class FuncionarioController {
   static buscar(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { empresa_id } = req.query as { empresa_id?: string };
-      if (!empresa_id) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
       }
-      const funcionario = db.prepare(`
+      const { empresa_id } = req.query as { empresa_id?: string };
+      if (empresa_id && Number(empresa_id) !== auth.empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
+      }
+
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const funcionario = tenantDb.prepare(`
         SELECT id, nome, cpf, email, telefone, cargo, ativo, created_at, updated_at 
         FROM funcionarios 
         WHERE id = ? AND empresa_id = ?
-      `).get(id, empresa_id);
+      `).get(id, auth.empresaId);
       
       if (!funcionario) {
         return res.status(404).json({ error: 'Funcionário não encontrado' });
@@ -61,9 +74,12 @@ export class FuncionarioController {
   static criar(req: Request, res: Response) {
     try {
       const { nome, cpf, email, telefone, cargo, senha, empresa_id } = req.body;
-
-      if (!empresa_id) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+      if (empresa_id !== undefined && Number(empresa_id) !== auth.empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
       }
 
       if (!nome || !cpf) {
@@ -71,21 +87,24 @@ export class FuncionarioController {
       }
 
       // Verificar se CPF já existe
-      const cpfExistente = db.prepare('SELECT id FROM funcionarios WHERE cpf = ? AND empresa_id = ?').get(cpf, empresa_id);
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const cpfExistente = tenantDb
+        .prepare('SELECT id FROM funcionarios WHERE cpf = ? AND empresa_id = ?')
+        .get(cpf, auth.empresaId);
       if (cpfExistente) {
         return res.status(400).json({ error: 'CPF já cadastrado' });
       }
 
       const senhaHash = senha ? hashSenha(senha) : null;
 
-      const result = db.prepare(`
+      const result = tenantDb.prepare(`
         INSERT INTO funcionarios (empresa_id, nome, cpf, email, telefone, cargo, senha)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).run(empresa_id, nome, cpf, email, telefone, cargo || 'Operador de Caixa', senhaHash);
+      `).run(auth.empresaId, nome, cpf, email, telefone, cargo || 'Operador de Caixa', senhaHash);
 
       res.status(201).json({
         id: result.lastInsertRowid,
-        empresa_id,
+        empresa_id: auth.empresaId,
         nome,
         cpf,
         email,
@@ -107,12 +126,18 @@ export class FuncionarioController {
     try {
       const { id } = req.params;
       const { nome, cpf, email, telefone, cargo, ativo, senha, empresa_id } = req.body;
-
-      if (!empresa_id) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+      if (empresa_id !== undefined && Number(empresa_id) !== auth.empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const funcionario = db.prepare('SELECT id FROM funcionarios WHERE id = ? AND empresa_id = ?').get(id, empresa_id);
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const funcionario = tenantDb
+        .prepare('SELECT id FROM funcionarios WHERE id = ? AND empresa_id = ?')
+        .get(id, auth.empresaId);
       if (!funcionario) {
         return res.status(404).json({ error: 'Funcionário não encontrado' });
       }
@@ -120,19 +145,19 @@ export class FuncionarioController {
       const senhaHash = senha ? hashSenha(senha) : null;
 
       if (senhaHash) {
-        db.prepare(`
+        tenantDb.prepare(`
           UPDATE funcionarios 
           SET nome = ?, cpf = ?, email = ?, telefone = ?, cargo = ?, ativo = ?, senha = ?,
               updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND empresa_id = ?
-        `).run(nome, cpf, email, telefone, cargo, ativo !== undefined ? ativo : 1, senhaHash, id, empresa_id);
+        `).run(nome, cpf, email, telefone, cargo, ativo !== undefined ? ativo : 1, senhaHash, id, auth.empresaId);
       } else {
-        db.prepare(`
+        tenantDb.prepare(`
           UPDATE funcionarios 
           SET nome = ?, cpf = ?, email = ?, telefone = ?, cargo = ?, ativo = ?,
               updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND empresa_id = ?
-        `).run(nome, cpf, email, telefone, cargo, ativo !== undefined ? ativo : 1, id, empresa_id);
+        `).run(nome, cpf, email, telefone, cargo, ativo !== undefined ? ativo : 1, id, auth.empresaId);
       }
 
       res.json({ message: 'Funcionário atualizado com sucesso' });
@@ -149,19 +174,27 @@ export class FuncionarioController {
   static deletar(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
       const { empresa_id } = req.query as { empresa_id?: string };
-
-      if (!empresa_id) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      if (empresa_id && Number(empresa_id) !== auth.empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const funcionario = db.prepare('SELECT id FROM funcionarios WHERE id = ? AND empresa_id = ?').get(id, empresa_id);
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const funcionario = tenantDb
+        .prepare('SELECT id FROM funcionarios WHERE id = ? AND empresa_id = ?')
+        .get(id, auth.empresaId);
       if (!funcionario) {
         return res.status(404).json({ error: 'Funcionário não encontrado' });
       }
 
       // Soft delete - apenas desativa
-      db.prepare('UPDATE funcionarios SET ativo = 0 WHERE id = ? AND empresa_id = ?').run(id, empresa_id);
+      tenantDb
+        .prepare('UPDATE funcionarios SET ativo = 0 WHERE id = ? AND empresa_id = ?')
+        .run(id, auth.empresaId);
 
       res.json({ message: 'Funcionário desativado com sucesso' });
     } catch (error) {
@@ -174,18 +207,26 @@ export class FuncionarioController {
   static ativar(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
       const { empresa_id } = req.query as { empresa_id?: string };
-
-      if (!empresa_id) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
+      if (empresa_id && Number(empresa_id) !== auth.empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const funcionario = db.prepare('SELECT id FROM funcionarios WHERE id = ? AND empresa_id = ?').get(id, empresa_id);
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const funcionario = tenantDb
+        .prepare('SELECT id FROM funcionarios WHERE id = ? AND empresa_id = ?')
+        .get(id, auth.empresaId);
       if (!funcionario) {
         return res.status(404).json({ error: 'Funcionário não encontrado' });
       }
 
-      db.prepare('UPDATE funcionarios SET ativo = 1 WHERE id = ? AND empresa_id = ?').run(id, empresa_id);
+      tenantDb
+        .prepare('UPDATE funcionarios SET ativo = 1 WHERE id = ? AND empresa_id = ?')
+        .run(id, auth.empresaId);
 
       res.json({ message: 'Funcionário ativado com sucesso' });
     } catch (error) {
@@ -198,20 +239,23 @@ export class FuncionarioController {
   static login(req: Request, res: Response) {
     try {
       const { usuario, senha, empresa_id } = req.body;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+      if (empresa_id !== undefined && Number(empresa_id) !== auth.empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
+      }
 
       if (!usuario || !senha) {
         return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
       }
 
-      const funcionario: any = empresa_id
-        ? db.prepare(`
-          SELECT * FROM funcionarios
-          WHERE (cpf = ? OR email = ? OR nome = ?) AND ativo = 1 AND empresa_id = ?
-        `).get(usuario, usuario, usuario, empresa_id)
-        : db.prepare(`
-          SELECT * FROM funcionarios
-          WHERE (cpf = ? OR email = ? OR nome = ?) AND ativo = 1
-        `).get(usuario, usuario, usuario);
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const funcionario: any = tenantDb.prepare(`
+        SELECT * FROM funcionarios
+        WHERE (cpf = ? OR email = ? OR nome = ?) AND ativo = 1 AND empresa_id = ?
+      `).get(usuario, usuario, usuario, auth.empresaId);
 
       if (!funcionario || !funcionario.senha) {
         return res.status(401).json({ error: 'Credenciais inválidas' });

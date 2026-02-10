@@ -1,33 +1,26 @@
 import { Request, Response } from 'express';
-import { db } from '../database';
+import { getTenantDb } from '../database/tenant';
+import { getAuthContext } from '../middleware/auth';
 import { Cliente } from '../models/types';
-
-const getEmpresaIdFromAuth = (req: Request) => {
-  const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith('Bearer ')) return undefined;
-  const token = auth.slice(7);
-  try {
-    const decoded = Buffer.from(token, 'base64').toString('utf8');
-    const parts = decoded.split(':');
-    const empresaId = Number(parts[1]);
-    return Number.isFinite(empresaId) ? empresaId : undefined;
-  } catch {
-    return undefined;
-  }
-};
 
 export class ClienteController {
   // Listar todos os clientes
   static listar(req: Request, res: Response) {
     try {
-      const { empresa_id } = req.query as { empresa_id?: string };
-      const tokenEmpresaId = getEmpresaIdFromAuth(req);
-      const empresaId = empresa_id ? Number(empresa_id) : tokenEmpresaId;
-      if (!empresaId) {
-        return res.json([]);
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
       }
 
-      const clientes = db.prepare('SELECT * FROM clientes WHERE empresa_id = ? ORDER BY nome').all(empresaId);
+      const { empresa_id } = req.query as { empresa_id?: string };
+      if (empresa_id && Number(empresa_id) !== auth.empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
+      }
+
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const clientes = tenantDb
+        .prepare('SELECT * FROM clientes WHERE empresa_id = ? ORDER BY nome')
+        .all(auth.empresaId);
       return res.json(clientes);
     } catch (error) {
       res.status(500).json({ error: 'Erro ao listar clientes' });
@@ -38,16 +31,20 @@ export class ClienteController {
   static buscarPorId(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+
       const { empresa_id } = req.query as { empresa_id?: string };
-      const tokenEmpresaId = getEmpresaIdFromAuth(req);
-      const empresaId = empresa_id ? Number(empresa_id) : tokenEmpresaId;
-      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+      if (empresa_id && Number(empresa_id) !== auth.empresaId) {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
-      if (!empresaId) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
-      }
-      const cliente = db.prepare('SELECT * FROM clientes WHERE id = ? AND empresa_id = ?').get(id, empresaId);
+
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const cliente = tenantDb
+        .prepare('SELECT * FROM clientes WHERE id = ? AND empresa_id = ?')
+        .get(id, auth.empresaId);
       
       if (!cliente) {
         return res.status(404).json({ error: 'Cliente não encontrado' });
@@ -63,22 +60,23 @@ export class ClienteController {
   static criar(req: Request, res: Response) {
     try {
       const { nome, cpf, telefone, email, endereco, empresa_id }: Cliente = req.body;
-      const tokenEmpresaId = getEmpresaIdFromAuth(req);
-      const empresaId = empresa_id ?? tokenEmpresaId;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
 
-      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+      if (empresa_id !== undefined && Number(empresa_id) !== auth.empresaId) {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
-      
-      if (!empresaId) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
-      }
+
+      const empresaId = auth.empresaId;
 
       if (!nome) {
         return res.status(400).json({ error: 'Nome é obrigatório' });
       }
 
-      const result = db.prepare(`
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const result = tenantDb.prepare(`
         INSERT INTO clientes (empresa_id, nome, cpf, telefone, email, endereco)
         VALUES (?, ?, ?, ?, ?, ?)
       `).run(empresaId, nome, cpf || null, telefone || null, email || null, endereco || null);
@@ -97,18 +95,19 @@ export class ClienteController {
     try {
       const { id } = req.params;
       const { nome, cpf, telefone, email, endereco, empresa_id }: Cliente = req.body;
-      const tokenEmpresaId = getEmpresaIdFromAuth(req);
-      const empresaId = empresa_id ?? tokenEmpresaId;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
 
-      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+      if (empresa_id !== undefined && Number(empresa_id) !== auth.empresaId) {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      if (!empresaId) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
-      }
+      const empresaId = auth.empresaId;
 
-      const result = db.prepare(`
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const result = tenantDb.prepare(`
         UPDATE clientes 
         SET nome = ?, cpf = ?, telefone = ?, email = ?, endereco = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ? AND empresa_id = ?
@@ -131,19 +130,20 @@ export class ClienteController {
   static deletar(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { empresa_id } = req.query as { empresa_id?: string };
-      const tokenEmpresaId = getEmpresaIdFromAuth(req);
-      const empresaId = empresa_id ? Number(empresa_id) : tokenEmpresaId;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
 
-      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+      const { empresa_id } = req.query as { empresa_id?: string };
+      if (empresa_id && Number(empresa_id) !== auth.empresaId) {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      if (!empresaId) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
-      }
-      
-      const result = db.prepare('DELETE FROM clientes WHERE id = ? AND empresa_id = ?').run(id, empresaId);
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const result = tenantDb
+        .prepare('DELETE FROM clientes WHERE id = ? AND empresa_id = ?')
+        .run(id, auth.empresaId);
       
       if (result.changes === 0) {
         return res.status(404).json({ error: 'Cliente não encontrado' });

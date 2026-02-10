@@ -4,7 +4,7 @@ import { requireAuth } from '../middleware/auth';
 
 const router = express.Router();
 
-router.post('/login', FuncionarioController.login);
+router.post('/login', requireAuth, FuncionarioController.login);
 
 router.use(requireAuth);
 

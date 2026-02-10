@@ -4,18 +4,7 @@ import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
-router.use((req, res, next) => {
-	const hasToken = !!req.headers.authorization;
-	if (hasToken) {
-		return requireAuth(req, res, next);
-	}
-
-	if (req.method === 'GET') {
-		return next();
-	}
-
-	return res.status(401).json({ error: 'Token não fornecido' });
-});
+router.use(requireAuth);
 
 router.get('/', ProdutoController.listar);
 router.get('/:id', ProdutoController.buscarPorId);

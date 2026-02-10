@@ -1,4 +1,6 @@
-import { db } from '../database';
+import { db as masterDb } from '../database';
+import { getTenantDb } from '../database/tenant';
+import { getAuthContext } from '../middleware/auth';
 
 export class MesaController {
   // Criar pedido para uma mesa
@@ -6,6 +8,11 @@ export class MesaController {
     try {
       const { mesa_id } = req.params;
       const { itens } = req.body;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+      const tenantDb = getTenantDb(auth.usuarioId);
 
       if (!itens || !Array.isArray(itens) || itens.length === 0) {
         return res.status(400).json({ error: 'Itens obrigatórios' });
@@ -20,14 +27,14 @@ export class MesaController {
       });
 
       // Inserir pedido
-      const stmt = db.prepare(`
+      const stmt = tenantDb.prepare(`
         INSERT INTO pedidos_mesa (mesa_id, total, status)
         VALUES (?, ?, 'pendente')
       `);
       const result = stmt.run(mesa_id, total);
 
       // Inserir itens do pedido
-      const stmtItem = db.prepare(`
+      const stmtItem = tenantDb.prepare(`
         INSERT INTO itens_pedido_mesa (pedido_id, produto_id, quantidade, preco_unitario, subtotal)
         VALUES (?, ?, ?, ?, ?)
       `);
@@ -46,8 +53,13 @@ export class MesaController {
   static listarPedidos(req: any, res: any) {
     try {
       const { mesa_id } = req.params;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+      const tenantDb = getTenantDb(auth.usuarioId);
 
-      const stmt = db.prepare(`
+      const stmt = tenantDb.prepare(`
         SELECT pm.id, pm.mesa_id, pm.status, pm.total, pm.created_at, pm.updated_at,
                json_group_array(json_object('id', ipm.id, 'produto_id', ipm.produto_id, 'quantidade', ipm.quantidade, 'preco_unitario', ipm.preco_unitario, 'subtotal', ipm.subtotal)) as itens
         FROM pedidos_mesa pm
@@ -72,8 +84,13 @@ export class MesaController {
     try {
       const { mesa_id, pedido_id } = req.params;
       const { status } = req.body;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+      const tenantDb = getTenantDb(auth.usuarioId);
 
-      const stmt = db.prepare(`
+      const stmt = tenantDb.prepare(`
         UPDATE pedidos_mesa
         SET status = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ? AND mesa_id = ?
@@ -90,8 +107,13 @@ export class MesaController {
   static chamarAtendente(req: any, res: any) {
     try {
       const { mesa_id } = req.params;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+      const tenantDb = getTenantDb(auth.usuarioId);
 
-      const stmt = db.prepare(`
+      const stmt = tenantDb.prepare(`
         INSERT INTO chamados_mesa (mesa_id, status)
         VALUES (?, 'pendente')
       `);
@@ -106,9 +128,19 @@ export class MesaController {
 
   // Fechar conta (consolidar todos os pedidos em uma venda)
   static fecharConta(req: any, res: any) {
-    const transaction = db.transaction(() => {
+    const auth = getAuthContext(req);
+    if (!auth) {
+      return res.status(401).json({ error: 'Token não fornecido' });
+    }
+    const tenantDb = getTenantDb(auth.usuarioId);
+
+    const transaction = tenantDb.transaction(() => {
       const { mesa_id } = req.params;
       const { metodo_pagamento, desconto, empresa_id } = req.body;
+
+      if (empresa_id !== undefined && Number(empresa_id) !== auth.empresaId) {
+        throw new Error('Empresa inválida');
+      }
 
       // Validar método de pagamento
       if (!metodo_pagamento) {
@@ -116,7 +148,7 @@ export class MesaController {
       }
 
       // Buscar todos os pedidos abertos da mesa
-      const pedidos = db.prepare(`
+      const pedidos = tenantDb.prepare(`
         SELECT * FROM pedidos_mesa
         WHERE mesa_id = ? AND status != 'fechado' AND status != 'cancelado'
       `).all(mesa_id);
@@ -130,7 +162,7 @@ export class MesaController {
       const todosItens: any[] = [];
 
       pedidos.forEach((pedido: any) => {
-        const itens = db.prepare(`
+        const itens = tenantDb.prepare(`
           SELECT * FROM itens_pedido_mesa WHERE pedido_id = ?
         `).all(pedido.id);
 
@@ -144,13 +176,13 @@ export class MesaController {
       const totalComDesconto = Math.max(0, totalVenda - descontoValor);
 
       // Criar venda consolidada
-      const stmtVenda = db.prepare(`
+      const stmtVenda = tenantDb.prepare(`
         INSERT INTO vendas (empresa_id, total, desconto, metodo_pagamento, observacoes)
         VALUES (?, ?, ?, ?, ?)
       `);
 
       const resultVenda = stmtVenda.run(
-        empresa_id || null, 
+        auth.empresaId, 
         totalComDesconto, 
         descontoValor, 
         metodo_pagamento, 
@@ -158,24 +190,22 @@ export class MesaController {
       );
 
       // Atualizar faturamento/quantidade na empresa
-      if (empresa_id) {
-        const stmtEmpresa = db.prepare(`
-          UPDATE empresas
-          SET total_vendas = COALESCE(total_vendas, 0) + ?,
-              quantidade_vendas = COALESCE(quantidade_vendas, 0) + 1,
-              updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `);
-        stmtEmpresa.run(totalComDesconto, empresa_id);
-      }
+      const stmtEmpresa = masterDb.prepare(`
+        UPDATE empresas
+        SET total_vendas = COALESCE(total_vendas, 0) + ?,
+            quantidade_vendas = COALESCE(quantidade_vendas, 0) + 1,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `);
+      stmtEmpresa.run(totalComDesconto, auth.empresaId);
 
       // Inserir itens da venda
-      const stmtItemVenda = db.prepare(`
+      const stmtItemVenda = tenantDb.prepare(`
         INSERT INTO itens_venda (venda_id, produto_id, quantidade, preco_unitario, subtotal)
         VALUES (?, ?, ?, ?, ?)
       `);
 
-      const stmtEstoque = db.prepare(`
+      const stmtEstoque = tenantDb.prepare(`
         UPDATE produtos 
         SET estoque = estoque - ? 
         WHERE id = ?
@@ -195,7 +225,7 @@ export class MesaController {
       });
 
       // Marcar TODOS os pedidos da mesa como fechados
-      const stmtAtualizar = db.prepare(`
+      const stmtAtualizar = tenantDb.prepare(`
         UPDATE pedidos_mesa 
         SET status = 'fechado', updated_at = CURRENT_TIMESTAMP 
         WHERE mesa_id = ? AND (status != 'fechado' AND status != 'cancelado')
@@ -226,8 +256,13 @@ export class MesaController {
   static finalizarMesa(req: any, res: any) {
     try {
       const { mesa_id } = req.params;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+      const tenantDb = getTenantDb(auth.usuarioId);
 
-      const stmtAtualizar = db.prepare(`
+      const stmtAtualizar = tenantDb.prepare(`
         UPDATE pedidos_mesa 
         SET status = 'fechado', updated_at = CURRENT_TIMESTAMP 
         WHERE mesa_id = ? AND status != 'fechado' AND status != 'cancelado'
@@ -244,9 +279,14 @@ export class MesaController {
   static cancelarPedido(req: any, res: any) {
     try {
       const { mesa_id, pedido_id } = req.params;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+      const tenantDb = getTenantDb(auth.usuarioId);
 
       // Verificar se o pedido existe e pertence à mesa
-      const pedido = db.prepare(`
+      const pedido = tenantDb.prepare(`
         SELECT * FROM pedidos_mesa WHERE id = ? AND mesa_id = ?
       `).get(pedido_id, mesa_id);
 
@@ -255,7 +295,7 @@ export class MesaController {
       }
 
       // Cancelar o pedido
-      const stmt = db.prepare(`
+      const stmt = tenantDb.prepare(`
         UPDATE pedidos_mesa 
         SET status = 'cancelado', updated_at = CURRENT_TIMESTAMP 
         WHERE id = ? AND mesa_id = ?

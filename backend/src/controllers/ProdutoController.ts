@@ -1,35 +1,26 @@
 import { Request, Response } from 'express';
-import { db } from '../database';
+import { getTenantDb } from '../database/tenant';
+import { getAuthContext } from '../middleware/auth';
 import { Produto } from '../models/types';
-
-const getEmpresaIdFromAuth = (req: Request) => {
-  const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith('Bearer ')) return undefined;
-  const token = auth.slice(7);
-  try {
-    const decoded = Buffer.from(token, 'base64').toString('utf8');
-    const parts = decoded.split(':');
-    const empresaId = Number(parts[1]);
-    return Number.isFinite(empresaId) ? empresaId : undefined;
-  } catch {
-    return undefined;
-  }
-};
 
 export class ProdutoController {
   // Listar todos os produtos
   static listar(req: Request, res: Response) {
     try {
-      const { empresa_id } = req.query as { empresa_id?: string };
-      const tokenEmpresaId = getEmpresaIdFromAuth(req);
-      const empresaId = empresa_id ? Number(empresa_id) : tokenEmpresaId;
-      if (!empresaId) {
-        return res.json([]);
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
       }
 
-      const produtos = db.prepare(
+      const { empresa_id } = req.query as { empresa_id?: string };
+      if (empresa_id && Number(empresa_id) !== auth.empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
+      }
+
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const produtos = tenantDb.prepare(
         'SELECT * FROM produtos WHERE ativo = 1 AND empresa_id = ? ORDER BY nome'
-      ).all(empresaId);
+      ).all(auth.empresaId);
       return res.json(produtos);
     } catch (error) {
       res.status(500).json({ error: 'Erro ao listar produtos' });
@@ -40,16 +31,20 @@ export class ProdutoController {
   static buscarPorId(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+
       const { empresa_id } = req.query as { empresa_id?: string };
-      const tokenEmpresaId = getEmpresaIdFromAuth(req);
-      const empresaId = empresa_id ? Number(empresa_id) : tokenEmpresaId;
-      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+      if (empresa_id && Number(empresa_id) !== auth.empresaId) {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
-      if (!empresaId) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
-      }
-      const produto = db.prepare('SELECT * FROM produtos WHERE id = ? AND empresa_id = ?').get(id, empresaId);
+
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const produto = tenantDb
+        .prepare('SELECT * FROM produtos WHERE id = ? AND empresa_id = ?')
+        .get(id, auth.empresaId);
       
       if (!produto) {
         return res.status(404).json({ error: 'Produto não encontrado' });
@@ -65,18 +60,20 @@ export class ProdutoController {
   static buscarPorCodigoBarras(req: Request, res: Response) {
     try {
       const { codigo } = req.params;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+
       const { empresa_id } = req.query as { empresa_id?: string };
-      const tokenEmpresaId = getEmpresaIdFromAuth(req);
-      const empresaId = empresa_id ? Number(empresa_id) : tokenEmpresaId;
-      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+      if (empresa_id && Number(empresa_id) !== auth.empresaId) {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
-      if (!empresaId) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
-      }
-      const produto = db.prepare(
+
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const produto = tenantDb.prepare(
         'SELECT * FROM produtos WHERE codigo_barras = ? AND ativo = 1 AND empresa_id = ?'
-      ).get(codigo, empresaId);
+      ).get(codigo, auth.empresaId);
       
       if (!produto) {
         return res.status(404).json({ error: 'Produto não encontrado' });
@@ -92,22 +89,23 @@ export class ProdutoController {
   static criar(req: Request, res: Response) {
     try {
       const { nome, descricao, preco, codigo_barras, estoque, categoria, empresa_id }: Produto = req.body;
-      const tokenEmpresaId = getEmpresaIdFromAuth(req);
-      const empresaId = empresa_id ?? tokenEmpresaId;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
 
-      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+      if (empresa_id !== undefined && Number(empresa_id) !== auth.empresaId) {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
-      
-      if (!empresaId) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
-      }
+
+      const empresaId = auth.empresaId;
 
       if (!nome || !preco) {
         return res.status(400).json({ error: 'Nome e preço são obrigatórios' });
       }
 
-      const result = db.prepare(`
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const result = tenantDb.prepare(`
         INSERT INTO produtos (empresa_id, nome, descricao, preco, codigo_barras, estoque, categoria)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `).run(empresaId, nome, descricao || null, preco, codigo_barras || null, estoque || 0, categoria || null);
@@ -126,18 +124,19 @@ export class ProdutoController {
     try {
       const { id } = req.params;
       const { nome, descricao, preco, codigo_barras, estoque, categoria, empresa_id }: Produto = req.body;
-      const tokenEmpresaId = getEmpresaIdFromAuth(req);
-      const empresaId = empresa_id ?? tokenEmpresaId;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
 
-      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+      if (empresa_id !== undefined && Number(empresa_id) !== auth.empresaId) {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      if (!empresaId) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
-      }
+      const empresaId = auth.empresaId;
 
-      const result = db.prepare(`
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const result = tenantDb.prepare(`
         UPDATE produtos 
         SET nome = ?, descricao = ?, preco = ?, codigo_barras = ?, estoque = ?, categoria = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ? AND empresa_id = ?
@@ -160,19 +159,20 @@ export class ProdutoController {
   static deletar(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { empresa_id } = req.query as { empresa_id?: string };
-      const tokenEmpresaId = getEmpresaIdFromAuth(req);
-      const empresaId = empresa_id ? Number(empresa_id) : tokenEmpresaId;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
 
-      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+      const { empresa_id } = req.query as { empresa_id?: string };
+      if (empresa_id && Number(empresa_id) !== auth.empresaId) {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      if (!empresaId) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
-      }
-      
-      const result = db.prepare('UPDATE produtos SET ativo = 0 WHERE id = ? AND empresa_id = ?').run(id, empresaId);
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const result = tenantDb
+        .prepare('UPDATE produtos SET ativo = 0 WHERE id = ? AND empresa_id = ?')
+        .run(id, auth.empresaId);
       
       if (result.changes === 0) {
         return res.status(404).json({ error: 'Produto não encontrado' });
@@ -189,22 +189,21 @@ export class ProdutoController {
     try {
       const { id } = req.params;
       const { quantidade, empresa_id } = req.body;
-      const tokenEmpresaId = getEmpresaIdFromAuth(req);
-      const empresaId = empresa_id ?? tokenEmpresaId;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
 
-      if (tokenEmpresaId && empresaId && tokenEmpresaId !== empresaId) {
+      if (empresa_id !== undefined && Number(empresa_id) !== auth.empresaId) {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      if (!empresaId) {
-        return res.status(400).json({ error: 'empresa_id obrigatório' });
-      }
-
-      const result = db.prepare(`
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const result = tenantDb.prepare(`
         UPDATE produtos 
         SET estoque = estoque + ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ? AND empresa_id = ?
-      `).run(quantidade, id, empresaId);
+      `).run(quantidade, id, auth.empresaId);
 
       if (result.changes === 0) {
         return res.status(404).json({ error: 'Produto não encontrado' });

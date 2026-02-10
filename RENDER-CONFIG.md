@@ -1,33 +1,26 @@
-# ⚠️ CONFIGURAÇÃO MANUAL NO RENDER
+# ✅ CONFIGURAÇÃO VIA render.yaml (RECOMENDADO)
 
-## O arquivo render.yaml foi removido para evitar conflitos.
+O projeto usa o arquivo render.yaml na raiz para criar os serviços no Render.
 
-## Configure MANUALMENTE no Render Dashboard:
+## Como aplicar
 
-1. **Acesse seu serviço** no dashboard
-2. Clique em **"Settings"** (menu lateral)
-3. Configure EXATAMENTE assim:
+1. **Acesse** https://dashboard.render.com
+2. Clique em **"New +"** → **"Blueprint"**
+3. Selecione o repositório
+4. O Render vai ler o render.yaml e criar:
+	- `sistema-pdv-backend`
+	- `sistema-pdv-frontend`
 
-### Build & Deploy
+## Variáveis de ambiente usadas
 
-| Campo | Valor |
-|-------|-------|
-| **Root Directory** | `backend` |
-| **Build Command** | `npm ci && npm run build` |
-| **Start Command** | `node dist/server.js` |
+**Backend**
+- `NODE_ENV=production`
 
-### Environment Variables
-
-| Key | Value |
-|-----|-------|
-| `NODE_ENV` | `production` |
-
-4. **Clique em "Save Changes"**
-5. **Manual Deploy** → "Deploy latest commit"
+**Frontend**
+- `NODE_ENV=production`
+- `VITE_API_URL=https://sistema-pdv-backend.onrender.com/api`
+- `API_URL=https://sistema-pdv-backend.onrender.com`
 
 ---
 
-## ✅ Com essa configuração deve funcionar!
-
-O problema era o render.yaml conflitando com as configurações.
-Agora configure manualmente e vai funcionar.
+Se preferir configurar manualmente, use os mesmos valores do render.yaml.

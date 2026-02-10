@@ -22,7 +22,7 @@ git commit -m "Código otimizado para Render"
 git push origin main
 ```
 
-### 2. Criar Web Service no Render
+### 2. Criar Web Service no Render (Backend)
 
 **Acesse**: https://dashboard.render.com
 
@@ -34,10 +34,10 @@ git push origin main
 Name: sistema-pdv-backend
 Region: Oregon (US West)
 Branch: main
-Root Directory: (vazio)
+Root Directory: backend
 Runtime: Node
-Build Command: cd backend && npm install && npm run build
-Start Command: cd backend && node dist/server.js
+Build Command: npm install && npm run build
+Start Command: npm start
 Instance Type: Free
 ```
 
@@ -46,7 +46,25 @@ Instance Type: Free
 
 5. Clique **"Create Web Service"**
 
-### 3. Aguarde o Deploy (2-5 min)
+### 3. Criar Web Service no Render (Frontend)
+
+```
+Name: sistema-pdv-frontend
+Region: Oregon (US West)
+Branch: main
+Root Directory: frontend
+Runtime: Node
+Build Command: npm install --include=dev && npm run build
+Start Command: node server.js
+Instance Type: Free
+```
+
+**Environment Variables**:
+- `NODE_ENV` = `production`
+- `VITE_API_URL` = `https://sistema-pdv-backend.onrender.com/api`
+- `API_URL` = `https://sistema-pdv-backend.onrender.com`
+
+### 4. Aguarde o Deploy (2-5 min)
 
 Você verá os logs em tempo real. Quando aparecer:
 ```
@@ -65,10 +83,15 @@ Sua API estará em:
 https://sistema-pdv-backend.onrender.com
 ```
 
+Seu Frontend estará em:
+```
+https://sistema-pdv-frontend.onrender.com
+```
+
 **Endpoints para testar:**
 - `GET /` - Informações da API
 - `GET /api/health` - Health check
-- `GET /api/produtos` - Lista produtos
+- `GET /api/produtos` - Lista produtos (com token)
 - `GET /api/vendas` - Lista vendas
 - `GET /api/clientes` - Lista clientes
 
@@ -99,7 +122,7 @@ Deve retornar:
 
 ### Próximos Passos
 1. ✅ Backend no Render
-2. 🎨 Frontend no Vercel/Netlify
+2. ✅ Frontend no Render
 3. 🗄️ PostgreSQL para dados persistentes
 
 ---

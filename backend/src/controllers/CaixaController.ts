@@ -1,16 +1,25 @@
 import { Request, Response } from 'express';
-import { db } from '../database';
+import { getTenantDb } from '../database/tenant';
+import { getAuthContext } from '../middleware/auth';
 
 export class CaixaController {
   static listar(req: Request, res: Response) {
     try {
-      const { operador_nome, empresa_id } = req.query;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+
+      const { operador_nome, empresa_id } = req.query as { operador_nome?: string; empresa_id?: string };
+      if (empresa_id && Number(empresa_id) !== auth.empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
+      }
 
       let query = 'SELECT * FROM caixa_fechamentos';
       const params: any[] = [];
-      if (empresa_id) {
+      if (auth.empresaId) {
         query += ' WHERE empresa_id = ?';
-        params.push(empresa_id);
+        params.push(auth.empresaId);
       }
       if (operador_nome) {
         query += params.length ? ' AND' : ' WHERE';
@@ -19,7 +28,8 @@ export class CaixaController {
       }
       query += ' ORDER BY created_at DESC';
 
-      const fechamentos = db.prepare(query).all(...params);
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const fechamentos = tenantDb.prepare(query).all(...params);
       res.json(fechamentos);
     } catch (error) {
       console.error(error);
@@ -29,6 +39,11 @@ export class CaixaController {
 
   static criar(req: Request, res: Response) {
     try {
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+
       const {
         empresa_id,
         operador_id,
@@ -50,13 +65,18 @@ export class CaixaController {
         return res.status(400).json({ error: 'Valores de fechamento são obrigatórios' });
       }
 
-      const result = db.prepare(`
+      if (empresa_id !== undefined && Number(empresa_id) !== auth.empresaId) {
+        return res.status(403).json({ error: 'Empresa inválida' });
+      }
+
+      const tenantDb = getTenantDb(auth.usuarioId);
+      const result = tenantDb.prepare(`
         INSERT INTO caixa_fechamentos (
           empresa_id, operador_id, operador_nome, operador_tipo,
           valor_abertura, recebiveis, dinheiro, cartao, pix, observacoes
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
-        empresa_id || null,
+        auth.empresaId,
         operador_id || null,
         operador_nome,
         operador_tipo,

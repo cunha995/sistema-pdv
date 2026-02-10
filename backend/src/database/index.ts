@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import { migrateLegacyTenantData } from './tenantMigration';
 
 // Em produção (Render), usar /tmp que tem permissão de escrita
 // Em desenvolvimento, usar a pasta local
@@ -343,5 +344,8 @@ try {
 } catch (error) {
   console.error('Erro ao migrar clientes.empresa_id:', error);
 }
+
+// Migrar dados do banco legado para bancos por usuario (tenant)
+migrateLegacyTenantData(db);
 
 export default db;

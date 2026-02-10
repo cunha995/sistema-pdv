@@ -1,6 +1,9 @@
 import express from 'express';
 import { MesaController } from '../controllers/MesaController';
+import { requireAuth } from '../middleware/auth';
 const router = express.Router();
+
+router.use(requireAuth);
 
 // Criar pedido para uma mesa
 router.post('/:mesa_id/pedidos', MesaController.criarPedido);
