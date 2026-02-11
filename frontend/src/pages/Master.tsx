@@ -63,6 +63,8 @@ const Master: React.FC = () => {
   const [editandoEmpresa, setEditandoEmpresa] = useState<Empresa | null>(null);
   const [editandoPlano, setEditandoPlano] = useState<Plano | null>(null);
   const [mensagem, setMensagem] = useState('');
+  const [beneficioInput, setBeneficioInput] = useState('');
+  const [beneficiosPlano, setBeneficiosPlano] = useState<string[]>([]);
 
   const [formEmpresa, setFormEmpresa] = useState<Empresa>({
     nome: '',
@@ -135,6 +137,28 @@ const Master: React.FC = () => {
     } catch (error) {
       console.error('Erro ao carregar planos:', error);
     }
+  };
+
+  const parseServicos = (value?: string) => {
+    return (value || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  };
+
+  const handleAdicionarBeneficio = () => {
+    const trimmed = beneficioInput.trim();
+    if (!trimmed) return;
+    setBeneficiosPlano((prev) => {
+      const lower = trimmed.toLowerCase();
+      if (prev.some((item) => item.toLowerCase() === lower)) return prev;
+      return [...prev, trimmed];
+    });
+    setBeneficioInput('');
+  };
+
+  const handleRemoverBeneficio = (index: number) => {
+    setBeneficiosPlano((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmitEmpresa = async (e: React.FormEvent) => {
@@ -237,11 +261,16 @@ const Master: React.FC = () => {
   const handleSubmitPlano = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const servicos = beneficiosPlano.map((item) => item.trim()).filter(Boolean);
+      const payload = {
+        ...formPlano,
+        servicos: servicos.length > 0 ? servicos.join(', ') : ''
+      };
       if (editandoPlano) {
-        await api.planos.atualizar(editandoPlano.id!, formPlano);
+        await api.planos.atualizar(editandoPlano.id!, payload);
         setMensagem('✓ Plano atualizado!');
       } else {
-        await api.planos.criar(formPlano);
+        await api.planos.criar(payload);
         setMensagem('✓ Plano criado!');
       }
       limparFormPlano();
@@ -268,6 +297,8 @@ const Master: React.FC = () => {
   const handleEditarPlano = (plano: Plano) => {
     setEditandoPlano(plano);
     setFormPlano(plano);
+    setBeneficiosPlano(parseServicos(plano.servicos));
+    setBeneficioInput('');
     setMostrarFormPlano(true);
   };
 
@@ -356,6 +387,8 @@ const Master: React.FC = () => {
     });
     setEditandoPlano(null);
     setMostrarFormPlano(false);
+    setBeneficiosPlano([]);
+    setBeneficioInput('');
   };
 
   const formatCurrency = (value: number) => {
@@ -730,13 +763,45 @@ const Master: React.FC = () => {
                   />
                 </div>
                 <div className="field-group full">
-                  <label className="field-label">Serviços/Categorias adicionais</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Suporte premium, Integração, Treinamento (separe por vírgula)"
-                    value={formPlano.servicos || ''}
-                    onChange={(e) => setFormPlano({...formPlano, servicos: e.target.value})}
-                  />
+                  <label className="field-label">Benefícios adicionais</label>
+                  <div className="beneficios-input">
+                    <input
+                      type="text"
+                      placeholder="Ex: Suporte premium, Integração, Treinamento"
+                      value={beneficioInput}
+                      onChange={(e) => setBeneficioInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAdicionarBeneficio();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="btn-add-beneficio"
+                      onClick={handleAdicionarBeneficio}
+                    >
+                      Adicionar
+                    </button>
+                  </div>
+                  {beneficiosPlano.length > 0 && (
+                    <div className="beneficios-list">
+                      {beneficiosPlano.map((item, index) => (
+                        <span key={`${item}-${index}`} className="beneficio-chip">
+                          {item}
+                          <button
+                            type="button"
+                            className="btn-remove-beneficio"
+                            onClick={() => handleRemoverBeneficio(index)}
+                            aria-label={`Remover beneficio ${item}`}
+                          >
+                            x
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="form-row">
                   <div className="field-group">
