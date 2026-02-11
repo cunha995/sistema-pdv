@@ -17,7 +17,7 @@ export class ClienteController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const clientes = tenantDb
         .prepare('SELECT * FROM clientes WHERE empresa_id = ? ORDER BY nome')
         .all(auth.empresaId);
@@ -41,7 +41,7 @@ export class ClienteController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const cliente = tenantDb
         .prepare('SELECT * FROM clientes WHERE id = ? AND empresa_id = ?')
         .get(id, auth.empresaId);
@@ -75,7 +75,7 @@ export class ClienteController {
         return res.status(400).json({ error: 'Nome é obrigatório' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const result = tenantDb.prepare(`
         INSERT INTO clientes (empresa_id, nome, cpf, telefone, email, endereco)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -106,7 +106,7 @@ export class ClienteController {
 
       const empresaId = auth.empresaId;
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const result = tenantDb.prepare(`
         UPDATE clientes 
         SET nome = ?, cpf = ?, telefone = ?, email = ?, endereco = ?, updated_at = CURRENT_TIMESTAMP
@@ -140,7 +140,7 @@ export class ClienteController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const result = tenantDb
         .prepare('DELETE FROM clientes WHERE id = ? AND empresa_id = ?')
         .run(id, auth.empresaId);

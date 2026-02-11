@@ -129,17 +129,17 @@ const ensureTenantSchema = (db: Database) => {
   `);
 };
 
-export const getTenantDb = (usuarioId: number) => {
-  if (!Number.isFinite(usuarioId)) {
-    throw new Error('usuario_id inválido para tenant db');
+export const getTenantDb = (empresaId: number) => {
+  if (!Number.isFinite(empresaId)) {
+    throw new Error('empresa_id inválido para tenant db');
   }
 
-  const cached = tenantDbCache.get(usuarioId);
+  const cached = tenantDbCache.get(empresaId);
   if (cached) return cached;
 
-  const dbPath = path.join(baseDir, `${usuarioId}.db`);
+  const dbPath = path.join(baseDir, `${empresaId}.db`);
   const db = new Database(dbPath);
   ensureTenantSchema(db);
-  tenantDbCache.set(usuarioId, db);
+  tenantDbCache.set(empresaId, db);
   return db;
 };

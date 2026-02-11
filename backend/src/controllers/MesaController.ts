@@ -12,7 +12,7 @@ export class MesaController {
       if (!auth) {
         return res.status(401).json({ error: 'Token não fornecido' });
       }
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
 
       if (!itens || !Array.isArray(itens) || itens.length === 0) {
         return res.status(400).json({ error: 'Itens obrigatórios' });
@@ -57,7 +57,7 @@ export class MesaController {
       if (!auth) {
         return res.status(401).json({ error: 'Token não fornecido' });
       }
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
 
       const stmt = tenantDb.prepare(`
         SELECT pm.id, pm.mesa_id, pm.status, pm.total, pm.created_at, pm.updated_at,
@@ -88,7 +88,7 @@ export class MesaController {
       if (!auth) {
         return res.status(401).json({ error: 'Token não fornecido' });
       }
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
 
       const stmt = tenantDb.prepare(`
         UPDATE pedidos_mesa
@@ -111,7 +111,7 @@ export class MesaController {
       if (!auth) {
         return res.status(401).json({ error: 'Token não fornecido' });
       }
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
 
       const stmt = tenantDb.prepare(`
         INSERT INTO chamados_mesa (mesa_id, status)
@@ -132,7 +132,7 @@ export class MesaController {
     if (!auth) {
       return res.status(401).json({ error: 'Token não fornecido' });
     }
-    const tenantDb = getTenantDb(auth.usuarioId);
+    const tenantDb = getTenantDb(auth.empresaId);
 
     const transaction = tenantDb.transaction(() => {
       const { mesa_id } = req.params;
@@ -260,7 +260,7 @@ export class MesaController {
       if (!auth) {
         return res.status(401).json({ error: 'Token não fornecido' });
       }
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
 
       const stmtAtualizar = tenantDb.prepare(`
         UPDATE pedidos_mesa 
@@ -283,7 +283,7 @@ export class MesaController {
       if (!auth) {
         return res.status(401).json({ error: 'Token não fornecido' });
       }
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
 
       // Verificar se o pedido existe e pertence à mesa
       const pedido = tenantDb.prepare(`

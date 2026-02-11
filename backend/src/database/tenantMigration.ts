@@ -16,26 +16,26 @@ export const migrateLegacyTenantData = (masterDb: Database) => {
 
     masterDb.exec(`
       CREATE TABLE IF NOT EXISTS tenant_migrations (
-        usuario_id INTEGER PRIMARY KEY,
+        empresa_id INTEGER PRIMARY KEY,
         migrated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
-    const usuarios = masterDb
-      .prepare('SELECT id, empresa_id FROM usuarios WHERE ativo = 1')
-      .all() as { id: number; empresa_id: number }[];
+    const empresas = masterDb
+      .prepare('SELECT id FROM empresas WHERE ativo = 1')
+      .all() as { id: number }[];
 
     const hasPedidosMesa = hasLegacyTable(masterDb, 'pedidos_mesa');
     const hasItensPedido = hasLegacyTable(masterDb, 'itens_pedido_mesa');
 
-    for (const usuario of usuarios) {
+    for (const empresa of empresas) {
       const jaMigrado = masterDb
-        .prepare('SELECT usuario_id FROM tenant_migrations WHERE usuario_id = ?')
-        .get(usuario.id);
+        .prepare('SELECT empresa_id FROM tenant_migrations WHERE empresa_id = ?')
+        .get(empresa.id);
       if (jaMigrado) continue;
 
-      const tenantDb = getTenantDb(usuario.id);
-      const empresaId = usuario.empresa_id;
+      const tenantDb = getTenantDb(empresa.id);
+      const empresaId = empresa.id;
 
       tenantDb.transaction(() => {
         const produtos = masterDb
@@ -148,8 +148,8 @@ export const migrateLegacyTenantData = (masterDb: Database) => {
       })();
 
       masterDb
-        .prepare('INSERT OR IGNORE INTO tenant_migrations (usuario_id) VALUES (?)')
-        .run(usuario.id);
+        .prepare('INSERT OR IGNORE INTO tenant_migrations (empresa_id) VALUES (?)')
+        .run(empresa.id);
     }
   } catch (error) {
     console.error('Erro ao migrar dados para tenant db:', error);

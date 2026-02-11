@@ -17,7 +17,7 @@ export class ProdutoController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const produtos = tenantDb.prepare(
         'SELECT * FROM produtos WHERE ativo = 1 AND empresa_id = ? ORDER BY nome'
       ).all(auth.empresaId);
@@ -41,7 +41,7 @@ export class ProdutoController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const produto = tenantDb
         .prepare('SELECT * FROM produtos WHERE id = ? AND empresa_id = ?')
         .get(id, auth.empresaId);
@@ -70,7 +70,7 @@ export class ProdutoController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const produto = tenantDb.prepare(
         'SELECT * FROM produtos WHERE codigo_barras = ? AND ativo = 1 AND empresa_id = ?'
       ).get(codigo, auth.empresaId);
@@ -104,7 +104,7 @@ export class ProdutoController {
         return res.status(400).json({ error: 'Nome e preço são obrigatórios' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const result = tenantDb.prepare(`
         INSERT INTO produtos (empresa_id, nome, descricao, preco, codigo_barras, estoque, categoria)
         VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -135,7 +135,7 @@ export class ProdutoController {
 
       const empresaId = auth.empresaId;
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const result = tenantDb.prepare(`
         UPDATE produtos 
         SET nome = ?, descricao = ?, preco = ?, codigo_barras = ?, estoque = ?, categoria = ?, updated_at = CURRENT_TIMESTAMP
@@ -169,7 +169,7 @@ export class ProdutoController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const result = tenantDb
         .prepare('UPDATE produtos SET ativo = 0 WHERE id = ? AND empresa_id = ?')
         .run(id, auth.empresaId);
@@ -198,7 +198,7 @@ export class ProdutoController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const result = tenantDb.prepare(`
         UPDATE produtos 
         SET estoque = estoque + ?, updated_at = CURRENT_TIMESTAMP

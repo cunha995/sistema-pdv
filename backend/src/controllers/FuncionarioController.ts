@@ -25,7 +25,7 @@ export class FuncionarioController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const funcionarios = tenantDb.prepare(`
         SELECT id, nome, cpf, email, telefone, cargo, ativo, created_at, updated_at 
         FROM funcionarios 
@@ -52,7 +52,7 @@ export class FuncionarioController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const funcionario = tenantDb.prepare(`
         SELECT id, nome, cpf, email, telefone, cargo, ativo, created_at, updated_at 
         FROM funcionarios 
@@ -87,7 +87,7 @@ export class FuncionarioController {
       }
 
       // Verificar se CPF já existe
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const cpfExistente = tenantDb
         .prepare('SELECT id FROM funcionarios WHERE cpf = ? AND empresa_id = ?')
         .get(cpf, auth.empresaId);
@@ -134,7 +134,7 @@ export class FuncionarioController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const funcionario = tenantDb
         .prepare('SELECT id FROM funcionarios WHERE id = ? AND empresa_id = ?')
         .get(id, auth.empresaId);
@@ -183,7 +183,7 @@ export class FuncionarioController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const funcionario = tenantDb
         .prepare('SELECT id FROM funcionarios WHERE id = ? AND empresa_id = ?')
         .get(id, auth.empresaId);
@@ -216,7 +216,7 @@ export class FuncionarioController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const funcionario = tenantDb
         .prepare('SELECT id FROM funcionarios WHERE id = ? AND empresa_id = ?')
         .get(id, auth.empresaId);
@@ -251,7 +251,7 @@ export class FuncionarioController {
         return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const funcionario: any = tenantDb.prepare(`
         SELECT * FROM funcionarios
         WHERE (cpf = ? OR email = ? OR nome = ?) AND ativo = 1 AND empresa_id = ?

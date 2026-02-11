@@ -17,7 +17,7 @@ export class VendaController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
 
       let query = `
         SELECT v.*, c.nome as cliente_nome 
@@ -53,7 +53,7 @@ export class VendaController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const venda = tenantDb.prepare(`
         SELECT v.*, c.nome as cliente_nome 
         FROM vendas v
@@ -85,7 +85,7 @@ export class VendaController {
       return res.status(401).json({ error: 'Token não fornecido' });
     }
 
-    const tenantDb = getTenantDb(auth.usuarioId);
+    const tenantDb = getTenantDb(auth.empresaId);
     const transaction = tenantDb.transaction((vendaData: Venda) => {
       try {
         const { empresa_id, cliente_id, total, desconto, metodo_pagamento, observacoes, itens } = vendaData;
@@ -166,7 +166,7 @@ export class VendaController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
 
       let query = 'SELECT * FROM vendas';
       const params: any[] = [];

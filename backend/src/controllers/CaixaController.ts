@@ -28,7 +28,7 @@ export class CaixaController {
       }
       query += ' ORDER BY created_at DESC';
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const fechamentos = tenantDb.prepare(query).all(...params);
       res.json(fechamentos);
     } catch (error) {
@@ -69,7 +69,7 @@ export class CaixaController {
         return res.status(403).json({ error: 'Empresa inválida' });
       }
 
-      const tenantDb = getTenantDb(auth.usuarioId);
+      const tenantDb = getTenantDb(auth.empresaId);
       const result = tenantDb.prepare(`
         INSERT INTO caixa_fechamentos (
           empresa_id, operador_id, operador_nome, operador_tipo,
