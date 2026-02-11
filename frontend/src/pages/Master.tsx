@@ -19,6 +19,8 @@ interface Empresa {
   plano_nome?: string;
   preco_mensal?: number;
   data_contratacao?: string;
+  data_renovacao?: string;
+  dia_vencimento?: number;
   // Campos para criação de usuário
   usuario_nome?: string;
   usuario_email?: string;
@@ -72,7 +74,8 @@ const Master: React.FC = () => {
     contato_email: '',
     contato_telefone: '',
     plano_id: 1,
-    usuario_email: ''
+    usuario_email: '',
+    dia_vencimento: undefined
   });
 
   const [formPlano, setFormPlano] = useState<Plano>({
@@ -167,7 +170,8 @@ const Master: React.FC = () => {
           contato_nome: formEmpresa.contato_nome?.trim() || '',
           contato_email: formEmpresa.contato_email?.trim() || '',
           contato_telefone: formEmpresa.contato_telefone?.trim() || '',
-          plano_id: formEmpresa.plano_id
+          plano_id: formEmpresa.plano_id,
+          dia_vencimento: formEmpresa.dia_vencimento
         };
 
         // Criar empresa
@@ -237,8 +241,15 @@ const Master: React.FC = () => {
   };
 
   const handleEditarEmpresa = (empresa: Empresa) => {
+    const dataRenovacao = empresa.data_renovacao ? new Date(empresa.data_renovacao) : null;
+    const diaVencimento = dataRenovacao && !Number.isNaN(dataRenovacao.getTime())
+      ? dataRenovacao.getDate()
+      : undefined;
     setEditandoEmpresa(empresa);
-    setFormEmpresa(empresa);
+    setFormEmpresa({
+      ...empresa,
+      dia_vencimento: diaVencimento
+    });
     setMostrarFormEmpresa(true);
   };
 
@@ -309,7 +320,8 @@ const Master: React.FC = () => {
       contato_email: '',
       contato_telefone: '',
       plano_id: 1,
-      usuario_email: ''
+      usuario_email: '',
+      dia_vencimento: undefined
     });
     setEditandoEmpresa(null);
     setMostrarFormEmpresa(false);
@@ -489,6 +501,19 @@ const Master: React.FC = () => {
                       <option key={p.id} value={p.id}>{p.nome} - R$ {p.preco_mensal}</option>
                     ))}
                   </select>
+                </div>
+                <div className="form-row">
+                  <input
+                    type="number"
+                    placeholder="Dia do vencimento (1-31)"
+                    min={1}
+                    max={31}
+                    value={formEmpresa.dia_vencimento ?? ''}
+                    onChange={(e) => setFormEmpresa({
+                      ...formEmpresa,
+                      dia_vencimento: e.target.value ? Number(e.target.value) : undefined
+                    })}
+                  />
                 </div>
                 <div className="form-row">
                   <input

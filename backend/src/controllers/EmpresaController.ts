@@ -2,6 +2,37 @@ import { Request, Response } from 'express';
 import { db } from '../database';
 import { getTenantDb } from '../database/tenant';
 
+const normalizeDiaVencimento = (value: any) => {
+  const dia = Number(value);
+  if (!Number.isFinite(dia)) return null;
+  const inteiro = Math.floor(dia);
+  if (inteiro < 1 || inteiro > 31) return null;
+  return inteiro;
+};
+
+const buildDataRenovacao = (diaVencimento: number) => {
+  const agora = new Date();
+  let ano = agora.getFullYear();
+  let mes = agora.getMonth();
+
+  const lastDayOfMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
+
+  let dia = Math.min(diaVencimento, lastDayOfMonth(ano, mes));
+  let vencimento = new Date(ano, mes, dia, 23, 59, 59, 999);
+
+  if (agora > vencimento) {
+    mes += 1;
+    if (mes > 11) {
+      mes = 0;
+      ano += 1;
+    }
+    dia = Math.min(diaVencimento, lastDayOfMonth(ano, mes));
+    vencimento = new Date(ano, mes, dia, 23, 59, 59, 999);
+  }
+
+  return vencimento.toISOString();
+};
+
 export class EmpresaController {
   // Listar todas as empresas
   static listar(req: Request, res: Response) {
@@ -57,7 +88,8 @@ export class EmpresaController {
     try {
       const { 
         nome, cnpj, email, telefone, endereco,
-        contato_nome, contato_email, contato_telefone, plano_id 
+        contato_nome, contato_email, contato_telefone, plano_id,
+        data_renovacao, dia_vencimento
       } = req.body;
 
       if (!nome || !email) {
@@ -69,14 +101,17 @@ export class EmpresaController {
         return res.status(400).json({ error: 'Email já cadastrado' });
       }
 
+      const diaVencimento = normalizeDiaVencimento(dia_vencimento);
+      const dataRenovacaoFinal = data_renovacao || (diaVencimento ? buildDataRenovacao(diaVencimento) : null);
+
       const result = db.prepare(`
         INSERT INTO empresas (
           nome, cnpj, email, telefone, endereco,
-          contato_nome, contato_email, contato_telefone, plano_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          contato_nome, contato_email, contato_telefone, plano_id, data_renovacao
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         nome, cnpj, email, telefone, endereco,
-        contato_nome, contato_email, contato_telefone, plano_id || 1
+        contato_nome, contato_email, contato_telefone, plano_id || 1, dataRenovacaoFinal
       );
 
       const empresaId = Number(result.lastInsertRowid);
@@ -87,6 +122,7 @@ export class EmpresaController {
         nome,
         email,
         plano_id: plano_id || 1,
+        data_renovacao: dataRenovacaoFinal,
         ativo: 1
       });
     } catch (error: any) {
@@ -104,24 +140,28 @@ export class EmpresaController {
       const { id } = req.params;
       const {
         nome, cnpj, email, telefone, endereco,
-        contato_nome, contato_email, contato_telefone, plano_id, ativo
+        contato_nome, contato_email, contato_telefone, plano_id, ativo,
+        data_renovacao, dia_vencimento
       } = req.body;
 
-      const empresa = db.prepare('SELECT id FROM empresas WHERE id = ?').get(id);
+      const empresa = db.prepare('SELECT id, data_renovacao FROM empresas WHERE id = ?').get(id) as any;
       if (!empresa) {
         return res.status(404).json({ error: 'Empresa não encontrada' });
       }
+
+      const diaVencimento = normalizeDiaVencimento(dia_vencimento);
+      const dataRenovacaoFinal = data_renovacao || (diaVencimento ? buildDataRenovacao(diaVencimento) : empresa.data_renovacao);
 
       db.prepare(`
         UPDATE empresas 
         SET nome = ?, cnpj = ?, email = ?, telefone = ?, endereco = ?,
             contato_nome = ?, contato_email = ?, contato_telefone = ?,
-            plano_id = ?, ativo = ?, updated_at = CURRENT_TIMESTAMP
+            plano_id = ?, data_renovacao = ?, ativo = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `).run(
         nome, cnpj, email, telefone, endereco,
         contato_nome, contato_email, contato_telefone,
-        plano_id, ativo !== undefined ? ativo : 1, id
+        plano_id, dataRenovacaoFinal, ativo !== undefined ? ativo : 1, id
       );
 
       res.json({ message: 'Empresa atualizada com sucesso' });

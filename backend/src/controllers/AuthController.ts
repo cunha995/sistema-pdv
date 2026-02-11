@@ -13,6 +13,18 @@ function gerarToken(usuarioId: number, empresaId: number): string {
   return Buffer.from(payload).toString('base64');
 }
 
+const GRACE_DAYS = 2;
+
+const isEmpresaInadimplente = (dataRenovacao?: string | null) => {
+  if (!dataRenovacao) return false;
+  const vencimento = new Date(dataRenovacao);
+  if (Number.isNaN(vencimento.getTime())) return false;
+  const limite = new Date(vencimento);
+  limite.setDate(limite.getDate() + GRACE_DAYS + 1);
+  limite.setHours(0, 0, 0, 0);
+  return new Date() >= limite;
+};
+
 export class AuthController {
   // Login
   static login(req: Request, res: Response) {
@@ -29,14 +41,14 @@ export class AuthController {
       if (isEmail) {
         if (empresa_id) {
           usuario = db.prepare(`
-            SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa
+            SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa, e.data_renovacao as data_renovacao
             FROM usuarios u
             JOIN empresas e ON u.empresa_id = e.id
             WHERE u.email = ? AND u.empresa_id = ? AND u.ativo = 1
           `).get(email, empresa_id);
         } else {
           usuario = db.prepare(`
-            SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa
+            SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa, e.data_renovacao as data_renovacao
             FROM usuarios u
             JOIN empresas e ON u.empresa_id = e.id
             WHERE u.email = ? AND u.ativo = 1
@@ -47,7 +59,7 @@ export class AuthController {
           return res.status(400).json({ error: 'Informe o ID da empresa para entrar com usuário' });
         }
         usuario = db.prepare(`
-          SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa
+          SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa, e.data_renovacao as data_renovacao
           FROM usuarios u
           JOIN empresas e ON u.empresa_id = e.id
           WHERE u.nome = ? AND u.empresa_id = ? AND u.ativo = 1
@@ -61,6 +73,14 @@ export class AuthController {
       // Verificar empresa ativa
       if (!usuario.empresa_ativa) {
         return res.status(403).json({ error: 'Empresa desativada. Entre em contato com o suporte.' });
+      }
+
+      if (isEmpresaInadimplente(usuario.data_renovacao)) {
+        return res.status(403).json({
+          error: 'Mensalidade vencida. Entre em contato com o suporte.',
+          pagamento_atrasado: true,
+          data_vencimento: usuario.data_renovacao
+        });
       }
 
       // Verificar se é demo expirada
@@ -212,7 +232,7 @@ export class AuthController {
 
       // Buscar usuário
       const usuario: any = db.prepare(`
-        SELECT u.*, e.ativo as empresa_ativa
+        SELECT u.*, e.ativo as empresa_ativa, e.data_renovacao as data_renovacao
         FROM usuarios u
         JOIN empresas e ON u.empresa_id = e.id
         WHERE u.id = ? AND u.empresa_id = ? AND u.ativo = 1
@@ -220,6 +240,14 @@ export class AuthController {
 
       if (!usuario || !usuario.empresa_ativa) {
         return res.status(401).json({ error: 'Token inválido' });
+      }
+
+      if (isEmpresaInadimplente(usuario.data_renovacao)) {
+        return res.status(403).json({
+          error: 'Mensalidade vencida. Entre em contato com o suporte.',
+          pagamento_atrasado: true,
+          data_vencimento: usuario.data_renovacao
+        });
       }
 
       // Verificar demo expirada

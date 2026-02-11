@@ -6,6 +6,18 @@ type AuthContext = {
   empresaId: number;
 };
 
+const GRACE_DAYS = 2;
+
+const isEmpresaInadimplente = (dataRenovacao?: string | null) => {
+  if (!dataRenovacao) return false;
+  const vencimento = new Date(dataRenovacao);
+  if (Number.isNaN(vencimento.getTime())) return false;
+  const limite = new Date(vencimento);
+  limite.setDate(limite.getDate() + GRACE_DAYS + 1);
+  limite.setHours(0, 0, 0, 0);
+  return new Date() >= limite;
+};
+
 const parseAuthToken = (req: Request): AuthContext | null => {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Bearer ')) return null;
@@ -40,7 +52,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
     }
 
     const usuario: any = db.prepare(`
-      SELECT u.*, e.ativo as empresa_ativa
+      SELECT u.*, e.ativo as empresa_ativa, e.data_renovacao as data_renovacao
       FROM usuarios u
       JOIN empresas e ON u.empresa_id = e.id
       WHERE u.id = ? AND u.empresa_id = ? AND u.ativo = 1
@@ -48,6 +60,14 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
 
     if (!usuario || !usuario.empresa_ativa) {
       return res.status(401).json({ error: 'Token inválido' });
+    }
+
+    if (isEmpresaInadimplente(usuario.data_renovacao)) {
+      return res.status(403).json({
+        error: 'Mensalidade vencida. Entre em contato com o suporte.',
+        pagamento_atrasado: true,
+        data_vencimento: usuario.data_renovacao
+      });
     }
 
     if (usuario.is_demo && usuario.demo_expira_em) {
