@@ -88,13 +88,13 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="login-form">
             <div className="form-group">
-              <label htmlFor="email">Usuário ou Email</label>
+              <label htmlFor="email">Email</label>
               <input
                 type="text"
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="usuario ou email"
+                placeholder="seu email"
                 required
                 autoFocus
               />

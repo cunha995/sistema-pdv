@@ -56,7 +56,7 @@ export class AuthController {
         }
       } else {
         if (!empresa_id) {
-          return res.status(400).json({ error: 'Informe o ID da empresa para entrar com usuário' });
+          return res.status(400).json({ error: 'Informe um email para entrar' });
         }
         usuario = db.prepare(`
           SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa, e.data_renovacao as data_renovacao
