@@ -333,7 +333,7 @@ export const api = {
     deletar: (id: number) => fetchWithAuth(`${API_URL}/empresas/${id}`, {
       method: 'DELETE'
     }).then(r => r.json()),
-    estatisticas: () => fetchWithAuth(`${API_URL}/empresas/estatisticas`).then(r => r.json())
+    estatisticas: () => fetchWithAuth(`${API_URL}/empresas/estatisticas?t=${Date.now()}`, { cache: 'no-store' }).then(r => r.json())
   },
 
   // Planos

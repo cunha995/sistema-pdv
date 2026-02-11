@@ -99,6 +99,17 @@ const Master: React.FC = () => {
     if (tab === 'planos') carregarPlanos();
   }, [tab]);
 
+  useEffect(() => {
+    if (tab !== 'dashboard') return;
+    const intervalId = window.setInterval(() => {
+      carregarEstatisticas();
+    }, 30000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [tab]);
+
   const carregarEstatisticas = async () => {
     try {
       const data = await api.empresas.estatisticas();
@@ -214,7 +225,8 @@ const Master: React.FC = () => {
       }
       limparFormEmpresa();
       // Revalidar imediatamente para garantir consistência
-      carregarEmpresas();
+      await carregarEmpresas();
+      await carregarEstatisticas();
       setTimeout(() => setMensagem(''), 4000);
     } catch (error: any) {
       console.error('Erro ao salvar empresa:', error);
@@ -265,7 +277,8 @@ const Master: React.FC = () => {
       await api.empresas.deletar(id);
       setEmpresas((prev) => prev.filter((e) => e.id !== id));
       setMensagem('✓ Empresa apagada!');
-      setTimeout(() => carregarEmpresas(), 800);
+      await carregarEmpresas();
+      await carregarEstatisticas();
     } catch (error) {
       setMensagem('❌ Erro ao apagar empresa');
     }
