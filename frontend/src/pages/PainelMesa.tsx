@@ -293,6 +293,11 @@ const PainelMesa: React.FC = () => {
     return pedidoAtual.reduce((acc, item) => acc + item.produto.preco * item.quantidade, 0);
   };
 
+  const obterNomeProduto = (produtoId: number) => {
+    const encontrado = produtos.find((produto) => produto.id === produtoId);
+    return encontrado?.nome ?? `Produto ${produtoId}`;
+  };
+
   return (
     <div className="painel-mesa">
       <div className="painel-header">
@@ -348,7 +353,7 @@ const PainelMesa: React.FC = () => {
                     {pedido.itens.map((item) => (
                       <div key={item.id} className="item-linha">
                         <span>{item.quantidade}x</span>
-                        <span>Produto {item.produto_id}</span>
+                        <span>{obterNomeProduto(item.produto_id)}</span>
                         <span>R$ {item.subtotal.toFixed(2)}</span>
                       </div>
                     ))}
