@@ -45,8 +45,8 @@ export const migrateLegacyTenantData = (masterDb: DatabaseType) => {
         if (produtos.length) {
           const stmt = tenantDb.prepare(`
             INSERT OR IGNORE INTO produtos
-            (id, empresa_id, nome, descricao, preco, codigo_barras, estoque, categoria, ativo, created_at, updated_at)
-            VALUES (@id, @empresa_id, @nome, @descricao, @preco, @codigo_barras, @estoque, @categoria, @ativo, @created_at, @updated_at)
+            (id, empresa_id, nome, descricao, preco, codigo_barras, estoque, categoria, imagem_url, ativo, created_at, updated_at)
+            VALUES (@id, @empresa_id, @nome, @descricao, @preco, @codigo_barras, @estoque, @categoria, @imagem_url, @ativo, @created_at, @updated_at)
           `);
           produtos.forEach((row) => stmt.run(row));
         }

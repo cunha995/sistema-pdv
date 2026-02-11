@@ -88,7 +88,7 @@ export class ProdutoController {
   // Criar novo produto
   static criar(req: Request, res: Response) {
     try {
-      const { nome, descricao, preco, codigo_barras, estoque, categoria, empresa_id }: Produto = req.body;
+      const { nome, descricao, preco, codigo_barras, estoque, categoria, imagem_url, empresa_id }: Produto = req.body;
       const auth = getAuthContext(req);
       if (!auth) {
         return res.status(401).json({ error: 'Token não fornecido' });
@@ -106,9 +106,9 @@ export class ProdutoController {
 
       const tenantDb = getTenantDb(auth.empresaId);
       const result = tenantDb.prepare(`
-        INSERT INTO produtos (empresa_id, nome, descricao, preco, codigo_barras, estoque, categoria)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).run(empresaId, nome, descricao || null, preco, codigo_barras || null, estoque || 0, categoria || null);
+        INSERT INTO produtos (empresa_id, nome, descricao, preco, codigo_barras, estoque, categoria, imagem_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(empresaId, nome, descricao || null, preco, codigo_barras || null, estoque || 0, categoria || null, imagem_url || null);
 
       res.status(201).json({ id: result.lastInsertRowid, message: 'Produto criado com sucesso' });
     } catch (error: any) {
@@ -123,7 +123,7 @@ export class ProdutoController {
   static atualizar(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { nome, descricao, preco, codigo_barras, estoque, categoria, empresa_id }: Produto = req.body;
+      const { nome, descricao, preco, codigo_barras, estoque, categoria, imagem_url, empresa_id }: Produto = req.body;
       const auth = getAuthContext(req);
       if (!auth) {
         return res.status(401).json({ error: 'Token não fornecido' });
@@ -136,11 +136,18 @@ export class ProdutoController {
       const empresaId = auth.empresaId;
 
       const tenantDb = getTenantDb(auth.empresaId);
+      const existente: any = tenantDb
+        .prepare('SELECT imagem_url FROM produtos WHERE id = ? AND empresa_id = ?')
+        .get(id, empresaId);
+      if (!existente) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+      const imagemUrlFinal = imagem_url !== undefined ? imagem_url : existente.imagem_url;
       const result = tenantDb.prepare(`
         UPDATE produtos 
-        SET nome = ?, descricao = ?, preco = ?, codigo_barras = ?, estoque = ?, categoria = ?, updated_at = CURRENT_TIMESTAMP
+        SET nome = ?, descricao = ?, preco = ?, codigo_barras = ?, estoque = ?, categoria = ?, imagem_url = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ? AND empresa_id = ?
-      `).run(nome, descricao || null, preco, codigo_barras || null, estoque, categoria || null, id, empresaId);
+      `).run(nome, descricao || null, preco, codigo_barras || null, estoque, categoria || null, imagemUrlFinal || null, id, empresaId);
 
       if (result.changes === 0) {
         return res.status(404).json({ error: 'Produto não encontrado' });
@@ -212,6 +219,42 @@ export class ProdutoController {
       res.json({ message: 'Estoque atualizado com sucesso' });
     } catch (error) {
       res.status(500).json({ error: 'Erro ao atualizar estoque' });
+    }
+  }
+
+  // Atualizar imagem do produto
+  static atualizarImagem(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const auth = getAuthContext(req);
+      if (!auth) {
+        return res.status(401).json({ error: 'Token não fornecido' });
+      }
+
+      const file = (req as any).file as Express.Multer.File | undefined;
+      if (!file) {
+        return res.status(400).json({ error: 'Arquivo de imagem não enviado' });
+      }
+
+      const tenantDb = getTenantDb(auth.empresaId);
+      const produto = tenantDb
+        .prepare('SELECT id FROM produtos WHERE id = ? AND empresa_id = ?')
+        .get(id, auth.empresaId);
+
+      if (!produto) {
+        return res.status(404).json({ error: 'Produto não encontrado' });
+      }
+
+      const imagemUrl = `/uploads/${auth.empresaId}/${file.filename}`;
+      tenantDb.prepare(`
+        UPDATE produtos
+        SET imagem_url = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND empresa_id = ?
+      `).run(imagemUrl, id, auth.empresaId);
+
+      res.json({ imagem_url: imagemUrl });
+    } catch (error) {
+      res.status(500).json({ error: 'Erro ao atualizar imagem do produto' });
     }
   }
 }

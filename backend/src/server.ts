@@ -11,6 +11,7 @@ import planosRoutes from './routes/planos';
 import authRoutes from './routes/auth';
 import caixaRoutes from './routes/caixa';
 import publicRoutes from './routes/public';
+import { ensureUploadsDir, uploadsBaseDir } from './utils/uploads';
 
 dotenv.config();
 
@@ -38,6 +39,9 @@ try {
   console.error('❌ Erro ao inicializar banco:', error);
   process.exit(1);
 }
+
+ensureUploadsDir();
+app.use('/uploads', express.static(uploadsBaseDir));
 
 // Rotas
 app.use('/api/produtos', produtosRoutes);

@@ -32,6 +32,7 @@ db.exec(`
     codigo_barras TEXT UNIQUE,
     estoque INTEGER DEFAULT 0,
     categoria TEXT,
+    imagem_url TEXT,
     ativo BOOLEAN DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -236,6 +237,17 @@ try {
   }
 } catch (error) {
   console.error('Erro ao migrar produtos.empresa_id:', error);
+}
+
+// Migração simples: adicionar imagem_url na tabela produtos se não existir
+try {
+  const columns = db.prepare('PRAGMA table_info(produtos)').all();
+  const hasImagemUrl = columns.some((c: any) => c.name === 'imagem_url');
+  if (!hasImagemUrl) {
+    db.prepare('ALTER TABLE produtos ADD COLUMN imagem_url TEXT').run();
+  }
+} catch (error) {
+  console.error('Erro ao migrar produtos.imagem_url:', error);
 }
 
 // Migração: permitir código de barras por empresa (unique por empresa_id + codigo_barras)

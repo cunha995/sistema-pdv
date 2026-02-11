@@ -21,6 +21,14 @@ const resolveApiUrl = () => {
 
 export const API_URL = resolveApiUrl();
 
+export const resolveAssetUrl = (assetPath?: string) => {
+  if (!assetPath) return '';
+  if (assetPath.startsWith('http')) return assetPath;
+  const base = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
+  const normalized = assetPath.startsWith('/') ? assetPath : `/${assetPath}`;
+  return `${base}${normalized}`;
+};
+
 const getEmpresaIdFromStorage = () => {
   if (typeof window === 'undefined') return undefined;
   const usuario = getUsuarioFromStorage<{ empresa_id?: number }>();
@@ -80,6 +88,14 @@ export const api = {
       const qs = resolvedEmpresaId ? `?empresa_id=${resolvedEmpresaId}` : '';
       return fetchWithAuth(`${API_URL}/produtos/${id}${qs}`, {
       method: 'DELETE'
+      }).then(r => r.json());
+    },
+    uploadImagem: (id: number, file: File) => {
+      const formData = new FormData();
+      formData.append('imagem', file);
+      return fetchWithAuth(`${API_URL}/produtos/${id}/imagem`, {
+        method: 'POST',
+        body: formData
       }).then(r => r.json());
     }
   },

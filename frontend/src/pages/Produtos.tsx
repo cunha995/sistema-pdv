@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { api, resolveAssetUrl } from '../services/api';
 import { Produto } from '../types';
 import { getUsuarioFromStorage } from '../services/authStorage';
 
@@ -7,13 +7,16 @@ const Produtos: React.FC = () => {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [produtoEdit, setProdutoEdit] = useState<Produto | null>(null);
+  const [imagemArquivo, setImagemArquivo] = useState<File | null>(null);
+  const [imagemPreview, setImagemPreview] = useState('');
   const [formData, setFormData] = useState<Produto>({
     nome: '',
     descricao: '',
     preco: 0,
     codigo_barras: '',
     estoque: 0,
-    categoria: ''
+    categoria: '',
+    imagem_url: ''
   });
 
   const usuario = getUsuarioFromStorage();
@@ -22,6 +25,13 @@ const Produtos: React.FC = () => {
   useEffect(() => {
     carregarProdutos();
   }, [empresaId]);
+
+  useEffect(() => {
+    if (!imagemPreview || !imagemPreview.startsWith('blob:')) return;
+    return () => {
+      URL.revokeObjectURL(imagemPreview);
+    };
+  }, [imagemPreview]);
 
   const carregarProdutos = async () => {
     const data = await api.produtos.listar(empresaId);
@@ -32,10 +42,16 @@ const Produtos: React.FC = () => {
     e.preventDefault();
     
     try {
+      let produtoId = produtoEdit?.id;
       if (produtoEdit) {
         await api.produtos.atualizar(produtoEdit.id!, formData);
       } else {
-        await api.produtos.criar({ ...formData, empresa_id: empresaId });
+        const criado = await api.produtos.criar({ ...formData, empresa_id: empresaId });
+        produtoId = criado?.id;
+      }
+
+      if (imagemArquivo && produtoId) {
+        await api.produtos.uploadImagem(produtoId, imagemArquivo);
       }
 
       await carregarProdutos();
@@ -48,7 +64,16 @@ const Produtos: React.FC = () => {
   const handleEdit = (produto: Produto) => {
     setProdutoEdit(produto);
     setFormData(produto);
+    setImagemArquivo(null);
+    setImagemPreview(resolveAssetUrl(produto.imagem_url));
     setMostrarForm(true);
+  };
+
+  const handleImagemChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    if (!file) return;
+    setImagemArquivo(file);
+    setImagemPreview(URL.createObjectURL(file));
   };
 
   const handleDelete = async (id: number) => {
@@ -65,10 +90,13 @@ const Produtos: React.FC = () => {
       preco: 0,
       codigo_barras: '',
       estoque: 0,
-      categoria: ''
+      categoria: '',
+      imagem_url: ''
     });
     setProdutoEdit(null);
     setMostrarForm(false);
+    setImagemArquivo(null);
+    setImagemPreview('');
   };
 
   return (
@@ -110,6 +138,20 @@ const Produtos: React.FC = () => {
                 value={formData.descricao}
                 onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
               />
+            </div>
+
+            <div className="form-group">
+              <label>Foto do Produto</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImagemChange}
+              />
+              {imagemPreview && (
+                <div className="produto-imagem-preview">
+                  <img src={imagemPreview} alt="Preview do produto" />
+                </div>
+              )}
             </div>
 
             <div className="form-row">
@@ -159,6 +201,7 @@ const Produtos: React.FC = () => {
         <table>
           <thead>
             <tr>
+              <th>Foto</th>
               <th>Código</th>
               <th>Nome</th>
               <th>Categoria</th>
@@ -170,6 +213,17 @@ const Produtos: React.FC = () => {
           <tbody>
             {produtos.map((produto) => (
               <tr key={produto.id}>
+                <td>
+                  {produto.imagem_url ? (
+                    <img
+                      src={resolveAssetUrl(produto.imagem_url)}
+                      alt={produto.nome}
+                      className="produto-thumb"
+                    />
+                  ) : (
+                    <span className="produto-thumb vazio">—</span>
+                  )}
+                </td>
                 <td>{produto.codigo_barras || '-'}</td>
                 <td>{produto.nome}</td>
                 <td>{produto.categoria || '-'}</td>

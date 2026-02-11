@@ -25,6 +25,7 @@ const ensureTenantSchema = (db: DatabaseType) => {
       codigo_barras TEXT,
       estoque INTEGER DEFAULT 0,
       categoria TEXT,
+      imagem_url TEXT,
       ativo BOOLEAN DEFAULT 1,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -128,6 +129,12 @@ const ensureTenantSchema = (db: DatabaseType) => {
     ON produtos (empresa_id, codigo_barras)
     WHERE codigo_barras IS NOT NULL;
   `);
+
+  const columns = db.prepare('PRAGMA table_info(produtos)').all() as { name: string }[];
+  const hasImagemUrl = columns.some((col) => col.name === 'imagem_url');
+  if (!hasImagemUrl) {
+    db.prepare('ALTER TABLE produtos ADD COLUMN imagem_url TEXT').run();
+  }
 };
 
 export const getTenantDb = (empresaId: number) => {

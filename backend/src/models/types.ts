@@ -7,6 +7,7 @@ export interface Produto {
   codigo_barras?: string;
   estoque: number;
   categoria?: string;
+  imagem_url?: string;
   ativo?: boolean;
   created_at?: string;
   updated_at?: string;

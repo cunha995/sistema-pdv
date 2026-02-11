@@ -7,6 +7,7 @@ export interface Produto {
   codigo_barras?: string;
   estoque: number;
   categoria?: string;
+  imagem_url?: string;
   ativo?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -29,6 +30,7 @@ export interface ItemVenda {
   venda_id?: number;
   produto_id: number;
   produto_nome?: string;
+  produto_imagem_url?: string;
   quantidade: number;
   preco_unitario: number;
   subtotal: number;

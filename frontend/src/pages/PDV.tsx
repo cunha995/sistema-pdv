@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import { api, resolveAssetUrl } from '../services/api';
 import { Produto, ItemVenda, Cliente } from '../types';
 import { getUsuarioFromStorage } from '../services/authStorage';
 import './PDV.css';
@@ -49,6 +49,9 @@ const PDV: React.FC = () => {
   const [mesaParaFechar, setMesaParaFechar] = useState<number | null>(null);
   const [mesasComPendencia, setMesasComPendencia] = useState<number[]>([]);
   const [mesasAceitas, setMesasAceitas] = useState<number[]>([]);
+  const [produtoImagemTarget, setProdutoImagemTarget] = useState<Produto | null>(null);
+  const [uploadingImagemId, setUploadingImagemId] = useState<number | null>(null);
+  const inputImagemRef = useRef<HTMLInputElement | null>(null);
   const sireneAtivaRef = useRef(false);
   const primeiraChecagemRef = useRef(true);
   const pedidosPendentesRef = useRef<Set<number>>(new Set());
@@ -143,6 +146,7 @@ const PDV: React.FC = () => {
           {
             produto_id: produtoSelecionado.id!,
             produto_nome: produtoSelecionado.nome,
+            produto_imagem_url: produtoSelecionado.imagem_url,
             quantidade,
             preco_unitario: produtoSelecionado.preco,
             subtotal: produtoSelecionado.preco * quantidade
@@ -186,6 +190,30 @@ const PDV: React.FC = () => {
   };
 
   const totalComDesconto = calcularTotal() - desconto;
+
+  const abrirSeletorImagem = (produto: Produto, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setProdutoImagemTarget(produto);
+    inputImagemRef.current?.click();
+  };
+
+  const handleImagemSelecionada = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !produtoImagemTarget?.id) return;
+
+    try {
+      setUploadingImagemId(produtoImagemTarget.id);
+      await api.produtos.uploadImagem(produtoImagemTarget.id, file);
+      await carregarProdutos();
+    } catch (error) {
+      setMensagem('❌ Erro ao enviar foto!');
+      setTimeout(() => setMensagem(''), 2000);
+    } finally {
+      setUploadingImagemId(null);
+      setProdutoImagemTarget(null);
+      event.target.value = '';
+    }
+  };
 
   const tocarSirene = async () => {
     if (sireneAtivaRef.current) return;
@@ -1214,6 +1242,14 @@ const PDV: React.FC = () => {
                 Adicionar
               </button>
             </div>
+
+            <input
+              ref={inputImagemRef}
+              type="file"
+              accept="image/*"
+              className="produto-imagem-input"
+              onChange={handleImagemSelecionada}
+            />
           </div>
 
           <div className="produtos-grid">
@@ -1229,6 +1265,25 @@ const PDV: React.FC = () => {
                     adicionarProduto(produto);
                   }}
                 >
+                  <div className="produto-imagem">
+                    {produto.imagem_url ? (
+                      <img
+                        src={resolveAssetUrl(produto.imagem_url)}
+                        alt={produto.nome}
+                      />
+                    ) : (
+                      <div className="produto-imagem-placeholder">📦</div>
+                    )}
+                    <button
+                      type="button"
+                      className="produto-foto-btn"
+                      onClick={(event) => abrirSeletorImagem(produto, event)}
+                      disabled={uploadingImagemId === produto.id}
+                      title="Atualizar foto"
+                    >
+                      {uploadingImagemId === produto.id ? '...' : '📷'}
+                    </button>
+                  </div>
                   <div className="produto-info">
                     <strong>{produto.nome}</strong>
                     <small>{produto.categoria}</small>
@@ -1257,6 +1312,16 @@ const PDV: React.FC = () => {
                 carrinho.map((item, idx) => (
                   <div key={item.produto_id} className="carrinho-item">
                     <div className="item-numero">{String(idx + 1).padStart(2, '0')}</div>
+                    <div className="item-foto">
+                      {item.produto_imagem_url ? (
+                        <img
+                          src={resolveAssetUrl(item.produto_imagem_url)}
+                          alt={item.produto_nome || 'Produto'}
+                        />
+                      ) : (
+                        <span className="item-foto-placeholder">📦</span>
+                      )}
+                    </div>
                     <div className="item-detalhes">
                       <div className="item-nome">{item.produto_nome}</div>
                       <div className="item-valores">
