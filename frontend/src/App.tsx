@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
-import { getTokenFromStorage } from './services/authStorage';
+import { getTokenFromStorage, getUsuarioFromStorage } from './services/authStorage';
 
 import Dashboard from './pages/Dashboard';
 import PDV from './pages/PDV';
@@ -29,6 +29,18 @@ function RotaProtegida({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function RotaProtegidaMaster({ children }: { children: React.ReactNode }) {
+  const token = getTokenFromStorage();
+  const usuario = getUsuarioFromStorage<{ tipo?: string }>();
+  const location = useLocation();
+
+  if (!token || usuario?.tipo !== 'master') {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -39,8 +51,8 @@ function App() {
         {/* Tela de Login */}
         <Route path="/login" element={<Login />} />
         
-        {/* Painel Master (SaaS) - Aberto */}
-        <Route path="/master" element={<Master />} />
+        {/* Painel Master (SaaS) - Protegido */}
+        <Route path="/master" element={<RotaProtegidaMaster><Master /></RotaProtegidaMaster>} />
         
         {/* Painel do administrador/atendente - Protegido */}
         <Route path="/admin" element={<RotaProtegida><Dashboard /></RotaProtegida>} />

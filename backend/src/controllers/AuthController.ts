@@ -31,11 +31,32 @@ export class AuthController {
     try {
       const { email, senha, empresa_id } = req.body;
 
+      const masterUser = process.env.MASTER_USER || 'masterjr';
+      const masterPassword = process.env.MASTER_PASSWORD || '12091995';
+
       if (!email || !senha) {
         return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
       }
 
-      const isEmail = String(email).includes('@');
+      const normalizedEmail = String(email).trim();
+      if (normalizedEmail === masterUser && String(senha) === masterPassword) {
+        const token = gerarToken(0, 0);
+        return res.json({
+          token,
+          usuario: {
+            id: 0,
+            nome: masterUser,
+            email: masterUser,
+            empresa_id: 0,
+            empresa_nome: 'Master',
+            tipo: 'master',
+            is_demo: false,
+            demo_expira_em: null
+          }
+        });
+      }
+
+      const isEmail = normalizedEmail.includes('@');
       let usuario: any = null;
 
       if (isEmail) {
@@ -45,14 +66,14 @@ export class AuthController {
             FROM usuarios u
             JOIN empresas e ON u.empresa_id = e.id
             WHERE u.email = ? AND u.empresa_id = ? AND u.ativo = 1
-          `).get(email, empresa_id);
+          `).get(normalizedEmail, empresa_id);
         } else {
           usuario = db.prepare(`
             SELECT u.*, e.nome as empresa_nome, e.ativo as empresa_ativa, e.data_renovacao as data_renovacao
             FROM usuarios u
             JOIN empresas e ON u.empresa_id = e.id
             WHERE u.email = ? AND u.ativo = 1
-          `).get(email);
+          `).get(normalizedEmail);
         }
       } else {
         if (!empresa_id) {
@@ -63,7 +84,7 @@ export class AuthController {
           FROM usuarios u
           JOIN empresas e ON u.empresa_id = e.id
           WHERE u.nome = ? AND u.empresa_id = ? AND u.ativo = 1
-        `).get(email, empresa_id);
+        `).get(normalizedEmail, empresa_id);
       }
 
       if (!usuario) {

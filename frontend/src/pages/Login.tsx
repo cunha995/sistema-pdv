@@ -38,8 +38,12 @@ export default function Login() {
       setAuthItem('token', data.token);
       setAuthItem('usuario', JSON.stringify(data.usuario));
 
-      // Redirecionar para o dashboard
-      navigate('/admin');
+      // Redirecionar conforme o tipo de usuario
+      if (data?.usuario?.tipo === 'master') {
+        navigate('/master');
+      } else {
+        navigate('/admin');
+      }
     } catch (error: any) {
       console.error('Erro:', error);
       if (error?.message?.includes('Conta demo expirada')) {
