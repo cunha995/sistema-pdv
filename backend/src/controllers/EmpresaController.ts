@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { db } from '../database';
+import { getTenantDb } from '../database/tenant';
 
 export class EmpresaController {
   // Listar todas as empresas
@@ -78,8 +79,11 @@ export class EmpresaController {
         contato_nome, contato_email, contato_telefone, plano_id || 1
       );
 
+      const empresaId = Number(result.lastInsertRowid);
+      getTenantDb(empresaId);
+
       res.status(201).json({
-        id: result.lastInsertRowid,
+        id: empresaId,
         nome,
         email,
         plano_id: plano_id || 1,
