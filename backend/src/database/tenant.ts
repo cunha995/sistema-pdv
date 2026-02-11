@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import type { Database as DatabaseType } from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
@@ -11,9 +12,9 @@ if (!fs.existsSync(baseDir)) {
   fs.mkdirSync(baseDir, { recursive: true });
 }
 
-const tenantDbCache = new Map<number, Database>();
+const tenantDbCache = new Map<number, DatabaseType>();
 
-const ensureTenantSchema = (db: Database) => {
+const ensureTenantSchema = (db: DatabaseType) => {
   db.exec(`
     CREATE TABLE IF NOT EXISTS produtos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

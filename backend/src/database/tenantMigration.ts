@@ -1,14 +1,15 @@
 import Database from 'better-sqlite3';
+import type { Database as DatabaseType } from 'better-sqlite3';
 import { getTenantDb } from './tenant';
 
-const hasLegacyTable = (db: Database, tableName: string) => {
+const hasLegacyTable = (db: DatabaseType, tableName: string) => {
   const row = db
     .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`)
     .get(tableName);
   return !!row;
 };
 
-export const migrateLegacyTenantData = (masterDb: Database) => {
+export const migrateLegacyTenantData = (masterDb: DatabaseType) => {
   try {
     if (!hasLegacyTable(masterDb, 'produtos')) {
       return;
