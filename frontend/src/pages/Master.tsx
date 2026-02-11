@@ -345,6 +345,19 @@ const Master: React.FC = () => {
     setMostrarFormPlano(false);
   };
 
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(Number.isFinite(value) ? value : 0);
+  };
+
+  const totalEmpresas = estatisticas?.totalEmpresas || 0;
+  const empresasAtivas = estatisticas?.empresasAtivas || 0;
+  const empresasInativas = Math.max(totalEmpresas - empresasAtivas, 0);
+  const totalVendas = Number(estatisticas?.totalVendas || 0);
+  const receita = Number(estatisticas?.receita || 0);
+
   return (
     <div className="master-container">
       {/* Header */}
@@ -391,23 +404,25 @@ const Master: React.FC = () => {
             <div className="stat-card stat-1">
               <div className="stat-icon">🏢</div>
               <div className="stat-content">
-                <div className="stat-value">{estatisticas?.totalEmpresas || 0}</div>
-                <div className="stat-label">Total de Empresas</div>
+                <div className="stat-value">{totalEmpresas}</div>
+                <div className="stat-label">Total de Empresas Cadastradas</div>
+                <div className="stat-hint">Inclui ativas e desativadas</div>
               </div>
             </div>
 
             <div className="stat-card stat-2">
               <div className="stat-icon">✓</div>
               <div className="stat-content">
-                <div className="stat-value">{estatisticas?.empresasAtivas || 0}</div>
+                <div className="stat-value">{empresasAtivas}</div>
                 <div className="stat-label">Empresas Ativas</div>
+                <div className="stat-hint">Inativas: {empresasInativas}</div>
               </div>
             </div>
 
             <div className="stat-card stat-3">
               <div className="stat-icon">💰</div>
               <div className="stat-content">
-                <div className="stat-value">R$ {(parseFloat(estatisticas?.totalVendas.toString() || '0')/1000).toFixed(1)}K</div>
+                <div className="stat-value">{formatCurrency(totalVendas)}</div>
                 <div className="stat-label">Total em Vendas</div>
               </div>
             </div>
@@ -415,7 +430,7 @@ const Master: React.FC = () => {
             <div className="stat-card stat-4">
               <div className="stat-icon">💵</div>
               <div className="stat-content">
-                <div className="stat-value">R$ {estatisticas?.receita || '0'}</div>
+                <div className="stat-value">{formatCurrency(receita)}</div>
                 <div className="stat-label">Receita Estimada</div>
               </div>
             </div>

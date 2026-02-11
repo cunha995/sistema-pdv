@@ -193,6 +193,12 @@
   font-size: 0.95em;
 }
 
+.stat-hint {
+  color: rgba(226, 232, 240, 0.75);
+  font-size: 0.82em;
+  margin-top: 6px;
+}
+
 /* Dashboard Info */
 .dashboard-info {
   display: grid;

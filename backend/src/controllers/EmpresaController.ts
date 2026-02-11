@@ -196,7 +196,7 @@ export class EmpresaController {
   // Estatísticas da plataforma
   static estatisticas(req: Request, res: Response) {
     try {
-      const totalEmpresas = (db.prepare('SELECT COUNT(*) as count FROM empresas WHERE ativo = 1').get() as any).count;
+      const totalEmpresas = (db.prepare('SELECT COUNT(*) as count FROM empresas').get() as any).count;
       const empresasAtivas = (db.prepare('SELECT COUNT(*) as count FROM empresas WHERE ativo = 1').get() as any).count;
       const totalVendas = (db.prepare('SELECT SUM(total_vendas) as sum FROM empresas').get() as any).sum || 0;
       const receita = (db.prepare('SELECT SUM(quantidade_vendas * preco_mensal) as sum FROM empresas e JOIN planos p ON e.plano_id = p.id').get() as any).sum || 0;
