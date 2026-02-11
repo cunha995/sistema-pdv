@@ -1,6 +1,8 @@
 import { Router } from 'express';
+import type { Request } from 'express';
 import path from 'path';
 import multer from 'multer';
+import type { FileFilterCallback } from 'multer';
 import { ProdutoController } from '../controllers/ProdutoController';
 import { getAuthContext, requireAuth } from '../middleware/auth';
 import { ensureEmpresaUploadsDir } from '../utils/uploads';
@@ -8,7 +10,11 @@ import { ensureEmpresaUploadsDir } from '../utils/uploads';
 const router = Router();
 
 const storage = multer.diskStorage({
-	destination: (req, _file, cb) => {
+	destination: (
+		req: Request,
+		_file: Express.Multer.File,
+		cb: (error: Error | null, destination: string) => void
+	) => {
 		const auth = getAuthContext(req);
 		if (!auth) {
 			return cb(new Error('Token não fornecido'), '');
@@ -16,7 +22,11 @@ const storage = multer.diskStorage({
 		const dir = ensureEmpresaUploadsDir(auth.empresaId);
 		return cb(null, dir);
 	},
-	filename: (_req, file, cb) => {
+	filename: (
+		_req: Request,
+		file: Express.Multer.File,
+		cb: (error: Error | null, filename: string) => void
+	) => {
 		const ext = path.extname(file.originalname || '').toLowerCase();
 		const safeName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
 		cb(null, safeName);
@@ -26,7 +36,7 @@ const storage = multer.diskStorage({
 const upload = multer({
 	storage,
 	limits: { fileSize: 3 * 1024 * 1024 },
-	fileFilter: (_req, file, cb) => {
+	fileFilter: (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
 		if (file.mimetype?.startsWith('image/')) {
 			return cb(null, true);
 		}

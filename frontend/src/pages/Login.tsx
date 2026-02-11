@@ -4,20 +4,6 @@ import { api } from '../services/api';
 import { setAuthItem } from '../services/authStorage';
 import './Login.css';
 
-interface LoginResponse {
-  token: string;
-  usuario: {
-    id: number;
-    nome: string;
-    email: string;
-    empresa_id: number;
-    empresa_nome: string;
-    tipo: string;
-    is_demo: boolean;
-    demo_expira_em: string | null;
-  };
-}
-
 export default function Login() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
