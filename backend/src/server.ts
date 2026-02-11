@@ -10,6 +10,7 @@ import empresasRoutes from './routes/empresas';
 import planosRoutes from './routes/planos';
 import authRoutes from './routes/auth';
 import caixaRoutes from './routes/caixa';
+import publicRoutes from './routes/public';
 
 dotenv.config();
 
@@ -48,6 +49,7 @@ app.use('/api/empresas', empresasRoutes);
 app.use('/api/planos', planosRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/caixa', caixaRoutes);
+app.use('/api/public', publicRoutes);
 
 // Rota raiz
 app.get('/', (req: express.Request, res: express.Response) => {

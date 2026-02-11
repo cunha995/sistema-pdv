@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { api } from '../services/api';
+import { api, API_URL } from '../services/api';
 import { Produto } from '../types';
-import { getUsuarioFromStorage } from '../services/authStorage';
+import { getTokenFromStorage, getUsuarioFromStorage } from '../services/authStorage';
 import './PainelMesa.css';
 
 interface ItemPedido {
@@ -36,11 +36,46 @@ const PainelMesa: React.FC = () => {
   const [clienteNome, setClienteNome] = useState('');
 
   const usuario = getUsuarioFromStorage();
-  const empresaId = usuario?.empresa_id;
+  const token = getTokenFromStorage();
+  const empresaIdAuth = usuario?.empresa_id;
+  const empresaIdQuery = (() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const raw = params.get('empresa');
+      const parsed = raw ? Number(raw) : NaN;
+      return Number.isFinite(parsed) ? parsed : undefined;
+    } catch {
+      return undefined;
+    }
+  })();
+  const empresaId = empresaIdAuth ?? empresaIdQuery;
 
   useEffect(() => {
-    api.produtos.listar(empresaId).then(setProdutos);
-  }, [empresaId]);
+    if (!empresaId) {
+      setProdutos([]);
+      setMensagem('Empresa não identificada. Abra o QR Code correto.');
+      return;
+    }
+
+    const carregarProdutos = async () => {
+      try {
+        if (token) {
+          const data = await api.produtos.listar(empresaId);
+          setProdutos(Array.isArray(data) ? data : []);
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/public/empresas/${empresaId}/produtos`);
+        const data = await response.json();
+        setProdutos(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Erro ao carregar produtos:', error);
+        setProdutos([]);
+      }
+    };
+
+    carregarProdutos();
+  }, [empresaId, token]);
 
   useEffect(() => {
     if (!id) return;
@@ -53,9 +88,20 @@ const PainelMesa: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
+    if (!token && !empresaId) {
+      return;
+    }
     const buscarPedidos = async () => {
       try {
-        const pedidos = await api.mesas.listarPedidos(Number(id));
+        let pedidos: any[] = [];
+        if (token) {
+          pedidos = await api.mesas.listarPedidos(Number(id));
+        } else {
+          const response = await fetch(
+            `${API_URL}/public/mesas/${id}/pedidos?empresa_id=${empresaId}`
+          );
+          pedidos = await response.json();
+        }
         // Filtrar apenas pedidos que não estão fechados
         const pedidosAtivos = pedidos.filter((pedido: Pedido) => 
           pedido.status !== 'fechado' && pedido.status !== 'cancelado'
@@ -126,7 +172,27 @@ const PainelMesa: React.FC = () => {
         preco_unitario: item.produto.preco,
       }));
 
-      await api.mesas.criarPedido(Number(id), itens);
+      if (!empresaId) {
+        throw new Error('Empresa não identificada');
+      }
+
+      if (token) {
+        await api.mesas.criarPedido(Number(id), itens);
+      } else {
+        const response = await fetch(
+          `${API_URL}/public/mesas/${id}/pedidos?empresa_id=${empresaId}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itens })
+          }
+        );
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data?.error || 'Erro ao enviar pedido');
+        }
+      }
       setMensagem('✓ Pedido enviado com sucesso!');
       setPedidoAtual([]);
       setTimeout(() => setMensagem(''), 2000);
@@ -141,10 +207,14 @@ const PainelMesa: React.FC = () => {
     if (!id || chamandoAtendente) return;
     setChamandoAtendente(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '/api';
-      const response = await fetch(`${apiUrl}/mesas/${id}/chamar-atendente`, {
-        method: 'POST'
-      });
+      if (!empresaId) {
+        throw new Error('Empresa não identificada');
+      }
+
+      const response = await fetch(
+        `${API_URL}/public/mesas/${id}/chamar-atendente?empresa_id=${empresaId}`,
+        { method: 'POST' }
+      );
 
       if (response.ok) {
         setMensagem('✓ Atendente chamado!');
@@ -164,13 +234,16 @@ const PainelMesa: React.FC = () => {
     if (!id) return;
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || '/api';
+      if (!empresaId) {
+        throw new Error('Empresa não identificada');
+      }
+
       const response = await fetch(
-        `${apiUrl}/mesas/${id}/fechar-conta`,
+        `${API_URL}/public/mesas/${id}/fechar-conta?empresa_id=${empresaId}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ metodo_pagamento: metodoPagamento, desconto: parseFloat(desconto.toString()) }),
+          body: JSON.stringify({ metodo_pagamento: metodoPagamento, desconto: parseFloat(desconto.toString()) })
         }
       );
 
@@ -324,7 +397,7 @@ const PainelMesa: React.FC = () => {
         </div>
       </div>
 
-      {historicoPedidos.length > 0 && (
+      {historicoPedidos.length > 0 && token && (
         <div className="painel-fechamento">
           <h2>Fechar Conta</h2>
           <div className="fechamento-form">

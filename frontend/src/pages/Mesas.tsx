@@ -1,4 +1,5 @@
 import React from 'react';
+import { getUsuarioFromStorage } from '../services/authStorage';
 import { QRCodeSVG } from 'qrcode.react';
 
 const mesas = [
@@ -11,12 +12,15 @@ const mesas = [
 const urlBase = window.location.origin;
 
 const Mesas: React.FC = () => {
+  const usuario = getUsuarioFromStorage();
+  const empresaId = usuario?.empresa_id;
   return (
     <div className="mesas-main">
       <h1>Mesas</h1>
       <div className="mesas-list">
         {mesas.map(mesa => {
-          const mesaUrl = `${urlBase}/mesa/${mesa.id}`;
+          const qs = empresaId ? `?empresa=${empresaId}` : '';
+          const mesaUrl = `${urlBase}/mesa/${mesa.id}${qs}`;
           return (
             <div key={mesa.id} className="mesa-card">
               <div>{mesa.nome}</div>
