@@ -21,7 +21,6 @@ interface LoginResponse {
 export default function Login() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [empresaId, setEmpresaId] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
@@ -33,8 +32,7 @@ export default function Login() {
     setCarregando(true);
 
     try {
-      const empresaIdNum = empresaId ? Number(empresaId) : undefined;
-      const data = await api.auth.login(email, senha, empresaIdNum);
+      const data = await api.auth.login(email, senha);
 
       // Salvar dados no storage da sessao
       setAuthItem('token', data.token);
@@ -101,18 +99,6 @@ export default function Login() {
                 autoFocus
               />
             </div>
-            <div className="form-group">
-              <label htmlFor="empresaId">ID da Empresa (obrigatorio se usar usuario)</label>
-              <input
-                type="number"
-                id="empresaId"
-                value={empresaId}
-                onChange={(e) => setEmpresaId(e.target.value)}
-                placeholder="Ex: 2"
-                min="1"
-              />
-            </div>
-
             <div className="form-group">
               <label htmlFor="senha">Senha</label>
               <div className="password-field">
