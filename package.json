@@ -8,6 +8,7 @@
     "dev": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:full": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "build": "cd backend && npm run build",
     "start": "cd backend && npm start",
     "build:frontend": "cd frontend && npm run build",
     "test:api": "node scripts/test-api.js",
