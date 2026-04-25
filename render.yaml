@@ -26,6 +26,6 @@ services:
       - key: NODE_ENV
         value: production
       - key: VITE_API_URL
-        value: https://sistema-pdv-backend.onrender.com/api
+        value: https://sistema-pdv-backend-production-88b5.up.railway.app/api
       - key: API_URL
-        value: https://sistema-pdv-backend.onrender.com
+        value: https://sistema-pdv-backend-production-88b5.up.railway.app
