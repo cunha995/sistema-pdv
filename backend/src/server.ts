@@ -11,6 +11,7 @@ import planosRoutes from './routes/planos';
 import authRoutes from './routes/auth';
 import caixaRoutes from './routes/caixa';
 import publicRoutes from './routes/public';
+import debugRoutes from './routes/debug';
 import { ensureUploadsDir, uploadsBaseDir } from './utils/uploads';
 
 dotenv.config();
@@ -54,6 +55,8 @@ app.use('/api/planos', planosRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/caixa', caixaRoutes);
 app.use('/api/public', publicRoutes);
+// Rota de debug temporária (remover em produção)
+app.use('/api/debug', debugRoutes);
 
 // Rota raiz
 app.get('/', (req: express.Request, res: express.Response) => {
